@@ -5,15 +5,16 @@ import pytest
 from homedant_linkedin.pillars import PILLARS, get_pillar
 from homedant_linkedin.planner import build_plan, posting_dates
 
-PLAN_START = date(2026, 9, 1)
+PLAN_START = date(2026, 9, 7)  # a Monday, so every week contributes three slots
 
 
-def test_posting_dates_land_on_tuesday_and_thursday():
-    assert [d.weekday() for d in posting_dates(PLAN_START, weeks=2)] == [1, 3, 1, 3]
+def test_posting_dates_land_on_monday_wednesday_and_friday():
+    assert [d.weekday() for d in posting_dates(PLAN_START, weeks=2)] == [0, 2, 4, 0, 2, 4]
 
 
 def test_posting_dates_never_precede_the_start_date():
-    assert posting_dates(date(2026, 9, 3), weeks=1) == [date(2026, 9, 3)]
+    """A plan starting Thursday skips that week's Monday and Wednesday."""
+    assert posting_dates(date(2026, 9, 3), weeks=1) == [date(2026, 9, 4)]
 
 
 def test_posting_dates_rejects_zero_weeks():
@@ -23,7 +24,7 @@ def test_posting_dates_rejects_zero_weeks():
 
 def test_plan_assigns_a_pillar_to_every_slot(catalog):
     slots = build_plan(catalog, start=PLAN_START, weeks=4)
-    assert len(slots) == 8
+    assert len(slots) == 12
     assert all(slot.pillar in PILLARS for slot in slots)
 
 
@@ -36,16 +37,17 @@ def test_recognition_leads_the_rotation(catalog):
 
 
 def test_a_show_that_has_already_closed_is_never_scheduled(catalog):
-    """Both shows on file ended before this plan starts."""
-    slots = build_plan(catalog, start=PLAN_START, weeks=6)
+    """By November every show on file has ended, so the pillar drops out."""
+    slots = build_plan(catalog, start=date(2026, 11, 2), weeks=6)
     assert all(slot.pillar.key != "tradeshow" for slot in slots)
 
 
 def test_an_upcoming_show_is_scheduled(catalog):
-    """The same plan, dated before the shows closed, does use them."""
-    slots = build_plan(catalog, start=date(2026, 3, 2), weeks=4)
+    """High Point Market opens in October, so a September plan uses it."""
+    slots = build_plan(catalog, start=PLAN_START, weeks=4)
     shows = [slot for slot in slots if slot.pillar.key == "tradeshow"]
-    assert shows and all(slot.show.end >= date(2026, 3, 2) for slot in shows)
+    assert shows and all(slot.show.end >= PLAN_START for slot in shows)
+    assert any(slot.show.name == "High Point Market" for slot in shows)
 
 
 def test_the_project_pillar_only_draws_project_products(catalog):

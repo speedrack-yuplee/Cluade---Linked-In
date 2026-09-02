@@ -45,6 +45,7 @@ PYTHONPATH=src python -m homedant_linkedin plan
 | `draft` | Render every post in the plan, ready to paste |
 | `validate` | Check every draft; exits `1` if any post has an issue |
 | `products` | List the catalog |
+| `next` | Write today's post and image into `out/` for an unattended run |
 
 Common flags: `--start YYYY-MM-DD`, `--weeks N`, `--marketplace US`,
 `--catalog path/to/products.json`, and `--json` on `plan` and `draft`.
@@ -104,6 +105,41 @@ pillar supplied.
 `highlights`, `audience`, `retail_fit` and `segments` are what the post copy is
 actually written from. Point `--catalog` at your own file to plan against a
 different set.
+
+## Weekly automation
+
+`.github/workflows/linkedin-draft.yml` runs three times a week — Monday,
+Wednesday and Friday at 09:00 KST — and sends that day's post and image to
+Telegram. Nothing is published automatically; the draft arrives in the chat and
+a person posts it.
+
+The run is a straight line: `next` builds the post from the calendar, validates
+it, renders the image, and `scripts/send_telegram.py` delivers both. A post that
+fails validation exits non-zero and is never sent.
+
+The rotation is counted from `plan_anchor` in `brand.json`, not from the day the
+job happens to run, so a missed or re-run job lands on the same slot the
+calendar shows.
+
+### Setting it up
+
+Add two repository secrets under **Settings → Secrets and variables → Actions**:
+
+| Secret | Where it comes from |
+| --- | --- |
+| `TELEGRAM_BOT_TOKEN` | BotFather, when the bot was created |
+| `TELEGRAM_CHAT_ID` | `https://api.telegram.org/bot<token>/getUpdates` after messaging the bot |
+
+Secrets are not readable from the repository, so a public repository is fine.
+Then run the workflow once by hand (**Actions → LinkedIn draft → Run
+workflow**) to confirm the message arrives.
+
+## Images
+
+`image.py` renders each post into a 1200x1200 PNG from the same draft the text
+comes from: the HOMEDANT wordmark over its tagline rule, the hook as the
+headline, up to three proof points, and a footer band carrying the show or the
+award. No external service is involved.
 
 ## Existing posts
 

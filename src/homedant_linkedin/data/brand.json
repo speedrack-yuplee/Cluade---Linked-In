@@ -12,9 +12,11 @@
   ],
   "proof_points": [
     "boltless assembly and adjustable shelves, engineered and inspected in our own Korean factory",
+    "manufacturing in South Korea since 1979",
+    "heavy-duty steel construction rated to 264 lb per shelf",
     "more than 20 registered designs",
     "over 3,000 reviews and a 4.8 star rating on Amazon",
-    "CA and US warehouses for fast domestic shipping"
+    "CA and GA warehouses for fast domestic shipping"
   ],
   "recognitions": [
     {
@@ -88,6 +90,23 @@
         "StorageSolutions",
         "B2B"
       ]
+    },
+    {
+      "name": "High Point Market",
+      "booth": null,
+      "venue": "Suites at Market Square, High Point, NC",
+      "start": "2026-10-16",
+      "end": "2026-10-21",
+      "hashtags": [
+        "HOMEDANT",
+        "HighPointMarket",
+        "HPMKT",
+        "StorageSolutions",
+        "KoreanMade",
+        "B2B"
+      ]
     }
-  ]
+  ],
+  "founded": 1979,
+  "plan_anchor": "2026-09-07"
 }

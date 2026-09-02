@@ -148,6 +148,9 @@ class Brand:
     proof_points: tuple[str, ...]
     recognitions: tuple[Recognition, ...] = ()
     trade_shows: tuple[TradeShow, ...] = ()
+    plan_anchor: date | None = None
+    """The Monday the rotation counts from, so an unattended run lands on the
+    same slot the calendar shows."""
 
     @classmethod
     def from_dict(cls, raw: dict) -> "Brand":
@@ -161,6 +164,7 @@ class Brand:
             proof_points=tuple(raw.get("proof_points", ())),
             recognitions=tuple(Recognition.from_dict(r) for r in raw.get("recognitions", ())),
             trade_shows=tuple(TradeShow.from_dict(s) for s in raw.get("trade_shows", ())),
+            plan_anchor=date.fromisoformat(raw["plan_anchor"]) if raw.get("plan_anchor") else None,
         )
 
     @property

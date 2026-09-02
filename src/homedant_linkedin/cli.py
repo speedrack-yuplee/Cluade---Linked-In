@@ -6,10 +6,12 @@ import argparse
 import json
 import sys
 from datetime import date, datetime, timedelta
+from pathlib import Path
 
 from .catalog import Catalog
 from .composer import compose_all
 from .planner import build_plan
+from .schedule import due_on
 from .validators import validate
 
 
@@ -46,6 +48,18 @@ def build_parser() -> argparse.ArgumentParser:
             sp.add_argument("--json", action="store_true", help="emit JSON instead of text")
 
     sub.add_parser("products", help="list the catalog")
+
+    nxt = sub.add_parser(
+        "next",
+        help="write today's post and image for an unattended run",
+    )
+    nxt.add_argument("--date", type=parse_date, help="the day to post for (default today)")
+    nxt.add_argument("--out", default="out", help="directory to write post.txt and post.png into")
+    nxt.add_argument(
+        "--require-slot",
+        action="store_true",
+        help="exit 3 when nothing is scheduled, instead of exiting 0 quietly",
+    )
     return parser
 
 
@@ -131,7 +145,60 @@ def _cmd_products(args, catalog: Catalog, out) -> int:
     return 0
 
 
-COMMANDS = {"plan": _cmd_plan, "draft": _cmd_draft, "validate": _cmd_validate, "products": _cmd_products}
+def _cmd_next(args, catalog: Catalog, out) -> int:
+    """Write the post due today, or say that nothing is due.
+
+    Exit codes: 0 wrote a post (or nothing was due), 2 the post failed
+    validation and must not be sent, 3 nothing was due and the caller asked to
+    be told about it.
+    """
+    day = args.date or date.today()
+    draft = due_on(catalog, day)
+    if draft is None:
+        print(f"nothing scheduled for {day:%Y-%m-%d}", file=out)
+        return 3 if args.require_slot else 0
+
+    issues = validate(draft, catalog.brand_profile)
+    if issues:
+        print(f"{day:%Y-%m-%d} {draft.pillar.key} failed validation:", file=out)
+        for issue in issues:
+            print(f"  {issue}", file=out)
+        return 2
+
+    directory = Path(args.out)
+    directory.mkdir(parents=True, exist_ok=True)
+    text_path = directory / "post.txt"
+    text_path.write_text(draft.render() + "\n", encoding="utf-8")
+
+    from .image import render  # imported late so the other commands need no Pillow
+
+    image_path = render(draft, directory / "post.png")
+    (directory / "post.json").write_text(
+        json.dumps(
+            {
+                "date": draft.scheduled_for.isoformat(),
+                "pillar": draft.pillar.key,
+                "pillar_name": draft.pillar.name,
+                "subject": draft.slot.subject,
+                "chars": draft.char_count,
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    print(f"{day:%Y-%m-%d} {draft.pillar.name}: {draft.slot.subject}", file=out)
+    print(f"wrote {text_path} and {image_path}", file=out)
+    return 0
+
+
+COMMANDS = {
+    "plan": _cmd_plan,
+    "draft": _cmd_draft,
+    "validate": _cmd_validate,
+    "products": _cmd_products,
+    "next": _cmd_next,
+}
 
 
 def main(argv: list[str] | None = None, out=None) -> int:

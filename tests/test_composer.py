@@ -7,12 +7,12 @@ from homedant_linkedin.models import Pillar, Slot
 from homedant_linkedin.pillars import get_pillar
 from homedant_linkedin.planner import build_plan
 
-PLAN_START = date(2026, 9, 1)
+PLAN_START = date(2026, 9, 7)  # a Monday, so every week contributes three slots
 
 
 def test_every_slot_in_a_plan_composes(catalog):
     drafts = compose_all(build_plan(catalog, start=PLAN_START, weeks=6), catalog)
-    assert len(drafts) == 12
+    assert len(drafts) == 18
     assert all(draft.render().strip() for draft in drafts)
 
 
@@ -24,10 +24,18 @@ def test_the_award_post_thanks_the_organisations_by_name(catalog):
 
 
 def test_the_show_post_names_the_booth_and_the_dates(catalog):
-    show = catalog.brand_profile.trade_shows[0]
+    show = next(s for s in catalog.brand_profile.trade_shows if s.booth)
     text = compose(Slot(PLAN_START, get_pillar("tradeshow"), show=show), catalog).render()
     assert "Booth #372" in text
     assert "August 2-6, 2026" in text
+
+
+def test_the_high_point_post_carries_the_dates_from_the_booth_memo(catalog):
+    show = next(s for s in catalog.brand_profile.trade_shows if s.name == "High Point Market")
+    text = compose(Slot(PLAN_START, get_pillar("tradeshow"), show=show), catalog).render()
+    assert "October 16-21, 2026" in text
+    assert "Suites at Market Square" in text
+    assert "Booth" not in text, "the floor was not contracted, so no booth number is claimed"
 
 
 def test_a_show_without_a_booth_omits_the_booth_line(catalog):

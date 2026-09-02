@@ -8,8 +8,8 @@ from .catalog import Catalog
 from .models import Pillar, Slot
 from .pillars import PILLARS
 
-POSTING_WEEKDAYS: tuple[int, ...] = (1, 3)
-"""Tuesday and Thursday. LinkedIn engagement for B2B sits mid-week."""
+POSTING_WEEKDAYS: tuple[int, ...] = (0, 2, 4)
+"""Monday, Wednesday and Friday: three posts a week."""
 
 
 def posting_dates(start: date, weeks: int, weekdays: tuple[int, ...] = POSTING_WEEKDAYS) -> list[date]:
