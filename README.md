@@ -161,6 +161,13 @@ Every post pictures a product, whether or not the text is about one. A show or
 brand post has no product subject, so the planner assigns it one to show,
 rotated by date so the same shelf does not appear on every show post.
 
+Where the brand's own finished artwork covers a pillar — the Amazon A+ panels,
+for instance — it is used as the post image instead, and the hook stays in the
+caption where LinkedIn shows it anyway. Drop those in
+`assets/creatives/<pillar>/`; several in one folder rotate by week. Show and
+award posts are always drawn, because no fixed panel can state a countdown or
+carry the current badge.
+
 Optional images live in [`assets/`](assets/README.md) — the brand wordmark, a
 logo per show, a badge per award. Run `python -m homedant_linkedin assets` to
 see which files the layouts are looking for and which are supplied. A missing

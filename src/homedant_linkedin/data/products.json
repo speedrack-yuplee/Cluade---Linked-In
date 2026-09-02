@@ -4,6 +4,27 @@
   "author": "Leo Lee",
   "products": [
     {
+      "asin": "B09NLJMGDZ",
+      "sku": "US-HSBWB6-090-040-180-5S-1Pack",
+      "title": "HOMEDANT House Metal Shelving Unit with Laminated Board 36.2\" W x 16.5\" D x 71.3\" H 5-Tier, White",
+      "short_name": "HOMEDANT House, the 36-inch five-tier laminated shelving unit",
+      "category": "house-shelving",
+      "marketplace": "US",
+      "url": "https://www.amazon.com/dp/B09NLJMGDZ",
+      "image_url": "https://m.media-amazon.com/images/I/419mCLa4ahL.jpg",
+      "audience": "retail buyers and specifiers who need one shelf that works in a pantry and in a garage",
+      "retail_fit": "one SKU covers kitchen, laundry, garage and stockroom, so it does not need a category of its own",
+      "highlights": [
+        "264 lb per tier and 1,322 lb across five tiers",
+        "reversible board: light wood on one face, soft white on the other",
+        "HANDiLOCK joints assemble by hand, with a mallet and no bolts"
+      ],
+      "segments": [
+        "retail",
+        "project"
+      ]
+    },
+    {
       "asin": "B0GWGZF1F3",
       "sku": "HS604015HP-5W-2Pack",
       "title": "HOMEDANT 24\" W Pegboards Storage Rack 5-Tier Heavy Duty Boltless Metal Utility Shelving Unit for Pantry Garage 2Pack",

@@ -57,6 +57,34 @@ def asset_path(kind: str, name: str) -> Path:
     return ASSET_DIR / kind / f"{slug(name)}.png"
 
 
+def creatives_for(pillar: str) -> list[Path]:
+    """Ready-made panels for ``pillar``, in name order.
+
+    The brand's own A+ content is finished artwork: on-brand, in English, and
+    better than anything the generated layout can do for a product argument.
+    Where a panel exists it becomes the post image, and the hook stays in the
+    caption where LinkedIn shows it anyway.
+    """
+    directory = ASSET_DIR / "creatives" / pillar
+    if not directory.is_dir():
+        return []
+    return sorted(p for p in directory.iterdir() if p.suffix.lower() in {".jpg", ".jpeg", ".png"})
+
+
+def creative_for(draft: PostDraft) -> Path | None:
+    """The panel to run for ``draft``, rotated by week, or None.
+
+    Show and award posts always render: their images carry a countdown or a
+    badge that no fixed panel can state.
+    """
+    if draft.slot.show or draft.slot.recognition:
+        return None
+    panels = creatives_for(draft.pillar.key)
+    if not panels:
+        return None
+    return panels[draft.scheduled_for.isocalendar()[1] % len(panels)]
+
+
 def product_photo_path(asin: str) -> Path | None:
     """A supplied photo for ``asin``, if there is one.
 
@@ -278,10 +306,20 @@ def _layout_plain(image, draw, draft: PostDraft, photo) -> None:
     _band(image, draw, _footer_text(draft), ACCENT, LIGHT_TEXT)
 
 
-def render(draft: PostDraft, path: str | Path, photo=None) -> Path:
-    """Write the image for ``draft`` and return the path it was written to."""
+def render(draft: PostDraft, path: str | Path, photo=None, use_creatives: bool = True) -> Path:
+    """Write the image for ``draft`` and return the path it was written to.
+
+    A ready-made panel is copied out as-is where one covers this pillar;
+    otherwise the layout for the post's subject is drawn.
+    """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
+
+    panel = creative_for(draft) if use_creatives else None
+    if panel is not None:
+        with Image.open(panel) as art:
+            art.convert("RGB").save(path, "PNG", optimize=True)
+        return path
 
     image = Image.new("RGB", (SIZE, SIZE), GROUND)
     draw = ImageDraw.Draw(image)

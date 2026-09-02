@@ -161,7 +161,16 @@ def _cmd_assets(args, catalog: Catalog, out) -> int:
     wanted += [(f"show: {s.name}", asset_path("shows", s.name)) for s in profile.trade_shows]
     wanted += [(f"award: {r.name}", asset_path("awards", r.name)) for r in profile.recognitions]
 
+    from .image import creatives_for
+    from .pillars import PILLARS
+
     print(f"asset directory: {ASSET_DIR}\n", file=out)
+    print("Ready-made panels, used as the post image where they exist:", file=out)
+    for pillar in PILLARS:
+        panels = creatives_for(pillar.key)
+        note = "  (drawn: the countdown or badge has to be current)" if pillar.needs in ("show", "recognition") else ""
+        print(f"  {pillar.name:<26} {len(panels)} panel(s){note}", file=out)
+    print(file=out)
     for label, path in wanted:
         mark = "present" if path.exists() else "MISSING"
         print(f"{mark:<8}  {label:<44}  {path.name}", file=out)
@@ -242,10 +251,13 @@ def _cmd_next(args, catalog: Catalog, out) -> int:
     text_path = directory / "post.txt"
     text_path.write_text(draft.render() + "\n", encoding="utf-8")
 
-    from .image import photo_for, render  # late import: only this command needs Pillow
+    from .image import creative_for, photo_for, render  # late import: only this needs Pillow
 
-    photo = photo_for(draft)
-    if photo is None and draft.slot.pictured:
+    panel = creative_for(draft)
+    photo = None if panel else photo_for(draft)
+    if panel:
+        print(f"image: {panel.parent.name}/{panel.name}", file=out)
+    elif photo is None and draft.slot.pictured:
         print("note: product photo unavailable, using the type-only layout", file=out)
     image_path = render(draft, directory / "post.png", photo=photo)
     (directory / "post.json").write_text(

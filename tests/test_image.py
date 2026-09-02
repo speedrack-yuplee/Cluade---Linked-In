@@ -11,6 +11,7 @@ except ImportError:  # pragma: no cover - Pillow is a declared dependency
 
 
 def test_every_post_in_a_plan_renders_a_square_image(catalog, tmp_path):
+    """Panels and drawn layouts alike come out at LinkedIn's square size."""
     drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=2), catalog)
     for index, draft in enumerate(drafts):
         path = render(draft, tmp_path / f"{index}.png")
@@ -26,8 +27,8 @@ def test_a_product_photo_narrows_the_text_column_without_failing(catalog, tmp_pa
     drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=1), catalog)
     product_post = next(d for d in drafts if d.product)
     photo = PILImage.new("RGB", (600, 600), (200, 200, 200))
-    with_photo = render(product_post, tmp_path / "with.png", photo=photo)
-    without = render(product_post, tmp_path / "without.png")
+    with_photo = render(product_post, tmp_path / "with.png", photo=photo, use_creatives=False)
+    without = render(product_post, tmp_path / "without.png", use_creatives=False)
     assert with_photo.read_bytes() != without.read_bytes()
 
 
@@ -71,3 +72,32 @@ def test_a_missing_asset_is_none_rather_than_an_error(tmp_path):
     from homedant_linkedin.image import load_asset
 
     assert load_asset(tmp_path / "nothing.png") is None
+
+
+def test_a_ready_made_panel_is_used_for_a_product_pillar(catalog, tmp_path):
+    """The brand's own A+ content beats anything the layout can draw."""
+    from homedant_linkedin.image import creative_for
+
+    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=6), catalog)
+    retail = next(d for d in drafts if d.pillar.key == "retail")
+    panel = creative_for(retail)
+    assert panel is not None and panel.parent.name == "retail"
+
+
+def test_a_show_post_always_renders_its_own_countdown(catalog):
+    """No fixed panel can state how many days are left."""
+    from homedant_linkedin.image import creative_for
+
+    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=6), catalog)
+    show = next(d for d in drafts if d.pillar.key == "tradeshow")
+    award = next(d for d in drafts if d.pillar.key == "recognition")
+    assert creative_for(show) is None
+    assert creative_for(award) is None
+
+
+def test_use_creatives_can_be_turned_off(catalog, tmp_path):
+    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=6), catalog)
+    retail = next(d for d in drafts if d.pillar.key == "retail")
+    drawn = render(retail, tmp_path / "drawn.png", use_creatives=False)
+    panel = render(retail, tmp_path / "panel.png")
+    assert drawn.read_bytes() != panel.read_bytes()

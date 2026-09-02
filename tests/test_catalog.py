@@ -7,7 +7,7 @@ from homedant_linkedin.models import Product
 
 
 def test_bundled_catalog_loads_every_product(catalog):
-    assert len(catalog) == 10
+    assert len(catalog) == 11
     assert catalog.brand == "HOMEDANT"
     assert catalog.company == "Homedant USA Inc"
     assert catalog.author == "Leo Lee"

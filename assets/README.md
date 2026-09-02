@@ -22,6 +22,32 @@
 PYTHONPATH=src python -m homedant_linkedin assets
 ```
 
+## 완성된 A+ 이미지 (`assets/creatives/`)
+
+Amazon A+ 콘텐츠처럼 **이미 완성된 브랜드 이미지**는 여기에 필러 이름 폴더로
+넣습니다. 넣으면 그 이미지가 게시 이미지로 **그대로** 나갑니다 — 제가 만드는
+템플릿보다 낫기 때문입니다.
+
+```
+assets/creatives/project/*.jpg        프로젝트 솔루션
+assets/creatives/retail/*.jpg         리테일 적합성
+assets/creatives/manufacturing/*.jpg  Made in Korea
+assets/creatives/seasonal/*.jpg       Q4 시즌
+assets/creatives/supply/*.jpg         공급 · 물류
+```
+
+한 폴더에 여러 장 넣으면 주 단위로 돌아가며 쓰입니다. 정사각형 1200px
+이상을 권합니다.
+
+**전시회·수상 게시글은 예외입니다.** "D-7", "Space M-1007" 같은 숫자가
+매번 달라져야 해서 완성 이미지로 대체할 수 없고, 항상 새로 그립니다.
+
+현재 상태는 이 명령으로 확인합니다:
+
+```bash
+PYTHONPATH=src python -m homedant_linkedin assets
+```
+
 ## 제품 사진
 
 제품 사진은 자사 자산이므로 권리 문제가 없습니다. `assets/products/` 에

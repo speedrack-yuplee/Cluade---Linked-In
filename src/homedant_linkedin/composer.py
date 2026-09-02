@@ -233,15 +233,17 @@ def _compose_manufacturing(slot: Slot, catalog: Catalog) -> PostDraft:
                 "The fastest way to lose a customer is an assembly step they cannot finish.",
                 "We own the factory. That is not a marketing line, it is why a spec change takes "
                 "a phone call.",
+                "Turn the board over and the shelf changes colour. One SKU, two rooms it belongs in.",
             ),
         ),
         body=_paragraphs(
             "Every fastener you remove is a tolerance you now have to hold in the steel itself, "
             "because the joint has to carry the load the bolt used to carry.",
-            f"That is why {product.short_title} is engineered and inspected in "
+            f"Ours is called HANDiLOCK. It goes together by hand with a mallet, holds 264 lb on a "
+            f"tier and 1,322 lb across five, and it is engineered and inspected in "
             f"{profile.company}'s own Korean factory rather than bought in. We have been making "
-            f"steel shelving since {profile.founded}, and the boltless joint is the part we have "
-            "spent the longest getting right.",
+            f"steel shelving since {profile.founded}, and that joint is the part we have spent the "
+            "longest getting right.",
             profile.capability,
         ),
         cta="If you are evaluating a supplier, ask me for our test reports. We will send them.",
