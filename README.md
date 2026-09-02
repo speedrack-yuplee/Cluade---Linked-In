@@ -1,12 +1,29 @@
 # HOMEDANT USA — LinkedIn AI Agent
 
-Plans, drafts and checks the LinkedIn posts for HOMEDANT USA's storage and
-shelving line before anything is published.
+Plans, drafts and checks the LinkedIn posts for Homedant USA Inc before
+anything is published.
 
-The agent works from a catalog of real HOMEDANT listings (`src/homedant_linkedin/data/products.json`),
-rotates a fixed set of content pillars across a posting calendar, renders each
-slot into a post draft, and refuses to pass anything that breaks LinkedIn's
-limits or makes a claim the brand cannot substantiate.
+The account sells **B2B**: retail buyers, distributors, hospitality specifiers
+and multifamily developers. Posts are written for those readers, not for the
+Amazon shopper, and they close by asking for a conversation rather than
+linking a listing.
+
+The agent works from a brand profile (`src/homedant_linkedin/data/brand.json`)
+and a product catalog (`src/homedant_linkedin/data/products.json`), rotates a
+set of content pillars across a posting calendar, renders each slot into a post
+draft, and refuses to pass anything that breaks LinkedIn's limits or makes a
+claim the brand cannot substantiate.
+
+## What the account's own history says
+
+| Post | Impressions | Reactions |
+| --- | ---: | ---: |
+| Retailers' Choice Awards win at the National Hardware Show | **698** | 10 |
+| RangeMe Award Winner Collection | 42 | 1 |
+| Open wardrobe system for hotel and residential projects | 18 | — |
+
+Third-party recognition outperformed product-led posts by 15 to 35 times, so
+the plan leads every cycle with it. See `content/posts/` for the source.
 
 ## Install
 
@@ -40,15 +57,26 @@ PYTHONPATH=src python -m homedant_linkedin validate --weeks 4
 
 ## Content pillars
 
-Posts rotate through four pillars, two posts a week on Tuesday and Thursday:
+Posts rotate through six pillars, two posts a week on Tuesday and Thursday:
 
-- **Problem we keep hearing** — a storage problem a buyer described, and the product that answers it
-- **Product spotlight** — one listing's design decisions and who it is built for
-- **How it is built** — a manufacturing or design choice behind the product
-- **Behind the operation** — an operating lesson from selling across Amazon marketplaces (no product)
+| Pillar | Subject | Notes |
+| --- | --- | --- |
+| Third-party recognition | An award on file | Leads the rotation |
+| Trade show | An upcoming show | Dropped once the show has closed |
+| Project solution | A project-tagged product | Hospitality and multifamily |
+| Retail fit | A retail-tagged product | Merchandising, case pack, planogram |
+| Made in Korea | Any product | Manufacturing and design control |
+| Supply and logistics | — | Warehousing and lead time |
 
-Products round-robin independently of the pillar rotation, so a product only
-repeats once the whole catalog has been used.
+Each subject pool round-robins on its own counter, so a subject only repeats
+once its pool is exhausted. Product pillars draw only from products tagged for
+that segment — a hospitality hook over a pallet-configuration product reads as
+a mismatch.
+
+**Trade shows must be kept current.** A show whose end date has passed is
+dropped from the rotation and the pillar falls out until an upcoming show is
+added to `brand.json`. Both shows currently on file (NY NOW Summer 2026,
+National Hardware Show 2026) have closed.
 
 ## Validation rules
 
@@ -56,18 +84,26 @@ repeats once the whole catalog has been used.
 
 - exceeds LinkedIn's 3,000 character body limit
 - has a hook over 210 characters (it would truncate behind "…see more")
-- carries fewer than 2 or more than 8 hashtags
-- has no call to action
+- carries fewer than 3 or more than 10 hashtags, or omits `#HOMEDANT`
+- has no call to action, or a call to action that does not ask for a conversation
+- never names Homedant USA Inc (every real post tags the company)
+- links a retail listing — that is a consumer CTA, not a B2B one
 - contains an unsupportable superlative ("cheapest", "#1 on Amazon", "lifetime guarantee", …)
-- names a product without linking its listing
 - contains a run of blank lines
 
-## Catalog
+## Data
 
-`products.json` holds the listings the agent may promote. Each entry needs
+`brand.json` holds who is posting and the facts every post can draw on: the
+company name as it is tagged on LinkedIn, the audiences, the proof points, and
+the recognitions and trade shows the plan schedules against. **Add each new
+award and each upcoming show here** — that is what keeps the top-performing
+pillar supplied.
+
+`products.json` holds the products the agent may promote. Each entry needs
 `asin`, `sku`, `title`, `category`, `marketplace` and `url`; `short_name`,
-`highlights` and `audience` are what the post copy is actually written from.
-Point `--catalog` at your own file to plan against a different set.
+`highlights`, `audience`, `retail_fit` and `segments` are what the post copy is
+actually written from. Point `--catalog` at your own file to plan against a
+different set.
 
 ## Existing posts
 

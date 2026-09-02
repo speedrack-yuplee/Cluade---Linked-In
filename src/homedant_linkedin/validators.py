@@ -5,10 +5,28 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from .models import MAX_HOOK_CHARS, MAX_POST_CHARS, PostDraft
+from .models import MAX_HOOK_CHARS, MAX_POST_CHARS, Brand, PostDraft
 
-MIN_HASHTAGS = 2
-MAX_HASHTAGS = 8
+MIN_HASHTAGS = 3
+MAX_HASHTAGS = 10
+"""The account's own award post carried eight; ten is the ceiling before a
+post reads as tag stuffing."""
+
+BRAND_HASHTAG = "HOMEDANT"
+
+CTA_INTENTS: tuple[str, ...] = (
+    "connect",
+    "message me",
+    "contact",
+    "sample",
+    "line sheet",
+    "quote",
+    "booth",
+    "meet",
+    "send",
+    "ask",
+)
+"""A B2B post has to ask for a conversation. A link to buy is not a CTA here."""
 
 UNSUPPORTABLE_CLAIMS: tuple[str, ...] = (
     "best in the world",
@@ -33,10 +51,11 @@ class Issue:
         return f"[{self.rule}] {self.message}"
 
 
-def validate(draft: PostDraft) -> list[Issue]:
+def validate(draft: PostDraft, brand: Brand | None = None) -> list[Issue]:
     """Every problem with ``draft``. An empty list means it is publishable."""
     issues: list[Issue] = []
     text = draft.render()
+    lowered = text.lower()
 
     if draft.char_count > MAX_POST_CHARS:
         issues.append(
@@ -54,17 +73,23 @@ def validate(draft: PostDraft) -> list[Issue]:
         issues.append(Issue("hashtags", f"{count} hashtag(s); at least {MIN_HASHTAGS} expected"))
     elif count > MAX_HASHTAGS:
         issues.append(Issue("hashtags", f"{count} hashtags; at most {MAX_HASHTAGS} allowed"))
+    if BRAND_HASHTAG not in draft.hashtags:
+        issues.append(Issue("hashtags", f"#{BRAND_HASHTAG} is missing"))
 
     if not draft.cta.strip():
         issues.append(Issue("cta", "post has no call to action"))
+    elif not any(intent in draft.cta.lower() for intent in CTA_INTENTS):
+        issues.append(Issue("cta", "call to action does not ask for a conversation"))
 
-    lowered = text.lower()
+    if brand is not None and brand.company.lower() not in lowered:
+        issues.append(Issue("company", f"post never names {brand.company}"))
+
     for claim in UNSUPPORTABLE_CLAIMS:
         if claim in lowered:
             issues.append(Issue("claims", f"unsupportable claim: {claim!r}"))
 
-    if draft.product is not None and draft.product.url not in text:
-        issues.append(Issue("link", f"product {draft.product.asin} is referenced but not linked"))
+    if "amazon.com/dp/" in lowered or "amazon.ca/dp/" in lowered:
+        issues.append(Issue("channel", "a retail listing link belongs in a consumer post, not a B2B one"))
 
     if re.search(r"\n{3,}", text):
         issues.append(Issue("spacing", "post contains a run of blank lines"))
@@ -72,6 +97,8 @@ def validate(draft: PostDraft) -> list[Issue]:
     return issues
 
 
-def validate_all(drafts) -> dict[int, list[Issue]]:
+def validate_all(drafts, brand: Brand | None = None) -> dict[int, list[Issue]]:
     """Issues per draft index, omitting drafts that passed."""
-    return {index: issues for index, draft in enumerate(drafts) if (issues := validate(draft))}
+    return {
+        index: issues for index, draft in enumerate(drafts) if (issues := validate(draft, brand))
+    }

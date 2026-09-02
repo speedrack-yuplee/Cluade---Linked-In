@@ -1,0 +1,93 @@
+{
+  "brand": "HOMEDANT",
+  "company": "Homedant USA Inc",
+  "tagline": "The Best Organizing Solution",
+  "author": "Leo Lee",
+  "role": "Global B2B Sales",
+  "audiences": [
+    "retail buyers",
+    "distributors",
+    "hospitality specifiers",
+    "multifamily developers"
+  ],
+  "proof_points": [
+    "boltless assembly and adjustable shelves, engineered and inspected in our own Korean factory",
+    "more than 20 registered designs",
+    "over 3,000 reviews and a 4.8 star rating on Amazon",
+    "CA and US warehouses for fast domestic shipping"
+  ],
+  "recognitions": [
+    {
+      "name": "Retailers' Choice Awards Winner",
+      "org": "North American Hardware and Paint Association (NHPA)",
+      "event": "National Hardware Show",
+      "venue": "Las Vegas Convention Center, Las Vegas, NV",
+      "date": "2026-04-02",
+      "thanks": [
+        "Hardlines Supplier Event",
+        "North American Hardware and Paint Association (NHPA)"
+      ],
+      "hashtags": [
+        "HOMEDANT",
+        "RetailersChoice",
+        "NationalHardwareShow",
+        "NHPA",
+        "SteelShelving",
+        "KoreanMade",
+        "StorageSolutions",
+        "B2B"
+      ],
+      "headline": "{company} has been selected as a Retailers' Choice Awards Winner at the National Hardware Show."
+    },
+    {
+      "name": "Award Winner Collection",
+      "org": "RangeMe",
+      "event": "RangeMe Award Winner Collection",
+      "venue": "the RangeMe platform",
+      "date": "2026-08-19",
+      "thanks": [
+        "RangeMe"
+      ],
+      "hashtags": [
+        "HOMEDANT",
+        "RangeMe",
+        "RetailBuyers",
+        "StorageSolutions",
+        "KoreanMade",
+        "B2B"
+      ],
+      "headline": "{company} has been selected for the RangeMe Award Winner Collection, in front of more than 15,000 retail buyers."
+    }
+  ],
+  "trade_shows": [
+    {
+      "name": "NY NOW Summer 2026",
+      "booth": "372",
+      "venue": "Javits Center, New York, NY",
+      "start": "2026-08-02",
+      "end": "2026-08-06",
+      "hashtags": [
+        "HOMEDANT",
+        "NYNOW",
+        "HomeDecor",
+        "StorageSolutions",
+        "KoreanMade",
+        "B2B"
+      ]
+    },
+    {
+      "name": "National Hardware Show 2026",
+      "booth": null,
+      "venue": "Las Vegas Convention Center, Las Vegas, NV",
+      "start": "2026-03-30",
+      "end": "2026-04-02",
+      "hashtags": [
+        "HOMEDANT",
+        "NationalHardwareShow",
+        "SteelShelving",
+        "StorageSolutions",
+        "B2B"
+      ]
+    }
+  ]
+}

@@ -1,5 +1,4 @@
 import json
-from datetime import date
 
 import pytest
 
@@ -10,12 +9,24 @@ from homedant_linkedin.models import Product
 def test_bundled_catalog_loads_every_product(catalog):
     assert len(catalog) == 10
     assert catalog.brand == "HOMEDANT"
+    assert catalog.company == "Homedant USA Inc"
     assert catalog.author == "Leo Lee"
 
 
+def test_brand_profile_carries_the_award_and_show_history(catalog):
+    profile = catalog.brand_profile
+    assert any("Retailers' Choice" in r.name for r in profile.recognitions)
+    assert any(s.booth == "372" for s in profile.trade_shows)
+
+
+def test_audience_phrase_reads_as_a_sentence(catalog):
+    phrase = catalog.brand_profile.audience_phrase
+    assert phrase.startswith("retail buyers")
+    assert phrase.endswith("and multifamily developers")
+
+
 def test_by_asin_is_case_insensitive(catalog):
-    product = catalog.by_asin("b0gwgzf1f3")
-    assert product.sku == "HS604015HP-5W-2Pack"
+    assert catalog.by_asin("b0gwgzf1f3").sku == "HS604015HP-5W-2Pack"
 
 
 def test_by_asin_raises_for_unknown(catalog):
@@ -35,9 +46,16 @@ def test_filter_by_category_narrows_the_catalog(catalog):
     assert len(racks) < len(catalog)
 
 
+def test_every_product_is_tagged_for_at_least_one_segment(catalog):
+    assert all(product.segments for product in catalog)
+
+
 def test_short_title_prefers_the_hand_written_short_name(catalog):
-    product = catalog.by_asin("B0BTYD4L7Y")
-    assert product.short_title == "the over-the-toilet storage cabinet"
+    assert catalog.by_asin("B0BTYD4L7Y").short_title == "the over-the-toilet storage cabinet"
+
+
+def test_sentence_name_capitalises_for_the_start_of_a_sentence(catalog):
+    assert catalog.by_asin("B0BTYD4L7Y").sentence_name == "The over-the-toilet storage cabinet"
 
 
 def test_short_title_falls_back_to_the_trimmed_listing_title():
@@ -61,6 +79,6 @@ def test_product_from_dict_rejects_missing_fields():
 
 def test_load_rejects_a_catalog_with_no_products(tmp_path):
     path = tmp_path / "empty.json"
-    path.write_text(json.dumps({"brand": "HOMEDANT", "products": []}), encoding="utf-8")
+    path.write_text(json.dumps({"products": []}), encoding="utf-8")
     with pytest.raises(ValueError, match="no products"):
         Catalog.load(path)

@@ -73,7 +73,7 @@ def _cmd_plan(args, catalog: Catalog, out) -> int:
         return 0
     print(f"{catalog.company} — {len(slots)} posts over {args.weeks} week(s)\n", file=out)
     for slot in slots:
-        subject = slot.product.short_title if slot.product else "(no product)"
+        subject = slot.subject
         print(
             f"{slot.scheduled_for:%Y-%m-%d %a}  {slot.pillar.name:<26}  {subject}",
             file=out,
@@ -111,7 +111,7 @@ def _cmd_validate(args, catalog: Catalog, out) -> int:
     drafts = compose_all(_slots(args, catalog), catalog)
     failures = 0
     for draft in drafts:
-        issues = validate(draft)
+        issues = validate(draft, catalog.brand_profile)
         label = f"{draft.scheduled_for:%Y-%m-%d} {draft.pillar.key}"
         if issues:
             failures += 1

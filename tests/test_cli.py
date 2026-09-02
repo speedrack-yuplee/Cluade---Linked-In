@@ -15,6 +15,12 @@ def test_next_monday_always_moves_forward():
     assert next_monday(date(2026, 8, 31)) == date(2026, 9, 7)
 
 
+def test_plan_leads_with_the_award_post():
+    code, output = _run(["plan", "--start", "2026-09-01", "--weeks", "1"])
+    assert code == 0
+    assert "Third-party recognition" in output.splitlines()[2]
+
+
 def test_plan_prints_one_line_per_post():
     code, output = _run(["plan", "--start", "2026-09-01", "--weeks", "2"])
     assert code == 0
@@ -26,13 +32,14 @@ def test_plan_json_is_machine_readable():
 
     code, output = _run(["plan", "--json", "--start", "2026-09-01", "--weeks", "1"])
     assert code == 0
-    assert [row["pillar"] for row in json.loads(output)] == ["problem", "spotlight"]
+    assert [row["pillar"] for row in json.loads(output)] == ["recognition", "project"]
 
 
 def test_draft_renders_full_post_text():
     code, output = _run(["draft", "--start", "2026-09-01", "--weeks", "1"])
     assert code == 0
-    assert "https://www.amazon.com/dp/" in output
+    assert "Homedant USA Inc" in output
+    assert "#HOMEDANT" in output
 
 
 def test_validate_passes_on_the_bundled_catalog():

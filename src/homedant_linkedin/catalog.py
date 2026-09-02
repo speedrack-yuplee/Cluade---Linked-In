@@ -1,37 +1,35 @@
-"""Loading and filtering the HOMEDANT product catalog."""
+"""Loading the HOMEDANT product catalog and brand profile."""
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-from .models import Product
+from .models import Brand, Product
 
-DEFAULT_CATALOG_PATH = Path(__file__).parent / "data" / "products.json"
+DATA_DIR = Path(__file__).parent / "data"
+DEFAULT_CATALOG_PATH = DATA_DIR / "products.json"
+DEFAULT_BRAND_PATH = DATA_DIR / "brand.json"
 
 
 class Catalog:
-    """The products the agent may promote, plus the brand identity around them."""
+    """The products the agent may promote, plus the brand posting them."""
 
-    def __init__(self, brand: str, company: str, author: str, products: list[Product]):
-        self.brand = brand
-        self.company = company
-        self.author = author
+    def __init__(self, brand: Brand, products: list[Product]):
+        self.brand_profile = brand
         self._products = list(products)
 
     @classmethod
-    def load(cls, path: str | Path | None = None) -> "Catalog":
+    def load(cls, path: str | Path | None = None, brand_path: str | Path | None = None) -> "Catalog":
         path = Path(path) if path else DEFAULT_CATALOG_PATH
         raw = json.loads(path.read_text(encoding="utf-8"))
         products = [Product.from_dict(item) for item in raw.get("products", [])]
         if not products:
             raise ValueError(f"catalog at {path} contains no products")
-        return cls(
-            brand=raw.get("brand", "HOMEDANT"),
-            company=raw.get("company", "HOMEDANT USA"),
-            author=raw.get("author", ""),
-            products=products,
-        )
+
+        brand_path = Path(brand_path) if brand_path else DEFAULT_BRAND_PATH
+        brand = Brand.from_dict(json.loads(brand_path.read_text(encoding="utf-8")))
+        return cls(brand, products)
 
     def __len__(self) -> int:
         return len(self._products)
@@ -42,6 +40,18 @@ class Catalog:
     @property
     def products(self) -> list[Product]:
         return list(self._products)
+
+    @property
+    def brand(self) -> str:
+        return self.brand_profile.brand
+
+    @property
+    def company(self) -> str:
+        return self.brand_profile.company
+
+    @property
+    def author(self) -> str:
+        return self.brand_profile.author
 
     def by_asin(self, asin: str) -> Product:
         for product in self._products:
@@ -55,7 +65,7 @@ class Catalog:
             selected = [p for p in selected if p.marketplace.upper() == marketplace.upper()]
         if category:
             selected = [p for p in selected if p.category == category]
-        return Catalog(self.brand, self.company, self.author, selected)
+        return Catalog(self.brand_profile, selected)
 
     @property
     def categories(self) -> list[str]:

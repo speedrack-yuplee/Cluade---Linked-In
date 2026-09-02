@@ -11,12 +11,16 @@
       "marketplace": "US",
       "url": "https://www.amazon.com/dp/B0GWGZF1F3",
       "highlights": [
-        "pegboard back panel keeps tools within arm's reach",
-        "boltless frame assembles without a single screw",
-        "24 inch width fits a narrow pantry wall"
+        "pegboard back panel, so the unit merchandises hanging goods and boxed goods together",
+        "boltless assembly, no fasteners to lose in the stockroom",
+        "24 inch width for a single bay reset"
       ],
-      "audience": "homeowners reclaiming a cluttered garage wall",
-      "short_name": "the 24-inch pegboard storage rack"
+      "audience": "hardware retailers stocking a pegboard endcap",
+      "short_name": "the 24-inch pegboard storage rack",
+      "retail_fit": "ships flat, two units per carton, so a pallet covers a full endcap reset",
+      "segments": [
+        "retail"
+      ]
     },
     {
       "asin": "B0GWGSJTC6",
@@ -26,12 +30,16 @@
       "marketplace": "US",
       "url": "https://www.amazon.com/dp/B0GWGSJTC6",
       "highlights": [
-        "32 inch width takes bulk pantry stock",
-        "five adjustable tiers on a single upright",
-        "ships as a two pack for a full wall build out"
+        "32 inch width to match a standard gondola run",
+        "five tiers, each adjustable in one inch increments",
+        "two units per carton for a full wall build out"
       ],
-      "audience": "families running a bulk-buy pantry",
-      "short_name": "the 32-inch pegboard storage rack"
+      "audience": "club and grocery buyers sizing a bulk storage program",
+      "short_name": "the 32-inch pegboard storage rack",
+      "retail_fit": "32 inch width matches standard gondola runs",
+      "segments": [
+        "retail"
+      ]
     },
     {
       "asin": "B09NLRKRYT",
@@ -42,11 +50,16 @@
       "url": "https://www.amazon.com/dp/B09NLRKRYT",
       "highlights": [
         "47.7 inch span carries long tote bins end to end",
-        "laminated steel shelves wipe clean after a shop day",
-        "tier height adjusts in one inch increments"
+        "laminated steel shelves wipe down after a shop day",
+        "rated for back-of-house and stockroom loads"
       ],
-      "audience": "workshop owners storing heavy bins",
-      "short_name": "the 47.7-inch five-tier garage shelving unit"
+      "audience": "distributors serving warehouse and industrial accounts",
+      "short_name": "the 47.7-inch five-tier garage shelving unit",
+      "retail_fit": "47.7 inch span suits back-of-house and stockroom builds",
+      "segments": [
+        "retail",
+        "project"
+      ]
     },
     {
       "asin": "B0B75Z5MGZ",
@@ -56,12 +69,16 @@
       "marketplace": "US",
       "url": "https://www.amazon.com/dp/B0B75Z5MGZ",
       "highlights": [
-        "39.8 inch footprint slots between garage door tracks",
-        "boltless build goes up in about fifteen minutes",
-        "black finish hides shop dust"
+        "39.8 inch footprint fits a standard four foot planogram bay",
+        "assembles in about fifteen minutes without tools",
+        "black finish holds up in a working environment"
       ],
-      "audience": "first time garage organizers",
-      "short_name": "the 39.8-inch five-tier garage shelving unit"
+      "audience": "hardware and home center buyers",
+      "short_name": "the 39.8-inch five-tier garage shelving unit",
+      "retail_fit": "39.8 inch footprint fits a standard four foot planogram bay",
+      "segments": [
+        "retail"
+      ]
     },
     {
       "asin": "B0F629W2DT",
@@ -71,12 +88,16 @@
       "marketplace": "US",
       "url": "https://www.amazon.com/dp/B0F629W2DT",
       "highlights": [
-        "white finish reads as furniture in a laundry room",
+        "white finish specified for interior amenity spaces",
         "two units line a full wall in one order",
-        "same boltless frame as the garage line"
+        "the same boltless frame as the utility line"
       ],
-      "audience": "interior-conscious buyers moving storage indoors",
-      "short_name": "the white 47.7-inch five-tier shelving unit"
+      "audience": "multifamily developers finishing laundry and utility rooms",
+      "short_name": "the white 47.7-inch five-tier shelving unit",
+      "retail_fit": "ships in a two pack, so one order covers a full amenity room",
+      "segments": [
+        "project"
+      ]
     },
     {
       "asin": "B0D8VQS2BK",
@@ -86,12 +107,16 @@
       "marketplace": "US",
       "url": "https://www.amazon.com/dp/B0D8VQS2BK",
       "highlights": [
-        "locking casters roll a full wardrobe room to room",
-        "three tiers plus a hanging rod in one frame",
-        "no screws, so renters can take it with them"
+        "open wardrobe system, installed without construction work",
+        "locking casters, so housekeeping can move it to clean",
+        "three tiers plus a hanging rod in a single frame"
       ],
-      "audience": "renters and apartment dwellers without closet space",
-      "short_name": "the rolling garment rack"
+      "audience": "hotel and multifamily projects adding storage without built-ins",
+      "short_name": "the rolling garment rack",
+      "retail_fit": "open wardrobe system installs without construction work",
+      "segments": [
+        "project"
+      ]
     },
     {
       "asin": "B0BTYD4L7Y",
@@ -102,11 +127,15 @@
       "url": "https://www.amazon.com/dp/B0BTYD4L7Y",
       "highlights": [
         "8.6 inch depth clears a standard tank",
-        "shelf heights adjust around the cistern",
-        "black frame works with chrome or brass fixtures"
+        "shelf heights adjust around existing fittings",
+        "adds storage to a finished bathroom with no plumbing work"
       ],
-      "audience": "small-bathroom owners with zero floor space",
-      "short_name": "the over-the-toilet storage cabinet"
+      "audience": "hospitality specifiers working around fixed bathroom fittings",
+      "short_name": "the over-the-toilet storage cabinet",
+      "retail_fit": "clears a standard tank, so it drops into an existing bathroom",
+      "segments": [
+        "project"
+      ]
     },
     {
       "asin": "B0GWH3C1DF",
@@ -116,12 +145,16 @@
       "marketplace": "US",
       "url": "https://www.amazon.com/dp/B0GWH3C1DF",
       "highlights": [
-        "rolls out of a laundry nook and back in",
-        "pegboard panel holds the tools the shelves cannot",
-        "locking wheels hold it still while loaded"
+        "locking casters hold the unit still under load",
+        "pegboard panel carries what the shelves cannot",
+        "24 inch width for a narrow service aisle"
       ],
-      "audience": "kitchen and laundry organizers",
-      "short_name": "the 24-inch rolling pegboard cart"
+      "audience": "retailers merchandising mobile storage",
+      "short_name": "the 24-inch rolling pegboard cart",
+      "retail_fit": "rolls, locks, and holds a pegboard panel in one SKU",
+      "segments": [
+        "retail"
+      ]
     },
     {
       "asin": "B0BTCQ4JWP",
@@ -131,12 +164,17 @@
       "marketplace": "US",
       "url": "https://www.amazon.com/dp/B0BTCQ4JWP",
       "highlights": [
-        "12.3 inch depth fits a tight basement stairwell",
-        "59.5 inch height stays under low ceilings",
-        "carries pantry jars and paint cans alike"
+        "12.3 inch depth fits corridors and stockroom stairwells",
+        "59.5 inch height clears a low ceiling",
+        "four adjustable tiers on a single upright"
       ],
-      "audience": "basement and stairwell storage planners",
-      "short_name": "the 28-inch narrow-depth shelving unit"
+      "audience": "buyers with tight shelf depth and low ceiling constraints",
+      "short_name": "the 28-inch narrow-depth shelving unit",
+      "retail_fit": "12.3 inch depth fits corridors and stockroom stairwells",
+      "segments": [
+        "retail",
+        "project"
+      ]
     },
     {
       "asin": "B0CWQ8LGQK",
@@ -146,12 +184,16 @@
       "marketplace": "CA",
       "url": "https://www.amazon.ca/dp/B0CWQ8LGQK",
       "highlights": [
-        "two rods double the hanging length",
-        "81 inch height uses vertical space over the floor plan",
-        "listed for the Canadian marketplace"
+        "two rods double the hanging capacity per unit",
+        "81 inch height uses the volume above the floor plan",
+        "listed and stocked for the Canadian market"
       ],
-      "audience": "Canadian shoppers outfitting a spare room",
-      "short_name": "the two-rod rolling garment rack"
+      "audience": "Canadian distributors and project buyers",
+      "short_name": "the two-rod rolling garment rack",
+      "retail_fit": "two rod configuration doubles hanging capacity per unit",
+      "segments": [
+        "project"
+      ]
     }
   ]
 }

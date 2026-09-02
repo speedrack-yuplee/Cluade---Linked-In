@@ -15,7 +15,7 @@ MAX_HOOK_CHARS = 210
 
 @dataclass(frozen=True)
 class Product:
-    """One HOMEDANT listing the agent can write about."""
+    """One HOMEDANT product the agent can write about, framed for a buyer."""
 
     asin: str
     sku: str
@@ -26,6 +26,8 @@ class Product:
     highlights: tuple[str, ...] = ()
     audience: str = ""
     short_name: str = ""
+    retail_fit: str = ""
+    segments: tuple[str, ...] = ()
 
     @classmethod
     def from_dict(cls, raw: dict) -> "Product":
@@ -42,6 +44,8 @@ class Product:
             highlights=tuple(raw.get("highlights", ())),
             audience=raw.get("audience", ""),
             short_name=raw.get("short_name", ""),
+            retail_fit=raw.get("retail_fit", ""),
+            segments=tuple(raw.get("segments", ())),
         )
 
     @property
@@ -58,6 +62,115 @@ class Product:
         title = re.split(r"\s+\d+(?:\.\d+)?\"", title)[0].strip()
         return title or self.title
 
+    @property
+    def sentence_name(self) -> str:
+        """``short_title`` capitalised for the start of a sentence."""
+        name = self.short_title
+        return name[:1].upper() + name[1:] if name else name
+
+
+@dataclass(frozen=True)
+class Recognition:
+    """An award or listing a third party gave the brand.
+
+    These are the highest performing posts by a wide margin, so the plan
+    leads with them whenever one is available.
+    """
+
+    name: str
+    org: str
+    event: str
+    venue: str
+    date: date
+    thanks: tuple[str, ...] = ()
+    hashtags: tuple[str, ...] = ()
+    headline: str = ""
+    """The opening line, written by hand. ``{company}`` is substituted in."""
+
+    @classmethod
+    def from_dict(cls, raw: dict) -> "Recognition":
+        return cls(
+            name=raw["name"],
+            org=raw["org"],
+            event=raw.get("event", ""),
+            venue=raw.get("venue", ""),
+            date=date.fromisoformat(raw["date"]),
+            thanks=tuple(raw.get("thanks", ())),
+            hashtags=tuple(raw.get("hashtags", ())),
+            headline=raw.get("headline", ""),
+        )
+
+    def opening(self, company: str) -> str:
+        if self.headline:
+            return self.headline.format(company=company)
+        return f"{company} has been recognized by {self.org}."
+
+
+@dataclass(frozen=True)
+class TradeShow:
+    """A show the company exhibits at."""
+
+    name: str
+    venue: str
+    start: date
+    end: date
+    booth: str | None = None
+    hashtags: tuple[str, ...] = ()
+
+    @classmethod
+    def from_dict(cls, raw: dict) -> "TradeShow":
+        return cls(
+            name=raw["name"],
+            venue=raw.get("venue", ""),
+            start=date.fromisoformat(raw["start"]),
+            end=date.fromisoformat(raw["end"]),
+            booth=raw.get("booth"),
+            hashtags=tuple(raw.get("hashtags", ())),
+        )
+
+    @property
+    def dates(self) -> str:
+        if self.start.month == self.end.month:
+            return f"{self.start:%B} {self.start.day}-{self.end.day}, {self.end.year}"
+        return f"{self.start:%B %-d} - {self.end:%B %-d, %Y}"
+
+
+@dataclass(frozen=True)
+class Brand:
+    """Who is posting, and the facts every post can draw on."""
+
+    brand: str
+    company: str
+    tagline: str
+    author: str
+    role: str
+    audiences: tuple[str, ...]
+    proof_points: tuple[str, ...]
+    recognitions: tuple[Recognition, ...] = ()
+    trade_shows: tuple[TradeShow, ...] = ()
+
+    @classmethod
+    def from_dict(cls, raw: dict) -> "Brand":
+        return cls(
+            brand=raw.get("brand", "HOMEDANT"),
+            company=raw["company"],
+            tagline=raw.get("tagline", ""),
+            author=raw.get("author", ""),
+            role=raw.get("role", ""),
+            audiences=tuple(raw.get("audiences", ())),
+            proof_points=tuple(raw.get("proof_points", ())),
+            recognitions=tuple(Recognition.from_dict(r) for r in raw.get("recognitions", ())),
+            trade_shows=tuple(TradeShow.from_dict(s) for s in raw.get("trade_shows", ())),
+        )
+
+    @property
+    def audience_phrase(self) -> str:
+        """The audiences as the posts address them: "a, b, and c"."""
+        items = list(self.audiences)
+        if len(items) < 2:
+            return items[0] if items else "partners"
+        return ", ".join(items[:-1]) + f", and {items[-1]}"
+
 
 @dataclass(frozen=True)
 class Pillar:
@@ -67,16 +180,35 @@ class Pillar:
     name: str
     intent: str
     hashtags: tuple[str, ...]
-    needs_product: bool = True
+    needs: str | None = "product"
+    """What the slot must carry: "product", "recognition", "show", or None."""
+
+    segment: str | None = None
+    """Restrict the product pool to products carrying this segment tag. A
+    hospitality hook over a pallet-configuration product reads as a mismatch,
+    so each product-led pillar draws from its own pool."""
 
 
 @dataclass(frozen=True)
 class Slot:
-    """A pillar scheduled on a date, optionally bound to a product."""
+    """A pillar scheduled on a date, with whatever subject it needs."""
 
     scheduled_for: date
     pillar: Pillar
     product: Product | None = None
+    recognition: Recognition | None = None
+    show: TradeShow | None = None
+
+    @property
+    def subject(self) -> str:
+        """A one-line label for the calendar."""
+        if self.product:
+            return self.product.short_title
+        if self.recognition:
+            return self.recognition.name
+        if self.show:
+            return self.show.name
+        return "(brand)"
 
 
 @dataclass(frozen=True)
