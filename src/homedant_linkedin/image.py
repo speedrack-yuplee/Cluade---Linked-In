@@ -224,7 +224,10 @@ def _layout_show(image, draw, draft: PostDraft, photo) -> None:
     else:
         big, small = "SAVE", "THE DATE"
 
+    # A word-form countdown sets smaller than a numeral, so the block drops by
+    # the difference and the card stays balanced either way.
     numeral = _font(BOLD, 250 if big.isdigit() else 150)
+    top += 250 - numeral.size
     draw.text((MARGIN, top + 10), big, font=numeral, fill=SHOW_ACCENT)
     label_y = top + 10 + int(numeral.size * 0.98)
     draw.text((MARGIN + 6, label_y), small, font=_font(BOLD, 46), fill=LIGHT_TEXT)
