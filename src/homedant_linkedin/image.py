@@ -211,7 +211,7 @@ def _layout_show(image, draw, draft: PostDraft, photo) -> None:
     if photo is not None:
         panel_left = 740
         draw.rectangle([panel_left, 0, SIZE, SIZE - BAND], fill=PANEL)
-        _paste(image, photo.convert("RGBA"), (panel_left + 24, 200, SIZE - 24, SIZE - BAND - 50))
+        _paste(image, photo.convert("RGBA"), (panel_left + 24, 235, SIZE - 24, SIZE - BAND - 40))
         width = panel_left - MARGIN - 44
 
     # After the panel, never before it: the panel is opaque and would paint
@@ -220,9 +220,9 @@ def _layout_show(image, draw, draft: PostDraft, photo) -> None:
     logo = load_asset(asset_path("shows", show.name))
     if logo is not None:
         box = (
-            (panel_left + 40, 40, SIZE - 40, 165)
+            (panel_left + 80, 52, SIZE - 80, 152)
             if panel_left
-            else (SIZE - MARGIN - 320, MARGIN - 10, SIZE - MARGIN, MARGIN + 130)
+            else (SIZE - MARGIN - 300, MARGIN, SIZE - MARGIN, MARGIN + 110)
         )
         _paste(image, logo, box)
 

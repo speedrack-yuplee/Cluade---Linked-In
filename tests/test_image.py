@@ -130,3 +130,17 @@ def test_a_show_logo_survives_the_photo_panel(catalog, tmp_path, monkeypatch):
         assert (255, 0, 255) in rendered.convert("RGB").getcolors(maxcolors=1_000_000)[0][1:] or any(
             colour == (255, 0, 255) for _, colour in rendered.convert("RGB").getcolors(maxcolors=1_000_000)
         )
+
+
+def test_the_high_point_logo_is_the_horizontal_lockup(catalog):
+    """The brand guide asks for a lockup, not the icon or wordmark alone, and
+    the slot is wide, so the horizontal one is the only correct file."""
+    from PIL import Image as PILImage
+
+    from homedant_linkedin.image import asset_path
+
+    path = asset_path("shows", "High Point Market")
+    assert path.exists(), "the show logo has not been supplied"
+    with PILImage.open(path) as logo:
+        assert logo.mode == "RGBA", "the logo needs its transparency"
+        assert logo.width / logo.height > 2, "that is not the horizontal lockup"

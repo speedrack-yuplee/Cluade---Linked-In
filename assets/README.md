@@ -71,8 +71,23 @@ assets/products/B0D8VQS2BK.png
 쓰지 마시고, 주최측이 출품사·수상사에게 제공하는 공식 홍보 키트의 파일만
 넣으세요.
 
-- **High Point Market** — ANDMORE 출품사 포털의 exhibitor marketing kit
-  (담당: Angie Carter)
+- **High Point Market** — 공식 브랜드 키트 적용 완료
+  (`assets/shows/high-point-market.png`)
+
+  브랜드 가이드북(HPMKT Brand Guidelines) 규정에 따라 고른 파일입니다:
+
+  | 규정 | 적용 |
+  | --- | --- |
+  | 가로형(horizontal) 또는 세로형 락업 우선 사용 | 가로형 락업 |
+  | 흰색·밝은 배경에는 **black + grey 이중색이 기본** | Black Grey |
+  | 가로형 최소 높이 50px | 렌더링 시 100px |
+  | 로고 주변에 아이콘 하나 너비만큼 여백 | 상하 50px+, 좌우 110px |
+  | ® 기호 제거 금지 | Registered 버전 사용 |
+  | 왜곡·효과·복잡한 배경 금지 | 비율 유지, 흰 패널 위 배치 |
+
+  **가이드북 PDF는 저장소에 넣지 않았습니다** — HPMKT 저작물이고 이 저장소는
+  공개입니다. 로고 파일 자체는 출품사 홍보용으로 제공된 것이라 파이프라인에
+  필요한 한 장만 넣었습니다.
 - **Retailers' Choice / NHPA** — 수상 통보 메일에 동봉된 winner badge 키트
 
 키트에는 보통 사용 규정(최소 여백, 변형 금지 등)이 함께 옵니다. 그 규정이
