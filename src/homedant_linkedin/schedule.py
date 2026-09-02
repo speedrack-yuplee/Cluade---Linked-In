@@ -18,16 +18,23 @@ HORIZON_WEEKS = 52
 
 
 def anchor_for(catalog: Catalog, today: date) -> date:
-    """The Monday the rotation counts from."""
+    """The day the rotation counts from: the brand profile's, else this Monday."""
     anchor = catalog.brand_profile.plan_anchor
-    if anchor and anchor <= today:
+    if anchor:
         return anchor
     return today - timedelta(days=today.weekday())
 
 
 def due_on(catalog: Catalog, day: date) -> PostDraft | None:
-    """The post scheduled for ``day``, or None if ``day`` is not a posting day."""
+    """The post scheduled for ``day``.
+
+    None when ``day`` is not a posting day, and also when it falls before the
+    anchor: the calendar has not started, so an early run must post nothing
+    rather than post the first slot ahead of time.
+    """
     anchor = anchor_for(catalog, day)
+    if day < anchor:
+        return None
     weeks = min(((day - anchor).days // 7) + 2, HORIZON_WEEKS)
     for slot in build_plan(catalog, start=anchor, weeks=weeks):
         if slot.scheduled_for == day:

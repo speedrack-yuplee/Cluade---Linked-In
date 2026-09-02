@@ -1,7 +1,7 @@
 import io
 from datetime import date
 
-from homedant_linkedin.cli import main, next_monday
+from homedant_linkedin.cli import main
 
 
 def _run(argv):
@@ -10,9 +10,18 @@ def _run(argv):
     return code, out.getvalue()
 
 
-def test_next_monday_always_moves_forward():
-    assert next_monday(date(2026, 9, 2)).weekday() == 0
-    assert next_monday(date(2026, 8, 31)) == date(2026, 9, 7)
+def test_plan_defaults_to_the_same_calendar_the_scheduled_run_posts_from():
+    """`plan` and `next` must never disagree about which post falls on a day."""
+    import json as _json
+
+    from homedant_linkedin.catalog import Catalog
+    from homedant_linkedin.schedule import due_on
+
+    _, output = _run(["plan", "--json", "--weeks", "3"])
+    catalog = Catalog.load()
+    for row in _json.loads(output):
+        day = date.fromisoformat(row["date"])
+        assert due_on(catalog, day).pillar.key == row["pillar"]
 
 
 def test_plan_leads_with_the_award_post():
@@ -61,7 +70,7 @@ def test_an_unknown_marketplace_exits_nonzero():
 
 
 def test_next_writes_the_post_and_the_image(tmp_path):
-    code, output = _run(["next", "--date", "2026-09-07", "--out", str(tmp_path)])
+    code, output = _run(["next", "--date", "2026-09-04", "--out", str(tmp_path)])
     assert code == 0
     assert (tmp_path / "post.txt").exists()
     assert (tmp_path / "post.png").exists()

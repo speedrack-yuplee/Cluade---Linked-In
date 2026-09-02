@@ -182,8 +182,8 @@ class Brand:
     recognitions: tuple[Recognition, ...] = ()
     trade_shows: tuple[TradeShow, ...] = ()
     plan_anchor: date | None = None
-    """The Monday the rotation counts from, so an unattended run lands on the
-    same slot the calendar shows."""
+    """The day the rotation starts counting from, so an unattended run lands on
+    the same slot the calendar shows. Nothing is due before it."""
 
     @classmethod
     def from_dict(cls, raw: dict) -> "Brand":

@@ -5,19 +5,14 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
 
 from .catalog import Catalog
 from .composer import compose_all
 from .planner import build_plan
-from .schedule import due_on
+from .schedule import anchor_for, due_on
 from .validators import validate
-
-
-def next_monday(today: date | None = None) -> date:
-    today = today or date.today()
-    return today + timedelta(days=(7 - today.weekday()) % 7 or 7)
 
 
 def parse_date(value: str) -> date:
@@ -64,7 +59,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _slots(args, catalog: Catalog):
-    return build_plan(catalog, start=args.start or next_monday(), weeks=args.weeks)
+    """The plan the commands show.
+
+    Without an explicit --start this is the same calendar the unattended run
+    posts from, so `plan` and `next` can never disagree about which post falls
+    on which day.
+    """
+    start = args.start or anchor_for(catalog, date.today())
+    return build_plan(catalog, start=start, weeks=args.weeks)
 
 
 def _cmd_plan(args, catalog: Catalog, out) -> int:
@@ -175,7 +177,7 @@ def _cmd_next(args, catalog: Catalog, out) -> int:
     product = draft.product
     photo = fetch_product_image(product.image_url) if product else None
     if product and photo is None and product.image_url:
-        print(f"note: product photo unavailable, using the type-only layout", file=out)
+        print("note: product photo unavailable, using the type-only layout", file=out)
     image_path = render(draft, directory / "post.png", photo=photo)
     (directory / "post.json").write_text(
         json.dumps(
