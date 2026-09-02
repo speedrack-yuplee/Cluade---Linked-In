@@ -39,7 +39,9 @@
         "StorageSolutions",
         "B2B"
       ],
-      "headline": "{company} has been selected as a Retailers' Choice Awards Winner at the National Hardware Show."
+      "headline": "{company} has been selected as a Retailers' Choice Awards Winner at the National Hardware Show.",
+      "city": "Las Vegas",
+      "award": "Retailers' Choice Awards Winner"
     },
     {
       "name": "Award Winner Collection",
@@ -58,7 +60,9 @@
         "KoreanMade",
         "B2B"
       ],
-      "headline": "{company} has been selected for the RangeMe Award Winner Collection, in front of more than 15,000 retail buyers."
+      "headline": "{company} has been selected for the RangeMe Award Winner Collection, in front of more than 15,000 retail buyers.",
+      "city": "",
+      "award": "RangeMe Award Winner Collection selection"
     }
   ],
   "trade_shows": [
@@ -110,5 +114,8 @@
     }
   ],
   "founded": 1979,
-  "plan_anchor": "2026-09-07"
+  "plan_anchor": "2026-09-07",
+  "positioning": "Korean-made boltless steel shelving solutions to the North American market",
+  "capability": "Our shelving systems are designed to support homes, garages, retail backrooms, offices, and commercial spaces with reliable quality, easy assembly, and flexible use.",
+  "offer": "Korean-made boltless steel shelving"
 }

@@ -84,6 +84,8 @@ class Recognition:
     date: date
     thanks: tuple[str, ...] = ()
     hashtags: tuple[str, ...] = ()
+    city: str = ""
+    award: str = ""
     headline: str = ""
     """The opening line, written by hand. ``{company}`` is substituted in."""
 
@@ -98,6 +100,8 @@ class Recognition:
             thanks=tuple(raw.get("thanks", ())),
             hashtags=tuple(raw.get("hashtags", ())),
             headline=raw.get("headline", ""),
+            city=raw.get("city", ""),
+            award=raw.get("award", ""),
         )
 
     def opening(self, company: str) -> str:
@@ -162,6 +166,10 @@ class Brand:
     role: str
     audiences: tuple[str, ...]
     proof_points: tuple[str, ...]
+    positioning: str = ""
+    founded: int | None = None
+    capability: str = ""
+    offer: str = ""
     recognitions: tuple[Recognition, ...] = ()
     trade_shows: tuple[TradeShow, ...] = ()
     plan_anchor: date | None = None
@@ -178,6 +186,10 @@ class Brand:
             role=raw.get("role", ""),
             audiences=tuple(raw.get("audiences", ())),
             proof_points=tuple(raw.get("proof_points", ())),
+            positioning=raw.get("positioning", ""),
+            founded=raw.get("founded"),
+            capability=raw.get("capability", ""),
+            offer=raw.get("offer", ""),
             recognitions=tuple(Recognition.from_dict(r) for r in raw.get("recognitions", ())),
             trade_shows=tuple(TradeShow.from_dict(s) for s in raw.get("trade_shows", ())),
             plan_anchor=date.fromisoformat(raw["plan_anchor"]) if raw.get("plan_anchor") else None,
@@ -239,7 +251,14 @@ class PostDraft:
     hook: str
     body: str
     cta: str
+    closing: str = ""
+    """A line that follows the call to action, such as the thank-you the award
+    posts end on."""
+
     hashtags: tuple[str, ...] = field(default=())
+    points: tuple[str, ...] = ()
+    """Proof points for the image. The posts themselves run as prose, so these
+    are never rendered into the text."""
 
     @property
     def scheduled_for(self) -> date:
@@ -255,7 +274,7 @@ class PostDraft:
 
     def render(self) -> str:
         """The exact text to paste into LinkedIn."""
-        blocks = [self.hook, self.body, self.cta]
+        blocks = [self.hook, self.body, self.cta, self.closing]
         if self.hashtags:
             blocks.append(" ".join(f"#{tag}" for tag in self.hashtags))
         return "\n\n".join(block for block in blocks if block)

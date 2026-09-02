@@ -53,13 +53,34 @@ def test_no_post_links_a_retail_listing(catalog):
 def test_a_product_name_opening_a_sentence_is_capitalised(catalog):
     product = catalog.by_asin("B0GWGZF1F3")
     text = compose(Slot(PLAN_START, get_pillar("retail"), product=product), catalog).render()
-    assert "The 24-inch pegboard storage rack was built for" in text
+    assert "The 24-inch pegboard storage rack adjusts to them" in text
 
 
-def test_a_merchandising_note_that_repeats_a_bullet_is_dropped(catalog):
-    product = catalog.by_asin("B0F629W2DT")
-    text = compose(Slot(PLAN_START, get_pillar("project"), product=product), catalog).render()
-    assert text.count("ships in a two pack") == 1
+def test_no_post_renders_a_bullet_list(catalog):
+    """The account's own posts run as prose; the bullets belong to the image."""
+    drafts = compose_all(build_plan(catalog, start=PLAN_START, weeks=6), catalog)
+    assert not any(line.startswith("- ") for d in drafts for line in d.render().split("\n"))
+
+
+def test_proof_points_are_carried_for_the_image_but_not_the_text(catalog):
+    drafts = compose_all(build_plan(catalog, start=PLAN_START, weeks=2), catalog)
+    assert all(draft.points for draft in drafts)
+
+
+def test_the_award_post_matches_the_structure_of_the_real_one(catalog):
+    """Hook, milestone, capability, invitation, thanks - in that order."""
+    award = catalog.brand_profile.recognitions[0]
+    text = compose(Slot(PLAN_START, get_pillar("recognition"), recognition=award), catalog).render()
+    order = [
+        "We are proud to share that HOMEDANT",
+        "meaningful milestone for Homedant USA Inc",
+        "Our shelving systems are designed to support",
+        "We look forward to connecting with",
+        "Thank you to",
+        "#HOMEDANT",
+    ]
+    positions = [text.index(fragment) for fragment in order]
+    assert positions == sorted(positions)
 
 
 def test_compose_rejects_a_pillar_whose_subject_is_missing(catalog):

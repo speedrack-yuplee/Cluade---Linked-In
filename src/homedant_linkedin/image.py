@@ -108,7 +108,7 @@ def render(draft: PostDraft, path: str | Path) -> Path:
     lines, headline_font = _fit_headline(draw, draft.hook, inner, max_lines=5)
     line_height = int(headline_font.size * 1.28)
 
-    bullets = [b[2:] for b in draft.body.split("\n") if b.startswith("- ")][:MAX_BULLETS]
+    bullets = list(draft.points[:MAX_BULLETS])
     body_font = _font(REGULAR, 30)
     wrapped = [_wrap(draw, bullet, body_font, inner - 46) for bullet in bullets]
 
