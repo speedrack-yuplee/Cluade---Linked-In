@@ -64,6 +64,33 @@
 `segments` 가 필러를 결정합니다. 호텔·다세대 프로젝트용이면 `project`,
 리테일 바이어용이면 `retail` 입니다.
 
+## 완성 이미지 (A+ 콘텐츠 등)
+
+`assets/creatives/<필러>/` 에 넣으면 그 이미지가 게시 이미지로 그대로
+나갑니다. 필러 폴더는 `project` `retail` `manufacturing` `seasonal` `supply`
+입니다. 자세한 내용은 [`assets/README.md`](../assets/README.md)를 보세요.
+
+**용량이 큰 zip을 대화창에 올릴 수 없을 때:**
+
+1. **Google Drive에 올리기** — 이미 연결돼 있어 제가 바로 읽습니다. 용량 제한
+   걱정이 없고 가장 편합니다.
+2. **GitHub 웹에서 직접 업로드** — `assets/creatives/<필러>/` 로 이동해
+   Add file → Upload files
+3. **이미지를 미리 줄여서 보내기** — 게시 이미지는 1200px 정사각형입니다.
+   원본 2500px를 1200px로 줄이면 한 장에 2.5MB → 200KB 수준이 됩니다.
+
+## 제품별 하중
+
+하중은 모델마다 다르고 LiftBeam 장착 여부에 따라 달라집니다. 브랜드 공통
+문구에는 상한만 쓰고, 개별 수치는 제품에 적습니다.
+
+```json
+"load_per_tier": "264 lb",
+"load_total": "1,322 lb across five tiers"
+```
+
+기록된 제품만 게시글에 수치가 들어갑니다. 없으면 그 문장을 생략합니다.
+
 ## 브랜드 사실
 
 `proof_points`, `capability`, `positioning`, `offer` 를 고치면 모든 게시글에

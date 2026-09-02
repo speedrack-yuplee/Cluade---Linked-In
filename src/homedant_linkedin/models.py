@@ -29,6 +29,8 @@ class Product:
     retail_fit: str = ""
     segments: tuple[str, ...] = ()
     image_url: str = ""
+    load_per_tier: str = ""
+    load_total: str = ""
 
     @classmethod
     def from_dict(cls, raw: dict) -> "Product":
@@ -48,6 +50,8 @@ class Product:
             retail_fit=raw.get("retail_fit", ""),
             segments=tuple(raw.get("segments", ())),
             image_url=raw.get("image_url", ""),
+            load_per_tier=raw.get("load_per_tier", ""),
+            load_total=raw.get("load_total", ""),
         )
 
     @property

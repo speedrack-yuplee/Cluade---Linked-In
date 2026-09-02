@@ -34,6 +34,18 @@ def _and_list(items: list[str]) -> str:
     return ", ".join(items[:-1]) + f", and {items[-1]}"
 
 
+def _load_clause(product) -> str:
+    """The unit's own load rating, where the catalog states one.
+
+    Ratings differ by model and by whether a LiftBeam is fitted, so a post
+    never carries a figure that was not recorded for the product it is about.
+    """
+    if not product or not product.load_per_tier:
+        return ""
+    total = f" and {product.load_total}" if product.load_total else ""
+    return f", and it still carries {product.load_per_tier} on a tier{total}"
+
+
 def _variant(slot: Slot, options: tuple[str, ...]) -> str:
     """One of several openings, rotated by ISO week.
 
@@ -239,11 +251,11 @@ def _compose_manufacturing(slot: Slot, catalog: Catalog) -> PostDraft:
         body=_paragraphs(
             "Every fastener you remove is a tolerance you now have to hold in the steel itself, "
             "because the joint has to carry the load the bolt used to carry.",
-            f"Ours is called HANDiLOCK. It goes together by hand with a mallet, holds 264 lb on a "
-            f"tier and 1,322 lb across five, and it is engineered and inspected in "
-            f"{profile.company}'s own Korean factory rather than bought in. We have been making "
-            f"steel shelving since {profile.founded}, and that joint is the part we have spent the "
-            "longest getting right.",
+            f"Ours is called HANDiLOCK. It goes together by hand in about ten minutes, with no "
+            f"tools, no drilling and no noise{_load_clause(product)}, and it is engineered and "
+            f"inspected in {profile.company}'s own Korean factory rather than bought in. We have "
+            f"been making steel shelving since {profile.founded}, and that joint is the part we "
+            "have spent the longest getting right.",
             profile.capability,
         ),
         cta="If you are evaluating a supplier, ask me for our test reports. We will send them.",

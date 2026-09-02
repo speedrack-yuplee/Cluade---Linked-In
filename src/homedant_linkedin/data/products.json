@@ -22,7 +22,9 @@
       "segments": [
         "retail",
         "project"
-      ]
+      ],
+      "load_per_tier": "264 lb",
+      "load_total": "1,322 lb across five tiers"
     },
     {
       "asin": "B0GWGZF1F3",
