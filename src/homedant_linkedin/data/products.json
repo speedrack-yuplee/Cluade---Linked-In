@@ -1,0 +1,157 @@
+{
+  "brand": "HOMEDANT",
+  "company": "HOMEDANT USA",
+  "author": "Leo Lee",
+  "products": [
+    {
+      "asin": "B0GWGZF1F3",
+      "sku": "HS604015HP-5W-2Pack",
+      "title": "HOMEDANT 24\" W Pegboards Storage Rack 5-Tier Heavy Duty Boltless Metal Utility Shelving Unit for Pantry Garage 2Pack",
+      "category": "pegboard-shelving",
+      "marketplace": "US",
+      "url": "https://www.amazon.com/dp/B0GWGZF1F3",
+      "highlights": [
+        "pegboard back panel keeps tools within arm's reach",
+        "boltless frame assembles without a single screw",
+        "24 inch width fits a narrow pantry wall"
+      ],
+      "audience": "homeowners reclaiming a cluttered garage wall",
+      "short_name": "the 24-inch pegboard storage rack"
+    },
+    {
+      "asin": "B0GWGSJTC6",
+      "sku": "HS804018HP-5W-2Pack",
+      "title": "HOMEDANT 32\" W Pegboards Storage Rack 5-Tier Heavy Duty Boltless Metal Utility Shelving Unit for Pantry Garage 2Pack",
+      "category": "pegboard-shelving",
+      "marketplace": "US",
+      "url": "https://www.amazon.com/dp/B0GWGSJTC6",
+      "highlights": [
+        "32 inch width takes bulk pantry stock",
+        "five adjustable tiers on a single upright",
+        "ships as a two pack for a full wall build out"
+      ],
+      "audience": "families running a bulk-buy pantry",
+      "short_name": "the 32-inch pegboard storage rack"
+    },
+    {
+      "asin": "B09NLRKRYT",
+      "sku": "US-SSBBM9-120-045-180-5S-1Pack",
+      "title": "HOMEDANT 47.7\" W 5 Tier Heavy Duty Garage Shelving Adjustable Metal Rack Storage Shelves Standing Shelf Unit",
+      "category": "garage-shelving",
+      "marketplace": "US",
+      "url": "https://www.amazon.com/dp/B09NLRKRYT",
+      "highlights": [
+        "47.7 inch span carries long tote bins end to end",
+        "laminated steel shelves wipe clean after a shop day",
+        "tier height adjusts in one inch increments"
+      ],
+      "audience": "workshop owners storing heavy bins",
+      "short_name": "the 47.7-inch five-tier garage shelving unit"
+    },
+    {
+      "asin": "B0B75Z5MGZ",
+      "sku": "US-SSBBM9-100-045-180-5S-1Pack",
+      "title": "HOMEDANT 39.8\" W 5 Tier Heavy Duty Garage Shelving Adjustable Metal Rack Storage Shelves Standing Shelf Unit",
+      "category": "garage-shelving",
+      "marketplace": "US",
+      "url": "https://www.amazon.com/dp/B0B75Z5MGZ",
+      "highlights": [
+        "39.8 inch footprint slots between garage door tracks",
+        "boltless build goes up in about fifteen minutes",
+        "black finish hides shop dust"
+      ],
+      "audience": "first time garage organizers",
+      "short_name": "the 39.8-inch five-tier garage shelving unit"
+    },
+    {
+      "asin": "B0F629W2DT",
+      "sku": "SS124518Z-5W-2Pack",
+      "title": "HOMEDANT 47.7\" W 5 Tier Heavy Duty Garage Shelving Adjustable Metal Rack Storage Shelves White 2Pack",
+      "category": "garage-shelving",
+      "marketplace": "US",
+      "url": "https://www.amazon.com/dp/B0F629W2DT",
+      "highlights": [
+        "white finish reads as furniture in a laundry room",
+        "two units line a full wall in one order",
+        "same boltless frame as the garage line"
+      ],
+      "audience": "interior-conscious buyers moving storage indoors",
+      "short_name": "the white 47.7-inch five-tier shelving unit"
+    },
+    {
+      "asin": "B0D8VQS2BK",
+      "sku": "Wheel Closet-Parent",
+      "title": "HOMEDANT 3 Tiers 1 Rod Heavy Duty Rolling Garment Rack Adjustable Metal Shelving Portable Wardrobe Closet",
+      "category": "garment-rack",
+      "marketplace": "US",
+      "url": "https://www.amazon.com/dp/B0D8VQS2BK",
+      "highlights": [
+        "locking casters roll a full wardrobe room to room",
+        "three tiers plus a hanging rod in one frame",
+        "no screws, so renters can take it with them"
+      ],
+      "audience": "renters and apartment dwellers without closet space",
+      "short_name": "the rolling garment rack"
+    },
+    {
+      "asin": "B0BTYD4L7Y",
+      "sku": "HT602016.5D-3.5B",
+      "title": "HOMEDANT Over The Toilet Storage Cabinet Fully Adjustable Shelf Organizer 24.5\" W x 8.6\" D x 65\" H",
+      "category": "bathroom-storage",
+      "marketplace": "US",
+      "url": "https://www.amazon.com/dp/B0BTYD4L7Y",
+      "highlights": [
+        "8.6 inch depth clears a standard tank",
+        "shelf heights adjust around the cistern",
+        "black frame works with chrome or brass fixtures"
+      ],
+      "audience": "small-bathroom owners with zero floor space",
+      "short_name": "the over-the-toilet storage cabinet"
+    },
+    {
+      "asin": "B0GWH3C1DF",
+      "sku": "HS604015HPW-5W-1Pack",
+      "title": "HOMEDANT 24\" W Rolling Storage Cart 5-Tier Pegboard Utility Shelving with Locking Wheels",
+      "category": "rolling-cart",
+      "marketplace": "US",
+      "url": "https://www.amazon.com/dp/B0GWH3C1DF",
+      "highlights": [
+        "rolls out of a laundry nook and back in",
+        "pegboard panel holds the tools the shelves cannot",
+        "locking wheels hold it still while loaded"
+      ],
+      "audience": "kitchen and laundry organizers",
+      "short_name": "the 24-inch rolling pegboard cart"
+    },
+    {
+      "asin": "B0BTCQ4JWP",
+      "sku": "US-SSBBM9-070-030-180-4S-1Pack(New)",
+      "title": "HOMEDANT 28\" W x 12.3\" D x 59.5\" H 5-Tier Metal Shelving Unit Adjustable Garage Storage Utility Rack",
+      "category": "garage-shelving",
+      "marketplace": "US",
+      "url": "https://www.amazon.com/dp/B0BTCQ4JWP",
+      "highlights": [
+        "12.3 inch depth fits a tight basement stairwell",
+        "59.5 inch height stays under low ceilings",
+        "carries pantry jars and paint cans alike"
+      ],
+      "audience": "basement and stairwell storage planners",
+      "short_name": "the 28-inch narrow-depth shelving unit"
+    },
+    {
+      "asin": "B0CWQ8LGQK",
+      "sku": "HH124519.5W-32W-CA",
+      "title": "HOMEDANT 3 Tiers 2 Rod Heavy Duty Rolling Garment Rack 48.1\" W x 18.5\" D x 81.1\" H",
+      "category": "garment-rack",
+      "marketplace": "CA",
+      "url": "https://www.amazon.ca/dp/B0CWQ8LGQK",
+      "highlights": [
+        "two rods double the hanging length",
+        "81 inch height uses vertical space over the floor plan",
+        "listed for the Canadian marketplace"
+      ],
+      "audience": "Canadian shoppers outfitting a spare room",
+      "short_name": "the two-rod rolling garment rack"
+    }
+  ]
+}
