@@ -38,9 +38,36 @@ def test_fetching_a_photo_returns_none_rather_than_raising():
     assert fetch_product_image("https://example.invalid/nope.jpg", timeout=3) is None
 
 
-def test_the_footer_names_the_show_for_a_show_post(catalog, tmp_path):
+def test_the_band_names_the_venue_and_the_space_for_a_show_post(catalog):
     from homedant_linkedin.image import _footer_text
 
     drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=4), catalog)
     show_post = next(d for d in drafts if d.pillar.key == "tradeshow")
-    assert "High Point Market" in _footer_text(show_post)
+    band = _footer_text(show_post)
+    assert "Suites at Market Square" in band
+    assert "Space M-1007" in band
+
+
+def test_the_band_names_the_product_without_the_asin(catalog):
+    """The ASIN means nothing to a buyer reading the feed."""
+    from homedant_linkedin.image import _footer_text
+
+    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=2), catalog)
+    product_post = next(d for d in drafts if d.product)
+    band = _footer_text(product_post)
+    assert product_post.product.short_title in band
+    assert product_post.product.asin not in band
+
+
+def test_an_asset_slug_is_derived_from_the_name():
+    from homedant_linkedin.image import asset_path, slug
+
+    assert slug("High Point Market") == "high-point-market"
+    assert slug("Retailers' Choice Awards Winner") == "retailers-choice-awards-winner"
+    assert asset_path("shows", "NY NOW Summer 2026").name == "ny-now-summer-2026.png"
+
+
+def test_a_missing_asset_is_none_rather_than_an_error(tmp_path):
+    from homedant_linkedin.image import load_asset
+
+    assert load_asset(tmp_path / "nothing.png") is None

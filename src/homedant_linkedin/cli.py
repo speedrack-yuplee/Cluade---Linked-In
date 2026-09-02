@@ -43,6 +43,7 @@ def build_parser() -> argparse.ArgumentParser:
             sp.add_argument("--json", action="store_true", help="emit JSON instead of text")
 
     sub.add_parser("products", help="list the catalog")
+    sub.add_parser("assets", help="show which logo and badge files the images look for")
 
     cal = sub.add_parser("calendar", help="the whole plan up to an end date")
     cal.add_argument("--until", type=parse_date, required=True, help="last date to plan (YYYY-MM-DD)")
@@ -151,6 +152,28 @@ def _cmd_products(args, catalog: Catalog, out) -> int:
     return 0
 
 
+def _cmd_assets(args, catalog: Catalog, out) -> int:
+    """Every optional image file the layouts look for, and whether it is there."""
+    from .image import ASSET_DIR, asset_path
+
+    profile = catalog.brand_profile
+    wanted = [("brand wordmark", ASSET_DIR / "logo.png")]
+    wanted += [(f"show: {s.name}", asset_path("shows", s.name)) for s in profile.trade_shows]
+    wanted += [(f"award: {r.name}", asset_path("awards", r.name)) for r in profile.recognitions]
+
+    print(f"asset directory: {ASSET_DIR}\n", file=out)
+    for label, path in wanted:
+        mark = "present" if path.exists() else "MISSING"
+        print(f"{mark:<8}  {label:<44}  {path.name}", file=out)
+    missing = sum(1 for _, path in wanted if not path.exists())
+    print(
+        f"\n{len(wanted) - missing}/{len(wanted)} supplied. "
+        "A missing file is not an error: the layout closes up around it.",
+        file=out,
+    )
+    return 0
+
+
 def _cmd_calendar(args, catalog: Catalog, out) -> int:
     """Every post from the anchor to --until, grouped by month."""
     start = anchor_for(catalog, date.today())
@@ -252,6 +275,7 @@ COMMANDS = {
     "products": _cmd_products,
     "next": _cmd_next,
     "calendar": _cmd_calendar,
+    "assets": _cmd_assets,
 }
 
 

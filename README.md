@@ -46,6 +46,8 @@ PYTHONPATH=src python -m homedant_linkedin plan
 | `validate` | Check every draft; exits `1` if any post has an issue |
 | `products` | List the catalog |
 | `next` | Write today's post and image into `out/` for an unattended run |
+| `calendar` | The whole plan up to `--until`, grouped by month |
+| `assets` | Which logo and badge files the images look for, and which are supplied |
 
 Common flags: `--start YYYY-MM-DD`, `--weeks N`, `--marketplace US`,
 `--catalog path/to/products.json`, and `--json` on `plan` and `draft`.
@@ -145,14 +147,27 @@ workflow**) to confirm the message arrives.
 ## Images
 
 `image.py` renders each post into a 1200x1200 PNG from the same draft the text
-comes from: the HOMEDANT wordmark over its tagline rule, the hook as the
-headline, up to three proof points, and a footer band carrying the show or the
-award. No external service is involved.
+comes from. Each pillar gets the treatment its subject deserves rather than one
+template with the words swapped:
+
+| Post | Layout |
+| --- | --- |
+| Trade show | Dark steel ground, the countdown set large, show logo, venue and space in the band |
+| Recognition | Award badge beside the headline, the event named in the band |
+| Product | The listing photo fills the right panel, the argument runs down the left |
+| Brand | Type only: the sentence carries it |
+
+Optional images live in [`assets/`](assets/README.md) — the brand wordmark, a
+logo per show, a badge per award. Run `python -m homedant_linkedin assets` to
+see which files the layouts are looking for and which are supplied. A missing
+file is not an error; the layout closes up around it.
+
+Show logos and award badges are the organisers' trademarks. Use the files from
+their official exhibitor or winner kit, not something taken off the web.
 
 A product post also carries the listing photo, fetched from `image_url` at
-render time. Where the CDN is unreachable the post falls back to the
-type-only layout rather than failing the run, so a network-restricted machine
-still produces a usable image.
+render time. Where the CDN is unreachable the post falls back to the type-only
+layout rather than failing the run.
 
 ## Existing posts
 
