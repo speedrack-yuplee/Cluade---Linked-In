@@ -28,12 +28,20 @@ def test_plan_assigns_a_pillar_to_every_slot(catalog):
     assert all(slot.pillar in PILLARS for slot in slots)
 
 
-def test_recognition_leads_the_rotation(catalog):
-    """The award post outperformed product posts by more than an order of
-    magnitude, so it opens every cycle."""
+def test_a_calendar_opens_by_announcing_the_next_show(catalog):
+    """The show post is what books the meetings, so it goes first."""
     slots = build_plan(catalog, start=PLAN_START, weeks=4)
-    assert slots[0].pillar.key == "recognition"
-    assert slots[0].recognition is not None
+    assert slots[0].pillar.key == "tradeshow"
+    assert slots[0].show.name == "High Point Market"
+
+
+def test_recognition_leads_the_rotation_behind_the_show(catalog):
+    """The award post outperformed product posts by more than an order of
+    magnitude, so it opens the rotation proper."""
+    slots = build_plan(catalog, start=PLAN_START, weeks=4)
+    rotation = [s for s in slots if s.pillar.key != "tradeshow"]
+    assert rotation[0].pillar.key == "recognition"
+    assert rotation[0].recognition is not None
 
 
 def test_a_show_that_has_already_closed_is_never_scheduled(catalog):
@@ -69,15 +77,30 @@ def test_the_supply_pillar_carries_no_subject(catalog):
 
 
 def test_products_do_not_repeat_before_their_pool_is_exhausted(catalog):
+    """Pillars sharing a segment share its pool, so no product comes round
+    again until every product in that segment has been used."""
     slots = build_plan(catalog, start=PLAN_START, weeks=12)
-    used = [s.product.asin for s in slots if s.pillar.key == "retail"]
+    used = [s.product.asin for s in slots if s.pillar.segment == "retail" and s.product]
     pool_size = len([p for p in catalog if "retail" in p.segments])
-    assert len(set(used[:pool_size])) == len(used[:pool_size])
+    first_pass = used[:pool_size]
+    assert len(set(first_pass)) == len(first_pass)
+
+
+def test_nothing_is_scheduled_on_a_blackout_date(catalog):
+    """Christmas Day is a posting weekday, and no B2B feed is being read."""
+    slots = build_plan(catalog, start=PLAN_START, weeks=20)
+    assert date(2026, 12, 25) not in {slot.scheduled_for for slot in slots}
+
+
+def test_a_seasonal_pillar_only_runs_in_its_own_months(catalog):
+    slots = build_plan(catalog, start=PLAN_START, weeks=20)
+    seasonal = [s for s in slots if s.pillar.key == "seasonal"]
+    assert seasonal and all(s.scheduled_for.month in (10, 11, 12) for s in seasonal)
 
 
 def test_slot_subject_labels_whatever_the_slot_carries(catalog):
     slots = build_plan(catalog, start=PLAN_START, weeks=4)
-    assert slots[0].subject == "Retailers' Choice Awards Winner"
+    assert slots[0].subject == "High Point Market"
     assert next(s for s in slots if s.pillar.key == "supply").subject == "(brand)"
 
 

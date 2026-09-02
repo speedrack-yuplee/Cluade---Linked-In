@@ -88,6 +88,10 @@ class Recognition:
     hashtags: tuple[str, ...] = ()
     city: str = ""
     award: str = ""
+    posted_on: date | None = None
+    """When this was already announced on LinkedIn. A recognition that has been
+    posted is never announced again; it is revisited from a new angle."""
+
     headline: str = ""
     """The opening line, written by hand. ``{company}`` is substituted in."""
 
@@ -104,6 +108,7 @@ class Recognition:
             headline=raw.get("headline", ""),
             city=raw.get("city", ""),
             award=raw.get("award", ""),
+            posted_on=date.fromisoformat(raw["posted_on"]) if raw.get("posted_on") else None,
         )
 
     def opening(self, company: str) -> str:
@@ -181,6 +186,9 @@ class Brand:
     offer: str = ""
     recognitions: tuple[Recognition, ...] = ()
     trade_shows: tuple[TradeShow, ...] = ()
+    blackout_dates: frozenset = frozenset()
+    """Days nothing goes out: US holidays, when a B2B feed is not being read."""
+
     plan_anchor: date | None = None
     """The day the rotation starts counting from, so an unattended run lands on
     the same slot the calendar shows. Nothing is due before it."""
@@ -202,6 +210,7 @@ class Brand:
             recognitions=tuple(Recognition.from_dict(r) for r in raw.get("recognitions", ())),
             trade_shows=tuple(TradeShow.from_dict(s) for s in raw.get("trade_shows", ())),
             plan_anchor=date.fromisoformat(raw["plan_anchor"]) if raw.get("plan_anchor") else None,
+            blackout_dates=frozenset(date.fromisoformat(d) for d in raw.get("blackout_dates", ())),
         )
 
     @property
@@ -223,6 +232,9 @@ class Pillar:
     hashtags: tuple[str, ...]
     needs: str | None = "product"
     """What the slot must carry: "product", "recognition", "show", or None."""
+
+    months: tuple[int, ...] = ()
+    """Restrict the pillar to these calendar months. Empty means all year."""
 
     segment: str | None = None
     """Restrict the product pool to products carrying this segment tag. A

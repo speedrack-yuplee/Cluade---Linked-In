@@ -82,6 +82,11 @@ def _show_dates(shows: list, days: list[date]) -> dict[date, object]:
     posting date inside the show's own run is claimed by that show.
     """
     claimed: dict[date, object] = {}
+    upcoming = [s for s in shows if days and s.start >= days[0]]
+    if upcoming and days:
+        # A calendar that opens with a show ahead of it opens by announcing the
+        # show: that is the post the meetings get booked from.
+        claimed[days[0]] = min(upcoming, key=lambda s: s.start)
     for show in shows:
         for day in days:
             if show.is_running(day):
@@ -114,12 +119,12 @@ def build_plan(
     if len(catalog) == 0:
         raise ValueError("catalog is empty")
 
+    profile = catalog.brand_profile
     usable = _usable_pillars(catalog, pillars, start)
     rotation = tuple(p for p in usable if p.needs != "show") or usable
     if not usable:
         raise ValueError("no pillar can be filled from this catalog and brand profile")
 
-    profile = catalog.brand_profile
     pools = {
         "product": catalog.products,
         "recognition": list(profile.recognitions),
@@ -130,7 +135,7 @@ def build_plan(
             pools[f"product:{pillar.segment}"] = _segment_pool(catalog, pillar.segment)
     cursors = dict.fromkeys(pools, 0)
 
-    days = posting_dates(start, weeks, weekdays)
+    days = [d for d in posting_dates(start, weeks, weekdays) if d not in profile.blackout_dates]
     show_pillar = next((p for p in usable if p.needs == "show"), None)
     claimed = _show_dates(pools["show"], days) if show_pillar else {}
 
@@ -140,7 +145,8 @@ def build_plan(
         if day in claimed:
             slots.append(Slot(scheduled_for=day, pillar=show_pillar, show=claimed[day]))
             continue
-        pillar = rotation[index % len(rotation)]
+        in_season = [p for p in rotation if not p.months or day.month in p.months]
+        pillar = in_season[index % len(in_season)]
         index += 1
         subject = {}
         if pillar.needs:

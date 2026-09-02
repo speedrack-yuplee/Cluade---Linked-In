@@ -11,7 +11,7 @@ def test_nothing_is_due_on_a_day_that_is_not_a_posting_day(catalog):
 def test_the_calendar_opens_on_the_anchor(catalog):
     draft = due_on(catalog, catalog.brand_profile.plan_anchor)
     assert draft is not None
-    assert draft.pillar.key == "recognition"
+    assert draft.pillar.key == "tradeshow"
 
 
 def test_the_post_due_on_a_posting_day_matches_the_calendar(catalog):
@@ -33,5 +33,5 @@ def test_the_rotation_is_counted_from_the_anchor_not_from_today(catalog):
 
 def test_nothing_is_due_before_the_anchor(catalog):
     """A run that fires early must post nothing, not the first slot early."""
-    assert due_on(catalog, date(2026, 9, 2)) is None
     assert due_on(catalog, date(2026, 8, 5)) is None
+    assert due_on(catalog, date(2026, 8, 31)) is None

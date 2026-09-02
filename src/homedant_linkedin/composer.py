@@ -34,6 +34,15 @@ def _and_list(items: list[str]) -> str:
     return ", ".join(items[:-1]) + f", and {items[-1]}"
 
 
+def _variant(slot: Slot, options: tuple[str, ...]) -> str:
+    """One of several openings, rotated by ISO week.
+
+    A hook that repeats every fortnight stops being read, so each pillar keeps
+    a small set and the week decides which one runs.
+    """
+    return options[slot.scheduled_for.isocalendar()[1] % len(options)]
+
+
 def _hashtags(slot: Slot, extra: tuple[str, ...] = ()) -> tuple[str, ...]:
     """Pillar hashtags plus any the subject carries, in order, without repeats."""
     seen: dict[str, None] = {}
@@ -42,15 +51,48 @@ def _hashtags(slot: Slot, extra: tuple[str, ...] = ()) -> tuple[str, ...]:
     return tuple(seen)
 
 
+def _next_show(catalog: Catalog, after):
+    """The next show that has not finished, or None."""
+    upcoming = [s for s in catalog.brand_profile.trade_shows if s.end >= after]
+    return min(upcoming, key=lambda s: s.start) if upcoming else None
+
+
 def _compose_recognition(slot: Slot, catalog: Catalog) -> PostDraft:
     award = slot.recognition
     profile = catalog.brand_profile
+
+    if award.posted_on:
+        # Already announced. Repeating the announcement would duplicate a post
+        # that is still live, so the award is used as the reason for what is
+        # next instead.
+        show = _next_show(catalog, slot.scheduled_for)
+        where = f" at {show.name}" if show else ""
+        return PostDraft(
+            slot=slot,
+            hook=(
+                f"What does a {award.award or award.name} actually change? "
+                "It changes who picks up the phone."
+            ),
+            body=_paragraphs(
+                f"Since {profile.company} was recognised at the {award.date.year} {award.event}, "
+                "the conversations have started with the product rather than with an introduction. "
+                "That is the whole value of it.",
+                profile.capability,
+                f"You can see the range for yourself{where}."
+                if show
+                else "The range is the same one the judges looked at.",
+            ),
+            cta=CONNECT_CTA.format(audiences=profile.audience_phrase),
+            hashtags=_hashtags(slot, award.hashtags),
+            points=profile.proof_points[:3],
+        )
+
     where = f" in {award.city}" if award.city else ""
     return PostDraft(
         slot=slot,
         hook=(
             f"We are proud to share that {profile.brand} has been selected as a "
-            f"{award.award or award.name} at the {award.date.year} {award.event}{where}! 🎉"
+            f"{award.award or award.name} at the {award.date.year} {award.event}{where}! \U0001f389"
         ),
         body=_paragraphs(
             f"This recognition is a meaningful milestone for {profile.company} as we continue "
@@ -128,9 +170,16 @@ def _compose_project(slot: Slot, catalog: Catalog) -> PostDraft:
     profile = catalog.brand_profile
     return PostDraft(
         slot=slot,
-        hook=(
-            "How can hotels and residential projects provide more storage without making rooms "
-            "feel crowded?"
+        hook=_variant(
+            slot,
+            (
+                "How can hotels and residential projects provide more storage without making "
+                "rooms feel crowded?",
+                "The storage in a guest room is decided long before the guest arrives. Usually "
+                "by whoever signed off the millwork budget.",
+                "Every multifamily unit has a corner nobody specified. That is where the "
+                "complaints come from.",
+            ),
         ),
         body=_paragraphs(
             f"At {profile.company}, we build for the room as it already is. "
@@ -150,7 +199,15 @@ def _compose_retail(slot: Slot, catalog: Catalog) -> PostDraft:
     profile = catalog.brand_profile
     return PostDraft(
         slot=slot,
-        hook="Ever struggled to fit diverse inventory perfectly onto your shelves?",
+        hook=_variant(
+            slot,
+            (
+                "Ever struggled to fit diverse inventory perfectly onto your shelves?",
+                "A shelf that only fits one box size is a planogram problem waiting to happen.",
+                "Buyers do not ask how strong the shelf is. They ask how many of them fit on a "
+                "pallet.",
+            ),
+        ),
         body=_paragraphs(
             f"At {profile.company}, we understand that every product has its own dimensions. "
             f"{product.sentence_name} adjusts to them rather than the other way round, and it was "
@@ -169,7 +226,15 @@ def _compose_manufacturing(slot: Slot, catalog: Catalog) -> PostDraft:
     profile = catalog.brand_profile
     return PostDraft(
         slot=slot,
-        hook="A boltless frame sounds like a shortcut. It is the harder engineering choice.",
+        hook=_variant(
+            slot,
+            (
+                "A boltless frame sounds like a shortcut. It is the harder engineering choice.",
+                "The fastest way to lose a customer is an assembly step they cannot finish.",
+                "We own the factory. That is not a marketing line, it is why a spec change takes "
+                "a phone call.",
+            ),
+        ),
         body=_paragraphs(
             "Every fastener you remove is a tolerance you now have to hold in the steel itself, "
             "because the joint has to carry the load the bolt used to carry.",
@@ -189,7 +254,17 @@ def _compose_supply(slot: Slot, catalog: Catalog) -> PostDraft:
     profile = catalog.brand_profile
     return PostDraft(
         slot=slot,
-        hook="Buyers ask about the product first and the supply chain second. The second answer decides it.",
+        hook=_variant(
+            slot,
+            (
+                "Buyers ask about the product first and the supply chain second. The second "
+                "answer decides it.",
+                "A reset date does not move because a vessel did. That is what domestic stock "
+                "is for.",
+                "The hardest question in a vendor meeting is not about the product. It is "
+                "\u201ccan you actually ship it?\u201d",
+            ),
+        ),
         body=_paragraphs(
             f"{profile.company} holds stock in CA and GA warehouses, so a domestic order does not "
             "wait on an ocean container, and a reset date does not move because a vessel did.",
@@ -203,12 +278,42 @@ def _compose_supply(slot: Slot, catalog: Catalog) -> PostDraft:
     )
 
 
+def _compose_seasonal(slot: Slot, catalog: Catalog) -> PostDraft:
+    product = slot.product
+    profile = catalog.brand_profile
+    return PostDraft(
+        slot=slot,
+        hook=_variant(
+            slot,
+            (
+                "Holiday decor is a storage category. It just does not look like one on the "
+                "planogram.",
+                "The same shelving unit sells twice a year: once to put the decorations up, "
+                "once to put them away.",
+                "Garages fill up in November and get sorted out in January. Both are shelving "
+                "moments.",
+            ),
+        ),
+        body=_paragraphs(
+            f"At {profile.company}, we see the same pattern every year. Storage is the demand "
+            "holiday decor creates, and the buy that serves it happens months earlier.",
+            f"{product.sentence_name} carries the load either way, and it was built for "
+            f"{product.audience}.",
+            product.retail_fit and f"On the floor: {product.retail_fit}.",
+        ),
+        cta="Message me for a line sheet if you are still building your Q4 storage set.",
+        hashtags=_hashtags(slot),
+        points=product.highlights[:3],
+    )
+
+
 _COMPOSERS = {
     "recognition": _compose_recognition,
     "tradeshow": _compose_tradeshow,
     "project": _compose_project,
     "retail": _compose_retail,
     "manufacturing": _compose_manufacturing,
+    "seasonal": _compose_seasonal,
     "supply": _compose_supply,
 }
 

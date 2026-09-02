@@ -24,10 +24,10 @@ def test_plan_defaults_to_the_same_calendar_the_scheduled_run_posts_from():
         assert due_on(catalog, day).pillar.key == row["pillar"]
 
 
-def test_plan_leads_with_the_award_post():
+def test_plan_leads_with_the_show_announcement():
     code, output = _run(["plan", "--start", "2026-09-01", "--weeks", "1"])
     assert code == 0
-    assert "Third-party recognition" in output.splitlines()[2]
+    assert "Trade show" in output.splitlines()[2]
 
 
 def test_plan_prints_one_line_per_post():
@@ -41,7 +41,7 @@ def test_plan_json_is_machine_readable():
 
     code, output = _run(["plan", "--json", "--start", "2026-09-01", "--weeks", "1"])
     assert code == 0
-    assert [row["pillar"] for row in json.loads(output)] == ["recognition", "project"]
+    assert [row["pillar"] for row in json.loads(output)] == ["tradeshow", "recognition"]
 
 
 def test_draft_renders_full_post_text():

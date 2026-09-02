@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import date
 
 import pytest
@@ -16,11 +17,26 @@ def test_every_slot_in_a_plan_composes(catalog):
     assert all(draft.render().strip() for draft in drafts)
 
 
+def _unposted(award):
+    """The same award as it would have been before it went out."""
+    return replace(award, posted_on=None)
+
+
 def test_the_award_post_thanks_the_organisations_by_name(catalog):
-    award = catalog.brand_profile.recognitions[0]
+    award = _unposted(catalog.brand_profile.recognitions[0])
     text = compose(Slot(PLAN_START, get_pillar("recognition"), recognition=award), catalog).render()
     assert "Thank you to Hardlines Supplier Event and North American Hardware" in text
     assert "#RetailersChoice" in text
+
+
+def test_an_award_that_is_already_live_is_not_announced_again(catalog):
+    """Repeating the announcement would duplicate a post that is still up."""
+    award = catalog.brand_profile.recognitions[0]
+    assert award.posted_on is not None
+    text = compose(Slot(PLAN_START, get_pillar("recognition"), recognition=award), catalog).render()
+    assert "We are proud to share" not in text
+    assert "Thank you to" not in text
+    assert award.event in text
 
 
 def test_the_show_post_names_the_booth_and_the_dates(catalog):
@@ -69,7 +85,7 @@ def test_proof_points_are_carried_for_the_image_but_not_the_text(catalog):
 
 def test_the_award_post_matches_the_structure_of_the_real_one(catalog):
     """Hook, milestone, capability, invitation, thanks - in that order."""
-    award = catalog.brand_profile.recognitions[0]
+    award = _unposted(catalog.brand_profile.recognitions[0])
     text = compose(Slot(PLAN_START, get_pillar("recognition"), recognition=award), catalog).render()
     order = [
         "We are proud to share that HOMEDANT",

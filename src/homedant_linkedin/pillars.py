@@ -57,6 +57,15 @@ PILLARS: tuple[Pillar, ...] = (
         hashtags=("HOMEDANT", "KoreanMade", "SteelShelving", "Manufacturing", "B2B"),
     ),
     Pillar(
+        key="seasonal",
+        name="Q4 seasonal",
+        intent="Holiday decor comes out of storage and goes back into it. Same SKU, two peak "
+        "sell-through moments, and the buy happens months earlier.",
+        hashtags=("HOMEDANT", "RetailBuyers", "StorageSolutions", "SeasonalRetail", "B2B"),
+        months=(10, 11, 12),
+        segment="retail",
+    ),
+    Pillar(
         key="supply",
         name="Supply and logistics",
         intent="Answer the question every buyer asks second: can you actually ship it.",
