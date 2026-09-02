@@ -69,6 +69,14 @@ repeats once the whole catalog has been used.
 `highlights` and `audience` are what the post copy is actually written from.
 Point `--catalog` at your own file to plan against a different set.
 
+## Existing posts
+
+`content/posts/` holds the LinkedIn posts that have already been published.
+Drop them in as markdown files and the drafts can be written to match that
+voice rather than the default template voice. See
+[`content/posts/README.md`](content/posts/README.md) for the file format and
+for how to add one from the GitHub web UI.
+
 ## Tests
 
 ```bash
