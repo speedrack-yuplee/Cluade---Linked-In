@@ -242,11 +242,10 @@ def _cmd_next(args, catalog: Catalog, out) -> int:
     text_path = directory / "post.txt"
     text_path.write_text(draft.render() + "\n", encoding="utf-8")
 
-    from .image import fetch_product_image, render  # late import: only this command needs Pillow
+    from .image import photo_for, render  # late import: only this command needs Pillow
 
-    product = draft.product
-    photo = fetch_product_image(product.image_url) if product else None
-    if product and photo is None and product.image_url:
+    photo = photo_for(draft)
+    if photo is None and draft.slot.pictured:
         print("note: product photo unavailable, using the type-only layout", file=out)
     image_path = render(draft, directory / "post.png", photo=photo)
     (directory / "post.json").write_text(

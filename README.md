@@ -152,10 +152,14 @@ template with the words swapped:
 
 | Post | Layout |
 | --- | --- |
-| Trade show | Dark steel ground, the countdown set large, show logo, venue and space in the band |
-| Recognition | Award badge beside the headline, the event named in the band |
-| Product | The listing photo fills the right panel, the argument runs down the left |
-| Brand | Type only: the sentence carries it |
+| Trade show | Dark steel ground, the countdown set large, the product on a panel beside it, venue and space in the band |
+| Recognition | Award badge beside the headline, or the product where no badge has been supplied |
+| Product | The photo fills the right panel, the argument runs down the left |
+| Brand | The product carries the panel while the sentence carries the left |
+
+Every post pictures a product, whether or not the text is about one. A show or
+brand post has no product subject, so the planner assigns it one to show,
+rotated by date so the same shelf does not appear on every show post.
 
 Optional images live in [`assets/`](assets/README.md) — the brand wordmark, a
 logo per show, a badge per award. Run `python -m homedant_linkedin assets` to
@@ -165,9 +169,10 @@ file is not an error; the layout closes up around it.
 Show logos and award badges are the organisers' trademarks. Use the files from
 their official exhibitor or winner kit, not something taken off the web.
 
-A product post also carries the listing photo, fetched from `image_url` at
-render time. Where the CDN is unreachable the post falls back to the type-only
-layout rather than failing the run.
+Photos come from `assets/products/<ASIN>.jpg` when one has been supplied, and
+from the listing's `image_url` otherwise — lifestyle photography reads far
+better in a feed than a cut-out on white. Where neither is reachable the post
+falls back to the type-only layout rather than failing the run.
 
 ## Existing posts
 

@@ -57,6 +57,19 @@ def asset_path(kind: str, name: str) -> Path:
     return ASSET_DIR / kind / f"{slug(name)}.png"
 
 
+def product_photo_path(asin: str) -> Path | None:
+    """A supplied photo for ``asin``, if there is one.
+
+    Lifestyle photography reads far better in a feed than a listing cut on
+    white, so a file dropped in assets/products wins over the CDN.
+    """
+    for suffix in (".jpg", ".jpeg", ".png", ".webp"):
+        candidate = ASSET_DIR / "products" / f"{asin}{suffix}"
+        if candidate.exists():
+            return candidate
+    return None
+
+
 def load_asset(path: Path):
     """The image at ``path``, or None when it has not been supplied."""
     try:
@@ -158,7 +171,7 @@ def _footer_text(draft: PostDraft) -> str:
     return "HOMEDANT   ·   The Best Organizing Solution"
 
 
-def _layout_show(image, draw, draft: PostDraft) -> None:
+def _layout_show(image, draw, draft: PostDraft, photo) -> None:
     """A dark event card: the countdown is the picture."""
     show = draft.slot.show
     draw.rectangle([0, 0, SIZE, SIZE], fill=SHOW_GROUND)
@@ -167,6 +180,13 @@ def _layout_show(image, draw, draft: PostDraft) -> None:
     logo = load_asset(asset_path("shows", show.name))
     if logo is not None:
         _paste(image, logo, (SIZE - MARGIN - 300, MARGIN - 10, SIZE - MARGIN, MARGIN + 130))
+
+    width = SIZE - 2 * MARGIN
+    if photo is not None:
+        panel = 740
+        draw.rectangle([panel, 0, SIZE, SIZE - BAND], fill=PANEL)
+        _paste(image, photo.convert("RGBA"), (panel + 24, 150, SIZE - 24, SIZE - BAND - 50))
+        width = panel - MARGIN - 44
 
     days = show.days_until(draft.scheduled_for)
     if show.is_running(draft.scheduled_for):
@@ -181,17 +201,17 @@ def _layout_show(image, draw, draft: PostDraft) -> None:
     label_y = top + 10 + int(numeral.size * 0.98)
     draw.text((MARGIN + 6, label_y), small, font=_font(BOLD, 46), fill=LIGHT_TEXT)
 
-    name, name_font = _fit(draw, show.name, SIZE - 2 * MARGIN, 2, 66, 38)
+    name, name_font = _fit(draw, show.name, width, 2, 66, 34)
     y = label_y + 84
     for line in name:
         draw.text((MARGIN, y), line, font=name_font, fill=LIGHT_TEXT)
         y += int(name_font.size * 1.2)
 
-    _bullets(image, draw, draft.points, y + 34, SIZE - 2 * MARGIN, LIGHT_TEXT, SHOW_ACCENT)
+    _bullets(image, draw, draft.points, y + 34, width, LIGHT_TEXT, SHOW_ACCENT)
     _band(image, draw, _footer_text(draft), SHOW_ACCENT, SHOW_GROUND)
 
 
-def _layout_award(image, draw, draft: PostDraft) -> None:
+def _layout_award(image, draw, draft: PostDraft, photo) -> None:
     """The badge earns the space; the headline sits beside it."""
     award = draft.slot.recognition
     top = _masthead(image, draw, dark=False)
@@ -201,6 +221,11 @@ def _layout_award(image, draw, draft: PostDraft) -> None:
     if badge is not None:
         _paste(image, badge, (SIZE - MARGIN - 320, top, SIZE - MARGIN, top + 320))
         width = SIZE - 2 * MARGIN - 360
+    elif photo is not None:
+        panel = 700
+        draw.rectangle([panel, 0, SIZE, SIZE - BAND], fill=PANEL)
+        _paste(image, photo.convert("RGBA"), (panel + 26, 150, SIZE - 26, SIZE - BAND - 50))
+        width = panel - MARGIN - 46
 
     lines, font = _fit(draw, draft.hook, width, 5, 68, 36)
     y = top + 30
@@ -208,7 +233,7 @@ def _layout_award(image, draw, draft: PostDraft) -> None:
         draw.text((MARGIN, y), line, font=font, fill=ACCENT)
         y += int(font.size * 1.26)
 
-    _bullets(image, draw, draft.points, y + 40, SIZE - 2 * MARGIN, INK, ACCENT)
+    _bullets(image, draw, draft.points, y + 40, width, INK, ACCENT)
     _band(image, draw, _footer_text(draft), ACCENT, LIGHT_TEXT)
 
 
@@ -235,15 +260,21 @@ def _layout_product(image, draw, draft: PostDraft, photo) -> None:
     _band(image, draw, _footer_text(draft), accent, LIGHT_TEXT)
 
 
-def _layout_plain(image, draw, draft: PostDraft) -> None:
+def _layout_plain(image, draw, draft: PostDraft, photo) -> None:
     """No subject to picture: the sentence carries it."""
     top = _masthead(image, draw, dark=False)
-    lines, font = _fit(draw, draft.hook, SIZE - 2 * MARGIN, 6, 66, 34)
+    width = SIZE - 2 * MARGIN
+    if photo is not None:
+        panel = 700
+        draw.rectangle([panel, 0, SIZE, SIZE - BAND], fill=PANEL)
+        _paste(image, photo.convert("RGBA"), (panel + 26, 150, SIZE - 26, SIZE - BAND - 50))
+        width = panel - MARGIN - 46
+    lines, font = _fit(draw, draft.hook, width, 6, 62, 32)
     y = top + 40
     for line in lines:
         draw.text((MARGIN, y), line, font=font, fill=ACCENT)
         y += int(font.size * 1.26)
-    _bullets(image, draw, draft.points, y + 44, SIZE - 2 * MARGIN, INK, ACCENT)
+    _bullets(image, draw, draft.points, y + 44, width, INK, ACCENT)
     _band(image, draw, _footer_text(draft), ACCENT, LIGHT_TEXT)
 
 
@@ -256,16 +287,35 @@ def render(draft: PostDraft, path: str | Path, photo=None) -> Path:
     draw = ImageDraw.Draw(image)
 
     if draft.slot.show:
-        _layout_show(image, draw, draft)
+        _layout_show(image, draw, draft, photo)
     elif draft.slot.recognition:
-        _layout_award(image, draw, draft)
+        _layout_award(image, draw, draft, photo)
     elif draft.product:
         _layout_product(image, draw, draft, photo)
     else:
-        _layout_plain(image, draw, draft)
+        _layout_plain(image, draw, draft, photo)
 
     image.save(path, "PNG", optimize=True)
     return path
+
+
+def photo_for(draft: PostDraft, timeout: int = 20):
+    """The photo to use for ``draft``, or None.
+
+    A file in assets/products wins; otherwise the listing image is fetched.
+    """
+    product = draft.slot.pictured
+    if product is None:
+        return None
+    local = product_photo_path(product.asin)
+    if local is not None:
+        from PIL import Image as PILImage
+
+        try:
+            return PILImage.open(local).convert("RGB")
+        except Exception:
+            pass
+    return fetch_product_image(product.image_url, timeout=timeout)
 
 
 def fetch_product_image(url: str, timeout: int = 20):

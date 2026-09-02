@@ -8,6 +8,7 @@
 | `assets/logo.png` | 모든 게시 이미지 좌상단 | 가로 800px 이상, 배경 투명 PNG |
 | `assets/shows/<slug>.png` | 해당 전시회 게시글 | 정사각형에 가깝게, 배경 투명 PNG |
 | `assets/awards/<slug>.png` | 해당 수상 게시글 | 수상 배지, 배경 투명 PNG |
+| `assets/products/<ASIN>.jpg` | 해당 제품이 들어가는 모든 게시글 | 정사각형에 가깝게, 1000px 이상 |
 
 `<slug>`는 전시회·수상 이름을 소문자로 바꾸고 공백을 `-`로 이은 것입니다.
 
@@ -20,6 +21,23 @@
 ```bash
 PYTHONPATH=src python -m homedant_linkedin assets
 ```
+
+## 제품 사진
+
+제품 사진은 자사 자산이므로 권리 문제가 없습니다. `assets/products/` 에
+ASIN 이름으로 넣으면 Amazon 리스팅 컷 대신 그 파일이 쓰입니다.
+
+```
+assets/products/B0GWGZF1F3.jpg
+assets/products/B0D8VQS2BK.png
+```
+
+`.jpg` `.jpeg` `.png` `.webp` 를 지원합니다. 파일이 없으면 리스팅 이미지를
+자동으로 받아 씁니다.
+
+**연출 사진을 권합니다.** 흰 배경 제품컷보다, 실제 공간에 놓인 사진
+(콘도 침실의 오픈 워드로브, 공구를 올린 창고 선반 등)이 피드에서 훨씬 잘
+읽힙니다. 기존 게시글에 쓰셨던 이미지들이 여기 적합합니다.
 
 ## 저작권 주의
 

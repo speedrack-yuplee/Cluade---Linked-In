@@ -251,6 +251,14 @@ class Slot:
     product: Product | None = None
     recognition: Recognition | None = None
     show: TradeShow | None = None
+    feature: Product | None = None
+    """A product shown in the image only. A show or brand post has no product
+    subject, but it still has something to show."""
+
+    @property
+    def pictured(self) -> Product | None:
+        """The product the image should show, whether or not the text is about it."""
+        return self.product or self.feature
 
     @property
     def subject(self) -> str:

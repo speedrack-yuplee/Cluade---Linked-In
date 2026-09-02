@@ -40,6 +40,15 @@ def _segment_pool(catalog: Catalog, segment: str) -> list:
     return tagged or catalog.products
 
 
+def _feature(catalog: Catalog, day: date):
+    """A product to picture on a post that is not about a product.
+
+    Rotated by date so the same shelf does not appear on every show post.
+    """
+    products = catalog.products
+    return products[day.toordinal() % len(products)] if products else None
+
+
 def _upcoming_shows(catalog: Catalog, start: date) -> list:
     """Shows that have not finished yet.
 
@@ -143,7 +152,14 @@ def build_plan(
     index = 0
     for day in days:
         if day in claimed:
-            slots.append(Slot(scheduled_for=day, pillar=show_pillar, show=claimed[day]))
+            slots.append(
+                Slot(
+                    scheduled_for=day,
+                    pillar=show_pillar,
+                    show=claimed[day],
+                    feature=_feature(catalog, day),
+                )
+            )
             continue
         in_season = [p for p in rotation if not p.months or day.month in p.months]
         pillar = in_season[index % len(in_season)]
@@ -154,6 +170,8 @@ def build_plan(
             pool = pools[key]
             subject[pillar.needs] = pool[cursors[key] % len(pool)]
             cursors[key] += 1
+        if pillar.needs != "product":
+            subject["feature"] = _feature(catalog, day)
         slots.append(Slot(scheduled_for=day, pillar=pillar, **subject))
 
     return slots
