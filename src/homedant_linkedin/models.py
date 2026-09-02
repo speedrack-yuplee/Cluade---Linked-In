@@ -115,6 +115,9 @@ class TradeShow:
     start: date
     end: date
     booth: str | None = None
+    booth_label: str = "Booth"
+    """Shows differ: NY NOW numbers booths, High Point numbers showroom spaces."""
+
     hashtags: tuple[str, ...] = ()
 
     @classmethod
@@ -125,8 +128,21 @@ class TradeShow:
             start=date.fromisoformat(raw["start"]),
             end=date.fromisoformat(raw["end"]),
             booth=raw.get("booth"),
+            booth_label=raw.get("booth_label", "Booth"),
             hashtags=tuple(raw.get("hashtags", ())),
         )
+
+    @property
+    def location(self) -> str:
+        """How the stand is named on the show floor, e.g. "Space M-1007".
+
+        The number sign only reads correctly on a bare number, so a space
+        carrying a letter prefix goes without it.
+        """
+        if not self.booth:
+            return ""
+        prefix = "#" if self.booth.isdigit() else ""
+        return f"{self.booth_label} {prefix}{self.booth}"
 
     @property
     def dates(self) -> str:

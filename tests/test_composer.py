@@ -35,7 +35,8 @@ def test_the_high_point_post_carries_the_dates_from_the_booth_memo(catalog):
     text = compose(Slot(PLAN_START, get_pillar("tradeshow"), show=show), catalog).render()
     assert "October 16-21, 2026" in text
     assert "Suites at Market Square" in text
-    assert "Booth" not in text, "the floor was not contracted, so no booth number is claimed"
+    assert "Space M-1007" in text
+    assert "Booth" not in text, "High Point numbers showroom spaces, not booths"
 
 
 def test_a_show_without_a_booth_omits_the_booth_line(catalog):

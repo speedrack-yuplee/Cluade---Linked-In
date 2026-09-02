@@ -78,7 +78,7 @@ def _footer_text(draft: PostDraft) -> str:
     """What the bottom band says: the event where there is one, else the brand."""
     slot = draft.slot
     if slot.show:
-        booth = f"  ·  Booth #{slot.show.booth}" if slot.show.booth else ""
+        booth = f"  ·  {slot.show.location}" if slot.show.booth else ""
         return f"{slot.show.name}  ·  {slot.show.dates}{booth}"
     if slot.recognition:
         return f"{slot.recognition.event}  ·  {slot.recognition.venue}"

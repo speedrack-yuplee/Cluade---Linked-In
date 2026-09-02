@@ -75,8 +75,7 @@ def _compose_recognition(slot: Slot, catalog: Catalog) -> PostDraft:
 def _compose_tradeshow(slot: Slot, catalog: Catalog) -> PostDraft:
     show = slot.show
     profile = catalog.brand_profile
-    booth = f" at Booth #{show.booth}" if show.booth else ""
-    hook = f"See you at {show.name}{booth}."
+    hook = f"See you at {show.name}, {show.location}." if show.booth else f"See you at {show.name}."
     body = _paragraphs(
         f"{profile.company} will be at {show.venue}, {show.dates}.",
         "What you will see on the stand:",

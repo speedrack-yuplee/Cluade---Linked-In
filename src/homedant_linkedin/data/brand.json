@@ -75,7 +75,8 @@
         "StorageSolutions",
         "KoreanMade",
         "B2B"
-      ]
+      ],
+      "booth_label": "Booth"
     },
     {
       "name": "National Hardware Show 2026",
@@ -93,7 +94,7 @@
     },
     {
       "name": "High Point Market",
-      "booth": null,
+      "booth": "M-1007",
       "venue": "Suites at Market Square, High Point, NC",
       "start": "2026-10-16",
       "end": "2026-10-21",
@@ -104,7 +105,8 @@
         "StorageSolutions",
         "KoreanMade",
         "B2B"
-      ]
+      ],
+      "booth_label": "Space"
     }
   ],
   "founded": 1979,
