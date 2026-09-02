@@ -31,6 +31,10 @@ MAX_BULLETS = 3
 BODY_LINE = 42
 BULLET_GAP = 14
 
+PHOTO_BOX = 430
+PHOTO_LEFT = SIZE - MARGIN - PHOTO_BOX
+PHOTO_TOP = 330
+
 
 class FontsUnavailable(RuntimeError):
     """The bundled layout needs Liberation Sans; say so rather than guessing."""
@@ -85,14 +89,29 @@ def _footer_text(draft: PostDraft) -> str:
     return "HOMEDANT  ·  The Best Organizing Solution"
 
 
-def render(draft: PostDraft, path: str | Path) -> Path:
-    """Write the image for ``draft`` and return the path it was written to."""
+def _paste_photo(canvas, photo) -> None:
+    """Drop the product shot into its box, scaled to fit and centred."""
+    fitted = photo.copy()
+    fitted.thumbnail((PHOTO_BOX, PHOTO_BOX), Image.LANCZOS)
+    left = PHOTO_LEFT + (PHOTO_BOX - fitted.width) // 2
+    top = PHOTO_TOP + (PHOTO_BOX - fitted.height) // 2
+    canvas.paste(fitted, (left, top))
+
+
+def render(draft: PostDraft, path: str | Path, photo=None) -> Path:
+    """Write the image for ``draft`` and return the path it was written to.
+
+    ``photo`` is an optional product shot. With one, the proof points sit beside
+    it; without one, the type fills the space on its own.
+    """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
 
     image = Image.new("RGB", (SIZE, SIZE), GROUND)
     draw = ImageDraw.Draw(image)
     inner = SIZE - 2 * MARGIN
+    if photo is not None:
+        inner = PHOTO_LEFT - MARGIN - 40
 
     # Masthead
     wordmark = _font(BOLD, 46)
@@ -131,6 +150,9 @@ def render(draft: PostDraft, path: str | Path) -> Path:
             y += BODY_LINE
         y += BULLET_GAP
 
+    if photo is not None:
+        _paste_photo(image, photo)
+
     # Footer band
     band_top = SIZE - 150
     draw.rectangle([0, band_top, SIZE, SIZE], fill=ACCENT)
@@ -147,3 +169,25 @@ def render(draft: PostDraft, path: str | Path) -> Path:
 
     image.save(path, "PNG", optimize=True)
     return path
+
+
+def fetch_product_image(url: str, timeout: int = 20):
+    """The product photo for a post, or None when it cannot be fetched.
+
+    The scheduled job runs where the CDN is reachable; a developer machine
+    behind a restricted network is not, and a missing photo must degrade to the
+    typographic layout rather than fail the run.
+    """
+    if not url:
+        return None
+    import io
+    import urllib.request
+
+    from PIL import Image as PILImage
+
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as response:
+            data = response.read()
+        return PILImage.open(io.BytesIO(data)).convert("RGB")
+    except Exception:
+        return None

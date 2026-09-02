@@ -68,24 +68,56 @@ def _compose_recognition(slot: Slot, catalog: Catalog) -> PostDraft:
     )
 
 
+def _show_hook(show, day, brand: str) -> str:
+    """The opening line, in the register the account already uses.
+
+    The countdown form ("2 Days to Go") is copied from the NY NOW post; the
+    closer the show, the more urgent the ask to book a meeting.
+    """
+    days = show.days_until(day)
+    where = f", {show.location}" if show.booth else ""
+    if show.is_running(day):
+        return f"We are on the floor at {show.name}{where}. Come and find us."
+    if days <= 7:
+        nights = "1 Day" if days == 1 else f"{days} Days"
+        return f"\u23f3 {nights} to Go \u2014 see you at {show.name}{where}!"
+    if days <= 20:
+        stand = f" We are at {show.location}." if show.booth else ""
+        return f"Two weeks out from {show.name}, and the calendar is filling up.{stand}"
+    return f"{brand} is coming to {show.name}{where}! \U0001f1f0\U0001f1f7"
+
+
 def _compose_tradeshow(slot: Slot, catalog: Catalog) -> PostDraft:
     show = slot.show
     profile = catalog.brand_profile
-    where = f", {show.location}" if show.booth else ""
+    day = slot.scheduled_for
+    running = show.is_running(day)
+
+    if running:
+        second = (
+            "We are showing our full boltless steel shelving range, and there is a table free for "
+            "anyone who wants to sit down with dimensions and a pack spec."
+        )
+        cta = f"Message me and I will come and meet you at the entrance. \u2014 {profile.author}"
+    else:
+        second = (
+            "Bring the dimensions you are working with and we will tell you on the spot whether we "
+            "already have a unit that fits, or whether it is a tooling change."
+        )
+        cta = (
+            "If you are attending, message me and we will book a time before the calendar fills. "
+            f"\u2014 {profile.author}"
+        )
+
     return PostDraft(
         slot=slot,
-        hook=f"See you at {show.name}{where}! 🇰🇷",
+        hook=_show_hook(show, day, profile.brand),
         body=_paragraphs(
-            f"{profile.company} will be at {show.venue}, {show.dates}, with our "
-            f"{profile.offer}.",
+            f"{profile.company} is at {show.venue}, {show.dates}, with our {profile.offer}.",
             profile.capability,
-            "Bring the dimensions you are working with and we will tell you on the spot whether "
-            "we already have a unit that fits, or whether it is a tooling change.",
+            second,
         ),
-        cta=(
-            "If you are attending, message me and we will set a time before the floor gets busy. "
-            f"— {profile.author}"
-        ),
+        cta=cta,
         hashtags=_hashtags(slot, show.hashtags),
         points=profile.proof_points[:3],
     )

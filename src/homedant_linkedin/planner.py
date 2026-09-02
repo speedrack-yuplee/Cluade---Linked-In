@@ -66,6 +66,37 @@ def _usable_pillars(catalog: Catalog, pillars: tuple[Pillar, ...], start: date) 
     return tuple(p for p in pillars if available.get(p.needs, False))
 
 
+COUNTDOWN_DAYS: tuple[int, ...] = (30, 14, 7, 2)
+"""How far ahead of a show to force a post about it.
+
+A showroom space on an upper floor cannot rely on buyers wandering in, so the
+meetings have to be booked before the show. These posts are what books them,
+and they take priority over the ordinary rotation.
+"""
+
+
+def _show_dates(shows: list, days: list[date]) -> dict[date, object]:
+    """Which posting dates belong to a show, and to which show.
+
+    Each countdown milestone claims the posting date closest to it, and every
+    posting date inside the show's own run is claimed by that show.
+    """
+    claimed: dict[date, object] = {}
+    for show in shows:
+        for day in days:
+            if show.is_running(day):
+                claimed.setdefault(day, show)
+        for offset in COUNTDOWN_DAYS:
+            target = show.start - timedelta(days=offset)
+            free = [d for d in days if d not in claimed and d <= show.start]
+            if not free:
+                continue
+            nearest = min(free, key=lambda d: abs((d - target).days))
+            if abs((nearest - target).days) <= 3:
+                claimed[nearest] = show
+    return claimed
+
+
 def build_plan(
     catalog: Catalog,
     start: date,
@@ -84,6 +115,7 @@ def build_plan(
         raise ValueError("catalog is empty")
 
     usable = _usable_pillars(catalog, pillars, start)
+    rotation = tuple(p for p in usable if p.needs != "show") or usable
     if not usable:
         raise ValueError("no pillar can be filled from this catalog and brand profile")
 
@@ -98,9 +130,18 @@ def build_plan(
             pools[f"product:{pillar.segment}"] = _segment_pool(catalog, pillar.segment)
     cursors = dict.fromkeys(pools, 0)
 
+    days = posting_dates(start, weeks, weekdays)
+    show_pillar = next((p for p in usable if p.needs == "show"), None)
+    claimed = _show_dates(pools["show"], days) if show_pillar else {}
+
     slots: list[Slot] = []
-    for index, day in enumerate(posting_dates(start, weeks, weekdays)):
-        pillar = usable[index % len(usable)]
+    index = 0
+    for day in days:
+        if day in claimed:
+            slots.append(Slot(scheduled_for=day, pillar=show_pillar, show=claimed[day]))
+            continue
+        pillar = rotation[index % len(rotation)]
+        index += 1
         subject = {}
         if pillar.needs:
             key = f"product:{pillar.segment}" if pillar.needs == "product" and pillar.segment else pillar.needs

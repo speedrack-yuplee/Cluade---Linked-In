@@ -20,7 +20,8 @@
       "retail_fit": "ships flat, two units per carton, so a pallet covers a full endcap reset",
       "segments": [
         "retail"
-      ]
+      ],
+      "image_url": "https://m.media-amazon.com/images/I/71uf0XVmBfL.jpg"
     },
     {
       "asin": "B0GWGSJTC6",
@@ -39,7 +40,8 @@
       "retail_fit": "32 inch width matches standard gondola runs",
       "segments": [
         "retail"
-      ]
+      ],
+      "image_url": "https://m.media-amazon.com/images/I/71ZJ9x2vg3L.jpg"
     },
     {
       "asin": "B09NLRKRYT",
@@ -59,7 +61,8 @@
       "segments": [
         "retail",
         "project"
-      ]
+      ],
+      "image_url": "https://m.media-amazon.com/images/I/71ABliuISmL.jpg"
     },
     {
       "asin": "B0B75Z5MGZ",
@@ -78,7 +81,8 @@
       "retail_fit": "39.8 inch footprint fits a standard four foot planogram bay",
       "segments": [
         "retail"
-      ]
+      ],
+      "image_url": "https://m.media-amazon.com/images/I/714mF00BcAL.jpg"
     },
     {
       "asin": "B0F629W2DT",
@@ -97,7 +101,8 @@
       "retail_fit": "ships in a two pack, so one order covers a full amenity room",
       "segments": [
         "project"
-      ]
+      ],
+      "image_url": "https://m.media-amazon.com/images/I/7172RVPZ52L.jpg"
     },
     {
       "asin": "B0D8VQS2BK",
@@ -116,7 +121,8 @@
       "retail_fit": "open wardrobe system installs without construction work",
       "segments": [
         "project"
-      ]
+      ],
+      "image_url": "https://m.media-amazon.com/images/I/71HDyqI2f5L.jpg"
     },
     {
       "asin": "B0BTYD4L7Y",
@@ -135,7 +141,8 @@
       "retail_fit": "clears a standard tank, so it drops into an existing bathroom",
       "segments": [
         "project"
-      ]
+      ],
+      "image_url": "https://m.media-amazon.com/images/I/71BDWmiJ9KL.jpg"
     },
     {
       "asin": "B0GWH3C1DF",
@@ -154,7 +161,8 @@
       "retail_fit": "rolls, locks, and holds a pegboard panel in one SKU",
       "segments": [
         "retail"
-      ]
+      ],
+      "image_url": "https://m.media-amazon.com/images/I/61lMnrrH2qL.jpg"
     },
     {
       "asin": "B0BTCQ4JWP",
@@ -174,7 +182,8 @@
       "segments": [
         "retail",
         "project"
-      ]
+      ],
+      "image_url": "https://m.media-amazon.com/images/I/71rusGhf4nL.jpg"
     },
     {
       "asin": "B0CWQ8LGQK",
@@ -193,7 +202,8 @@
       "retail_fit": "two rod configuration doubles hanging capacity per unit",
       "segments": [
         "project"
-      ]
+      ],
+      "image_url": "https://m.media-amazon.com/images/I/71HDyqI2f5L.jpg"
     }
   ]
 }

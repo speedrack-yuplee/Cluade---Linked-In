@@ -32,7 +32,7 @@ def test_plan_json_is_machine_readable():
 
     code, output = _run(["plan", "--json", "--start", "2026-09-01", "--weeks", "1"])
     assert code == 0
-    assert [row["pillar"] for row in json.loads(output)] == ["recognition", "tradeshow"]
+    assert [row["pillar"] for row in json.loads(output)] == ["recognition", "project"]
 
 
 def test_draft_renders_full_post_text():

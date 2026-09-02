@@ -74,10 +74,18 @@ once its pool is exhausted. Product pillars draw only from products tagged for
 that segment — a hospitality hook over a pallet-configuration product reads as
 a mismatch.
 
-**Trade shows must be kept current.** A show whose end date has passed is
-dropped from the rotation and the pillar falls out until an upcoming show is
-added to `brand.json`. Both shows currently on file (NY NOW Summer 2026,
-National Hardware Show 2026) have closed.
+**Trade shows drive the calendar, not the rotation.** A show claims posting
+dates at 30, 14, 7 and 2 days out, and every posting day it is open, ahead of
+whatever the rotation would otherwise have put there. A showroom space on an
+upper floor cannot rely on buyers wandering in, so the meetings have to be
+booked before the show — these posts are what books them.
+
+The countdown copy follows the show: an announcement a month out, "the calendar
+is filling up" two weeks out, "N Days to Go" inside the last week, and "we are
+on the floor" while it runs.
+
+A show whose end date has passed is dropped and the pillar falls out until an
+upcoming show is added to `brand.json`.
 
 ## Validation rules
 
@@ -140,6 +148,11 @@ workflow**) to confirm the message arrives.
 comes from: the HOMEDANT wordmark over its tagline rule, the hook as the
 headline, up to three proof points, and a footer band carrying the show or the
 award. No external service is involved.
+
+A product post also carries the listing photo, fetched from `image_url` at
+render time. Where the CDN is unreachable the post falls back to the
+type-only layout rather than failing the run, so a network-restricted machine
+still produces a usable image.
 
 ## Existing posts
 

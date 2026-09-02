@@ -28,6 +28,7 @@ class Product:
     short_name: str = ""
     retail_fit: str = ""
     segments: tuple[str, ...] = ()
+    image_url: str = ""
 
     @classmethod
     def from_dict(cls, raw: dict) -> "Product":
@@ -46,6 +47,7 @@ class Product:
             short_name=raw.get("short_name", ""),
             retail_fit=raw.get("retail_fit", ""),
             segments=tuple(raw.get("segments", ())),
+            image_url=raw.get("image_url", ""),
         )
 
     @property
@@ -135,6 +137,13 @@ class TradeShow:
             booth_label=raw.get("booth_label", "Booth"),
             hashtags=tuple(raw.get("hashtags", ())),
         )
+
+    def days_until(self, day: date) -> int:
+        """Days from ``day`` to the opening. Negative once the show has opened."""
+        return (self.start - day).days
+
+    def is_running(self, day: date) -> bool:
+        return self.start <= day <= self.end
 
     @property
     def location(self) -> str:
