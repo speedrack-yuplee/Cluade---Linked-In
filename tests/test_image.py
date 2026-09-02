@@ -101,3 +101,32 @@ def test_use_creatives_can_be_turned_off(catalog, tmp_path):
     drawn = render(retail, tmp_path / "drawn.png", use_creatives=False)
     panel = render(retail, tmp_path / "panel.png")
     assert drawn.read_bytes() != panel.read_bytes()
+
+
+def test_a_supplied_photo_stands_in_when_the_listing_image_is_unreachable(catalog):
+    """A show post keeps its picture even when that day's product has no file."""
+    from homedant_linkedin.image import photo_for
+
+    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 2), weeks=1), catalog)
+    show = next(d for d in drafts if d.pillar.key == "tradeshow")
+    assert photo_for(show, timeout=2) is not None
+
+
+def test_a_show_logo_survives_the_photo_panel(catalog, tmp_path, monkeypatch):
+    """The panel is opaque, so a logo drawn before it would be painted over."""
+    from PIL import Image as PILImage
+
+    from homedant_linkedin import image as image_module
+
+    mark = PILImage.new("RGBA", (300, 100), (255, 0, 255, 255))
+    monkeypatch.setattr(image_module, "load_asset", lambda path: mark if "shows" in str(path) else None)
+
+    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 2), weeks=1), catalog)
+    show = next(d for d in drafts if d.pillar.key == "tradeshow")
+    photo = PILImage.new("RGB", (700, 1200), (240, 240, 240))
+    path = image_module.render(show, tmp_path / "show.png", photo=photo)
+
+    with PILImage.open(path) as rendered:
+        assert (255, 0, 255) in rendered.convert("RGB").getcolors(maxcolors=1_000_000)[0][1:] or any(
+            colour == (255, 0, 255) for _, colour in rendered.convert("RGB").getcolors(maxcolors=1_000_000)
+        )

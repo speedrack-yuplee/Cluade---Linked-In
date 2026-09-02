@@ -38,6 +38,7 @@ BOLD = FONT_DIR / "LiberationSans-Bold.ttf"
 REGULAR = FONT_DIR / "LiberationSans-Regular.ttf"
 
 ASSET_DIR = Path(__file__).resolve().parent.parent.parent / "assets"
+PHOTO_SUFFIXES = (".jpg", ".jpeg", ".png", ".webp")
 MAX_BULLETS = 3
 BODY_LINE = 42
 BULLET_GAP = 14
@@ -91,7 +92,7 @@ def product_photo_path(asin: str) -> Path | None:
     Lifestyle photography reads far better in a feed than a listing cut on
     white, so a file dropped in assets/products wins over the CDN.
     """
-    for suffix in (".jpg", ".jpeg", ".png", ".webp"):
+    for suffix in PHOTO_SUFFIXES:
         candidate = ASSET_DIR / "products" / f"{asin}{suffix}"
         if candidate.exists():
             return candidate
@@ -205,16 +206,25 @@ def _layout_show(image, draw, draft: PostDraft, photo) -> None:
     draw.rectangle([0, 0, SIZE, SIZE], fill=SHOW_GROUND)
     top = _masthead(image, draw, dark=True)
 
+    width = SIZE - 2 * MARGIN
+    panel_left = None
+    if photo is not None:
+        panel_left = 740
+        draw.rectangle([panel_left, 0, SIZE, SIZE - BAND], fill=PANEL)
+        _paste(image, photo.convert("RGBA"), (panel_left + 24, 200, SIZE - 24, SIZE - BAND - 50))
+        width = panel_left - MARGIN - 44
+
+    # After the panel, never before it: the panel is opaque and would paint
+    # over a logo placed first. With a photo the logo sits on the panel, where
+    # a dark show mark reads; without one it sits on the dark ground.
     logo = load_asset(asset_path("shows", show.name))
     if logo is not None:
-        _paste(image, logo, (SIZE - MARGIN - 300, MARGIN - 10, SIZE - MARGIN, MARGIN + 130))
-
-    width = SIZE - 2 * MARGIN
-    if photo is not None:
-        panel = 740
-        draw.rectangle([panel, 0, SIZE, SIZE - BAND], fill=PANEL)
-        _paste(image, photo.convert("RGBA"), (panel + 24, 150, SIZE - 24, SIZE - BAND - 50))
-        width = panel - MARGIN - 44
+        box = (
+            (panel_left + 40, 40, SIZE - 40, 165)
+            if panel_left
+            else (SIZE - MARGIN - 320, MARGIN - 10, SIZE - MARGIN, MARGIN + 130)
+        )
+        _paste(image, logo, box)
 
     days = show.days_until(draft.scheduled_for)
     if show.is_running(draft.scheduled_for):
@@ -340,23 +350,43 @@ def render(draft: PostDraft, path: str | Path, photo=None, use_creatives: bool =
     return path
 
 
+def _open(path: Path):
+    from PIL import Image as PILImage
+
+    try:
+        return PILImage.open(path).convert("RGB")
+    except Exception:
+        return None
+
+
+def _any_supplied_photo(day):
+    """Any supplied product photo, chosen by date.
+
+    A post that could carry a picture should not lose it because that day's
+    rotation landed on a product whose photo has not been supplied and whose
+    listing image cannot be reached.
+    """
+    directory = ASSET_DIR / "products"
+    if not directory.is_dir():
+        return None
+    files = sorted(p for p in directory.iterdir() if p.suffix.lower() in PHOTO_SUFFIXES)
+    return _open(files[day.toordinal() % len(files)]) if files else None
+
+
 def photo_for(draft: PostDraft, timeout: int = 20):
     """The photo to use for ``draft``, or None.
 
-    A file in assets/products wins; otherwise the listing image is fetched.
+    A file supplied for this product wins, then its listing image, then any
+    other supplied photo.
     """
     product = draft.slot.pictured
     if product is None:
         return None
     local = product_photo_path(product.asin)
-    if local is not None:
-        from PIL import Image as PILImage
-
-        try:
-            return PILImage.open(local).convert("RGB")
-        except Exception:
-            pass
-    return fetch_product_image(product.image_url, timeout=timeout)
+    if local is not None and (image := _open(local)) is not None:
+        return image
+    fetched = fetch_product_image(product.image_url, timeout=timeout)
+    return fetched if fetched is not None else _any_supplied_photo(draft.scheduled_for)
 
 
 def fetch_product_image(url: str, timeout: int = 20):
