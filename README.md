@@ -181,6 +181,64 @@ from the listing's `image_url` otherwise — lifestyle photography reads far
 better in a feed than a cut-out on white. Where neither is reachable the post
 falls back to the type-only layout rather than failing the run.
 
+## 영문 메일 해석과 답장
+
+들어온 영문 메일을 붙여 넣으면 한국어 번역, 상대의 진짜 의도, 그리고 바로
+보낼 수 있는 영문 답장 초안까지 한 번에 나옵니다. Claude Code에서
+`/email` 로 실행합니다.
+
+```
+/email
+Hello, we are a regional hardware chain with 42 stores...
+```
+
+브랜드 사실관계(`brand.json`)와 제품 사양(`products.json`)을 자동으로 읽기
+때문에 회사 설명을 매번 다시 붙여넣을 필요가 없습니다.
+
+가격·MOQ·결제 조건·리드타임은 건마다 달라지므로 기본값을 두지 않습니다.
+초안에 `[[MOQ]]` 처럼 빈칸으로 남고, 그 자리에서 정해 알려 주시면 채운
+완성본이 다시 나옵니다. 지난 건의 조건이 다른 상대에게 따라가지 않습니다.
+
+## 아침 메일 정리
+
+미국에서 밤사이 들어온 메일을 `/inbox` 로 정리합니다. **채널별로 나누고**
+— 아마존, 월마트, 웨이페어, Faire, 쇼피파이 자사몰, B2B 거래처, 물류,
+전시회·기관, 광고·스팸 — 각 건에 🔴 오늘 처리 / 🟡 확인 / ⚪ 참고 를
+매깁니다. 🔴 과 🟡 만 번역하고, 답장이 필요한 건은 초안까지 만듭니다.
+
+기한이 적힌 메일은 무조건 🔴 입니다. 아마존 계정 상태 경고, 리스팅 차단,
+서류 제출 요구처럼 놓치면 계정이나 돈이 걸리는 건들입니다. 광고·스팸은
+건수와 유형만 세고, 아마존 사칭 피싱을 포함한 사기 의심 건은 발신 주소와
+함께 따로 알립니다.
+
+**아마존 고객 문의는 따로 봅니다.** 발신 주소가 `@marketplace.amazon.com`
+인 것은 아마존 알림이 아니라 구매자가 직접 쓴 글이고, 주말·공휴일을 포함해
+24시간 안에 답하지 않으면 Late Response Rate 가 올라갑니다. 그래서 전부 🔴 로
+두고 아마존 섹션 맨 위에 **남은 시간과 함께** 표로 냅니다. 답장 초안에는
+외부 연락처·링크, 리뷰 요청, 할인 제안을 넣지 않습니다 — 아마존 정책 위반입니다.
+
+채널 판정 기준은 `.claude/skills/inbox/references/channels.md`, 아마존 고객
+문의 처리는 `amazon-messages.md` 에 있습니다. 새 판매 채널이 생기면 이 파일에
+추가하면 됩니다.
+
+### 매일 아침 08:30 자동 실행
+
+평일 아침 08:30(한국시간)에 `/inbox` 가 자동으로 돌아, 출근하면 밤사이 온
+메일이 이미 정리되어 있습니다. 시간이나 요일을 바꾸시려면 말씀해 주세요.
+
+Outlook을 직접 읽으려면 claude.ai에서 Microsoft 365 커넥터를 연결해야
+합니다 — [`content/emails/OUTLOOK.md`](content/emails/OUTLOOK.md). 연결하지
+않아도 날짜·발신자·제목 목록을 붙여 넣으면 선별은 됩니다. 메일함은 읽기만
+하고 삭제·이동·발송은 하지 않습니다.
+
+선별 기준과 검색 질의는 `.claude/skills/inbox/references/` 에 있습니다.
+
+메일 유형별 판단 기준과 답장 뼈대는 `.claude/skills/email/references/` 에
+있습니다 — 바이어 문의, 유통사 제안, 견적 요청, 전시회 미팅, 물류 클레임,
+마켓플레이스 계정, 스팸·사기 판별. 지난 메일은
+[`content/emails/`](content/emails/README.md) 에 남겨 두면 다음 메일에서
+문맥이 이어집니다.
+
 ## Existing posts
 
 `content/posts/` holds the LinkedIn posts that have already been published.
