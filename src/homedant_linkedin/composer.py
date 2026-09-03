@@ -293,7 +293,7 @@ def _compose_supply(slot: Slot, catalog: Catalog) -> PostDraft:
         ),
         cta=CONNECT_CTA.format(audiences=profile.audience_phrase),
         hashtags=_hashtags(slot),
-        points=profile.proof_points[-3:],
+        points=(*profile.proof_points[-2:], profile.proof_points[2]),
     )
 
 

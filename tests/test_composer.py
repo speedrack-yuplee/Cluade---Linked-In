@@ -129,3 +129,17 @@ def test_a_show_post_carries_the_year_s_other_shows(catalog):
     show = next(s for s in catalog.brand_profile.trade_shows if s.name == "High Point Market")
     text = compose(Slot(PLAN_START, get_pillar("tradeshow"), show=show), catalog).render()
     assert "NeoCon" in text and "National Hardware Show" in text
+
+
+def test_the_headline_load_figure_is_the_plain_one(catalog):
+    """551 lb needs a LiftBeam fitted. The bullets an image shows are the
+    first three, so the plain rating has to be among them and the fitted one
+    must not be."""
+    points = catalog.brand_profile.proof_points[:3]
+    assert any("264 lb per tier" in p for p in points)
+    assert not any("551 lb" in p for p in points)
+
+
+def test_the_liftbeam_figure_says_it_needs_the_beam(catalog):
+    liftbeam = next(p for p in catalog.brand_profile.proof_points if "551 lb" in p)
+    assert "LiftBeam" in liftbeam and "raises" in liftbeam
