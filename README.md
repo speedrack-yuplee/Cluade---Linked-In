@@ -193,9 +193,11 @@ Hello, we are a regional hardware chain with 42 stores...
 ```
 
 브랜드 사실관계(`brand.json`)와 제품 사양(`products.json`)을 자동으로 읽기
-때문에 회사 설명을 매번 다시 붙여넣을 필요가 없습니다. 가격·MOQ·리드타임처럼
-지어내면 안 되는 값은 [`content/emails/facts.md`](content/emails/facts.md) 에
-적힌 값만 쓰고, 비어 있으면 `[[MOQ 확인]]` 표시로 남깁니다.
+때문에 회사 설명을 매번 다시 붙여넣을 필요가 없습니다.
+
+가격·MOQ·결제 조건·리드타임은 건마다 달라지므로 기본값을 두지 않습니다.
+초안에 `[[MOQ]]` 처럼 빈칸으로 남고, 그 자리에서 정해 알려 주시면 채운
+완성본이 다시 나옵니다. 지난 건의 조건이 다른 상대에게 따라가지 않습니다.
 
 메일 유형별 판단 기준과 답장 뼈대는 `.claude/skills/email/references/` 에
 있습니다 — 바이어 문의, 유통사 제안, 견적 요청, 전시회 미팅, 물류 클레임,

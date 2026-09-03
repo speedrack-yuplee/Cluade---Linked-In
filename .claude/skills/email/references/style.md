@@ -32,8 +32,9 @@ Global B2B Sales | Homedant USA Inc
 Korean-made boltless steel shelving | Manufacturing since 1979
 ```
 
-사용자가 실제 전화번호·주소·웹사이트를 `content/emails/facts.md` 에
-넣어 두면 서명에 함께 쓴다. 없으면 위 세 줄만 쓰고 지어내지 않는다.
+연락처는 받는 사람에 따라 달라질 수 있으므로 기본으로 붙이지 않는다.
+`content/emails/facts.md` 에 적혀 있거나 사용자가 이 건에 대해 지정한
+경우에만 서명에 넣는다. 지어내지 않는다.
 
 ## 근거로 쓸 수 있는 것
 
