@@ -32,6 +32,8 @@ description: Sort a morning inbox into channels — Amazon, Walmart, Wayfair, Fa
 1. **범위** — 기본은 마지막 확인 이후. 처음 실행하거나 기준이 없으면 최근 24시간.
 2. **채널 분류** — `references/channels.md` 의 발신 도메인 기준으로 나눈다.
 3. **조치 등급** — 채널 안에서 각 건에 🔴 / 🟡 / ⚪ 를 매긴다.
+   아마존 구매자 문의(`@marketplace.amazon.com`)는 전부 🔴 이고,
+   `references/amazon-messages.md` 를 따라 아마존 섹션 맨 위에 따로 낸다.
 4. **번역** — 🔴 과 🟡 만 한국어로 옮긴다. ⚪ 는 한 줄 요약만.
 5. **답장 초안** — 🔴 중 답장이 필요한 건에 대해 만든다. `email` 스킬의
    문체와 규칙(`.claude/skills/email/references/`)을 그대로 따른다.
@@ -61,6 +63,11 @@ description: Sort a morning inbox into channels — Amazon, Walmart, Wayfair, Fa
 ---
 
 ## 🛒 아마존 (18)
+
+### 💬 고객 문의 (3) — 24시간 내 응답 필요
+| 남은 시간 | 주문/ASIN | 무슨 문의인가 |
+| 약 6시간 | 111-2345678 / B09NLJMGDZ | 선반 한 칸 파손 도착 |
+(건마다 번역 → 답장 초안)
 
 ### 🔴 Listing suppressed — B09NLJMGDZ
 **원문 요지** (한국어)
@@ -98,6 +105,8 @@ description: Sort a morning inbox into channels — Amazon, Walmart, Wayfair, Fa
   `email` 스킬의 "거래 조건은 건별로 정해진다" 규칙이 여기에도 그대로 적용된다.
 - 아마존·월마트 케이스 회신은 감정 표현 없이 사실과 서류만. 사과나 변명을
   넣으면 심사에 불리하다.
+- 아마존 구매자 답장에는 **외부 연락처·링크, 리뷰 요청, 할인 제안을 절대
+  넣지 않는다.** 정책 위반이다. `references/amazon-messages.md` 참조.
 - 초안은 **만들기만 한다. 보내지 않는다.**
 
 ## 지켜야 할 선

@@ -211,8 +211,20 @@ Hello, we are a regional hardware chain with 42 stores...
 건수와 유형만 세고, 아마존 사칭 피싱을 포함한 사기 의심 건은 발신 주소와
 함께 따로 알립니다.
 
-채널 판정 기준은 `.claude/skills/inbox/references/channels.md` 에 있습니다.
-새 판매 채널이 생기면 이 파일에 추가하면 됩니다.
+**아마존 고객 문의는 따로 봅니다.** 발신 주소가 `@marketplace.amazon.com`
+인 것은 아마존 알림이 아니라 구매자가 직접 쓴 글이고, 주말·공휴일을 포함해
+24시간 안에 답하지 않으면 Late Response Rate 가 올라갑니다. 그래서 전부 🔴 로
+두고 아마존 섹션 맨 위에 **남은 시간과 함께** 표로 냅니다. 답장 초안에는
+외부 연락처·링크, 리뷰 요청, 할인 제안을 넣지 않습니다 — 아마존 정책 위반입니다.
+
+채널 판정 기준은 `.claude/skills/inbox/references/channels.md`, 아마존 고객
+문의 처리는 `amazon-messages.md` 에 있습니다. 새 판매 채널이 생기면 이 파일에
+추가하면 됩니다.
+
+### 매일 아침 08:30 자동 실행
+
+평일 아침 08:30(한국시간)에 `/inbox` 가 자동으로 돌아, 출근하면 밤사이 온
+메일이 이미 정리되어 있습니다. 시간이나 요일을 바꾸시려면 말씀해 주세요.
 
 Outlook을 직접 읽으려면 claude.ai에서 Microsoft 365 커넥터를 연결해야
 합니다 — [`content/emails/OUTLOOK.md`](content/emails/OUTLOOK.md). 연결하지
