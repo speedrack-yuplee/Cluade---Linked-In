@@ -84,3 +84,12 @@ def test_a_coined_name_with_its_explanation_passes(catalog):
         body="Homedant USA Inc builds HANDiLOCK frames: they lock by hand, with no bolts.",
     )
     assert not any(i.rule == "jargon" for i in validate(draft, catalog.brand_profile))
+
+
+def test_a_post_that_asks_nothing_is_flagged(catalog):
+    assert any(i.rule == "question" for i in validate(replace(_draft(catalog), question="")))
+
+
+def test_a_closing_line_that_is_not_a_question_is_flagged(catalog):
+    draft = replace(_draft(catalog), question="Let me know your thoughts.")
+    assert any(i.rule == "question" for i in validate(draft))

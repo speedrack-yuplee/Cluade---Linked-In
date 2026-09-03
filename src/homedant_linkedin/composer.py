@@ -46,6 +46,46 @@ def _load_clause(product) -> str:
     return f", and it still carries {product.load_per_tier} on a tier{total}"
 
 
+# One line, answerable from the reader's own desk, and worth reading when it
+# is answered. "What do you think?" is none of those.
+QUESTIONS: dict[str, tuple[str, ...]] = {
+    "recognition": (
+        "Which of these decides it in your category: the load rating, the assembly time, or the finish?",
+        "What is the first spec you check when a new shelving supplier reaches out?",
+    ),
+    "tradeshow": (
+        "Which day are you walking the floor?",
+        "What are you sourcing at this one?",
+        "Who else should we be talking to while we are there?",
+    ),
+    "project": (
+        "Where does storage run out first in your units: the entry, the bathroom, or the closet?",
+        "How far ahead of handover do you specify storage?",
+    ),
+    "retail": (
+        "How many facings does storage get in a four foot bay in your stores?",
+        "What box size breaks your current shelving?",
+    ),
+    "manufacturing": (
+        "Boltless or bolted, which comes back to you less often?",
+        "How much of an assembly complaint is the instructions rather than the product?",
+    ),
+    "seasonal": (
+        "When does your Q4 storage set go on the floor?",
+        "Does holiday storage sit in seasonal or in home organization for you?",
+    ),
+    "supply": (
+        "Where is your sourcing concentrated right now?",
+        "How far out are you quoting lead times this quarter?",
+    ),
+}
+
+
+def _question(slot: Slot) -> str:
+    options = QUESTIONS.get(slot.pillar.key, ())
+    return _variant(slot, options) if options else ""
+
+
 def _variant(slot: Slot, options: tuple[str, ...]) -> str:
     """One of several openings, rotated by ISO week.
 
@@ -95,6 +135,7 @@ def _compose_recognition(slot: Slot, catalog: Catalog) -> PostDraft:
                 else "The range is the same one the judges looked at.",
             ),
             cta=CONNECT_CTA.format(audiences=profile.audience_phrase),
+            question=_question(slot),
             hashtags=_hashtags(slot, award.hashtags),
             points=profile.proof_points[:3],
         )
@@ -117,6 +158,7 @@ def _compose_recognition(slot: Slot, catalog: Catalog) -> PostDraft:
             if award.thanks
             else f"Thank you to {award.org} for this recognition."
         ),
+        question=_question(slot),
         hashtags=_hashtags(slot, award.hashtags),
         points=profile.proof_points[:3],
     )
@@ -175,6 +217,7 @@ def _compose_tradeshow(slot: Slot, catalog: Catalog) -> PostDraft:
         closing=f"We also showed at {profile.show_history} this year."
         if profile.exhibited_at and not running
         else "",
+        question=_question(slot),
         hashtags=_hashtags(slot, show.hashtags),
         points=profile.proof_points[:3],
     )
@@ -204,6 +247,7 @@ def _compose_project(slot: Slot, catalog: Catalog) -> PostDraft:
             product.retail_fit and f"For specifiers: {product.retail_fit}.",
         ),
         cta="Send me your floor plan and unit count and we will come back with a layout and a quote.",
+        question=_question(slot),
         hashtags=_hashtags(slot),
         points=product.highlights[:3],
     )
@@ -231,6 +275,7 @@ def _compose_retail(slot: Slot, catalog: Catalog) -> PostDraft:
             product.retail_fit and f"On the floor: {product.retail_fit}.",
         ),
         cta="Message me for a line sheet, case pack and pallet configuration.",
+        question=_question(slot),
         hashtags=_hashtags(slot),
         points=product.highlights[:3],
     )
@@ -262,6 +307,7 @@ def _compose_manufacturing(slot: Slot, catalog: Catalog) -> PostDraft:
             profile.capability,
         ),
         cta="If you are evaluating a supplier, ask me for our test reports. We will send them.",
+        question=_question(slot),
         hashtags=_hashtags(slot),
         points=profile.proof_points[:3],
     )
@@ -292,6 +338,7 @@ def _compose_supply(slot: Slot, catalog: Catalog) -> PostDraft:
             profile.capability,
         ),
         cta=CONNECT_CTA.format(audiences=profile.audience_phrase),
+        question=_question(slot),
         hashtags=_hashtags(slot),
         points=(*profile.proof_points[-2:], profile.proof_points[2]),
     )
@@ -321,6 +368,7 @@ def _compose_seasonal(slot: Slot, catalog: Catalog) -> PostDraft:
             product.retail_fit and f"On the floor: {product.retail_fit}.",
         ),
         cta="Message me for a line sheet if you are still building your Q4 storage set.",
+        question=_question(slot),
         hashtags=_hashtags(slot),
         points=product.highlights[:3],
     )

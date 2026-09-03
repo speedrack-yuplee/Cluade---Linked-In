@@ -152,3 +152,21 @@ def test_no_hook_uses_a_flag_emoji(catalog):
     flags = {chr(c) for c in range(0x1F1E6, 0x1F200)}
     for draft in drafts:
         assert not (flags & set(draft.render())), f"flag emoji in {draft.pillar.key}"
+
+
+def test_every_post_ends_on_a_question(catalog):
+    """A message goes to an inbox the feed cannot see. The one post that drew
+    comments reached 709 impressions where the rest sat between 46 and 99, so
+    every post also asks something a reader can answer in a line."""
+    drafts = compose_all(build_plan(catalog, start=PLAN_START, weeks=8), catalog)
+    for draft in drafts:
+        assert draft.question, f"no question on {draft.pillar.key}"
+        assert draft.question.endswith("?")
+        assert len(draft.question) <= 110, f"too long to answer casually: {draft.pillar.key}"
+
+
+def test_the_question_is_the_last_line_before_the_hashtags(catalog):
+    drafts = compose_all(build_plan(catalog, start=PLAN_START, weeks=2), catalog)
+    for draft in drafts:
+        blocks = draft.render().split("\n\n")
+        assert blocks[-2] == draft.question

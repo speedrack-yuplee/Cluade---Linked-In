@@ -307,6 +307,14 @@ class PostDraft:
     """A line that follows the call to action, such as the thank-you the award
     posts end on."""
 
+    question: str = ""
+    """A question a reader can answer from their own experience in one line.
+
+    The account's best post carried eight comments and reached 709
+    impressions; every other post carried none or one and sat between 46 and
+    99. A message goes to an inbox the feed cannot see, so the post also has
+    to ask for something that costs a reader nothing to give."""
+
     hashtags: tuple[str, ...] = field(default=())
     points: tuple[str, ...] = ()
     """Proof points for the image. The posts themselves run as prose, so these
@@ -326,7 +334,7 @@ class PostDraft:
 
     def render(self) -> str:
         """The exact text to paste into LinkedIn."""
-        blocks = [self.hook, self.body, self.cta, self.closing]
+        blocks = [self.hook, self.body, self.cta, self.closing, self.question]
         if self.hashtags:
             blocks.append(" ".join(f"#{tag}" for tag in self.hashtags))
         return "\n\n".join(block for block in blocks if block)

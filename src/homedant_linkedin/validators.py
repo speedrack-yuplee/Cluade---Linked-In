@@ -76,6 +76,11 @@ def validate(draft: PostDraft, brand: Brand | None = None) -> list[Issue]:
     if BRAND_HASHTAG not in draft.hashtags:
         issues.append(Issue("hashtags", f"#{BRAND_HASHTAG} is missing"))
 
+    if not draft.question.strip():
+        issues.append(Issue("question", "post asks the reader nothing"))
+    elif not draft.question.rstrip().endswith("?"):
+        issues.append(Issue("question", "the closing question is not a question"))
+
     if not draft.cta.strip():
         issues.append(Issue("cta", "post has no call to action"))
     elif not any(intent in draft.cta.lower() for intent in CTA_INTENTS):
