@@ -8,6 +8,8 @@ on:
     branches: ["**"]
     paths:
       - "content/reference/posts.json"
+      - "content/reference/timeline.json"
+      - "content/reference/watched.json"
   workflow_dispatch:
 
 jobs:
@@ -19,7 +21,11 @@ jobs:
         with:
           python-version: "3.12"
       - name: Rank the posts
-        run: python scripts/report_posts.py --out digest.txt
+        run: python scripts/report_posts.py --out digest.txt || true
+      - name: Read what others posted
+        run: |
+          python scripts/report_watch.py --out watch.txt || true
+          if [ -s watch.txt ]; then printf '\n\n' >> digest.txt; cat watch.txt >> digest.txt; fi
       - name: Send the digest
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}

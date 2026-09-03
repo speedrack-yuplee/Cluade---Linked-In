@@ -44,10 +44,38 @@ Register-ScheduledTask -TaskName "LinkedIn metrics" -Action $action -Trigger $tr
 opencli.cmd linkedin whoami
 ```
 
+## 누구를 볼지 정하기
+
+`src/homedant_linkedin/data/watchlist.json` 에 있습니다. 세 종류입니다.
+
+| 항목 | 수집 방식 |
+| --- | --- |
+| `people` | `profile_url` 이 있으면 그 사람 게시글 10개를 직접 수집 |
+| `companies` | **직접 수집 불가.** LinkedIn에서 팔로우하시면 `timeline` 에 섞여 들어옵니다 |
+| `search_terms` | 사람을 새로 찾을 때 쓸 검색어 메모. 자동 실행되지 않습니다 |
+
+`profile_url` 이 비어 있으면 **건너뛰고 이름만 알려줍니다.** 핸들을 추측해서
+엉뚱한 사람을 긁는 것보다 낫습니다. 채우시려면 그 사람 프로필에 들어가
+주소창의 `https://www.linkedin.com/in/핸들/` 을 그대로 붙여넣으면 됩니다.
+
+**회사는 팔로우가 곧 수집입니다.** opencli는 회사 페이지 게시글을 읽지
+못합니다(`posts requires a /in/<handle>/ profile URL`). 팔로우해 두시면 그
+회사 글이 피드에 뜨고, `timeline` 이 그걸 가져옵니다.
+
+## 노출 수는 남의 글에서 안 보입니다
+
+LinkedIn은 노출을 작성자에게만 보여줍니다. 남의 게시글은 **반응·댓글**로만
+비교됩니다. 절대 도달은 알 수 없습니다.
+
 ## 푸시된 뒤
 
-`metrics.yml` 워크플로우가 자동으로 돌면서 순위 요약을 텔레그램으로
-보냅니다. 아무것도 안 하셔도 됩니다.
+`metrics.yml` 워크플로우가 자동으로 돌면서 텔레그램으로 두 가지를 보냅니다.
+
+1. **내 게시글 순위** — 노출순 상위 5개, 주제별 평균 노출
+2. **다른 계정 동향** — 반응이 붙은 글, 자주 나온 주제, 자주 쓰인 단어
+
+2번이 콘텐츠 소재가 됩니다. 예를 들어 "관세·소싱"이 계속 상위로 올라오면,
+그 주 공급·물류 게시글을 그 각도로 쓰면 됩니다.
 
 ## 안 될 때
 

@@ -51,11 +51,52 @@ $target = Join-Path $RepoPath "content\reference\posts.json"
 $count = ([regex]::Matches($json, '"rank"')).Count
 Write-Host "collected $count posts"
 
-git add content/reference/posts.json
+# The feed: what the people and companies this account follows are posting.
+# Impressions are visible to a post's author only, so watched posts carry
+# reactions and comments and nothing more.
+$feed = opencli.cmd linkedin timeline --limit 50 -f json --window foreground --keep-tab false |
+    Out-String -Width 100000
+if ($feed.TrimStart().StartsWith("[")) {
+    [IO.File]::WriteAllText(
+        (Join-Path $RepoPath "content\reference\timeline.json"), $feed, [Text.UTF8Encoding]::new($false))
+    Write-Host "collected $((([regex]::Matches($feed, '"rank"')).Count)) feed posts"
+} else {
+    Write-Warning "timeline returned no JSON; skipping"
+}
+
+# Named profiles from the watchlist. An entry with no profile_url is named
+# and skipped: a guessed handle would collect the wrong person silently.
+$watchPath = Join-Path $RepoPath "src\homedant_linkedin\data\watchlist.json"
+if (Test-Path $watchPath) {
+    $watch = Get-Content $watchPath -Raw | ConvertFrom-Json
+    $collected = @()
+    $missing = @()
+    foreach ($person in $watch.people) {
+        if (-not $person.profile_url) { $missing += $person.name; continue }
+        $one = opencli.cmd linkedin posts --profile-url $person.profile_url --limit 10 -f json `
+            --window foreground --keep-tab false | Out-String -Width 100000
+        if ($one.TrimStart().StartsWith("[")) {
+            $collected += [pscustomobject]@{ name = $person.name; url = $person.profile_url; posts = ($one | ConvertFrom-Json) }
+        } else {
+            Write-Warning "$($person.name): no JSON returned"
+        }
+    }
+    if ($collected.Count) {
+        [IO.File]::WriteAllText(
+            (Join-Path $RepoPath "content\reference\watched.json"),
+            ($collected | ConvertTo-Json -Depth 8), [Text.UTF8Encoding]::new($false))
+        Write-Host "collected $($collected.Count) watched profiles"
+    }
+    if ($missing.Count) {
+        Write-Host "no profile_url yet, skipped: $($missing -join ', ')"
+    }
+}
+
+git add content/reference/posts.json content/reference/timeline.json content/reference/watched.json 2>$null
 if (git diff --cached --quiet) {
     Write-Host "no change since the last run"
     exit 0
 }
-git commit -m "Refresh LinkedIn post metrics ($count posts, $(Get-Date -Format yyyy-MM-dd))" --quiet
+git commit -m "Refresh LinkedIn metrics ($count own posts, $(Get-Date -Format yyyy-MM-dd))" --quiet
 git push -u origin $Branch --quiet
 Write-Host "pushed to $Branch"

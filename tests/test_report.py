@@ -53,3 +53,33 @@ def test_a_missing_source_exits_three(tmp_path):
         text=True,
     )
     assert result.returncode == 3
+
+
+def test_watch_report_ranks_by_visible_engagement(tmp_path, monkeypatch):
+    """Impressions belong to a post's author, so a watched post is ranked on
+    what is public: reactions and comments."""
+    reference = tmp_path / "content" / "reference"
+    reference.mkdir(parents=True)
+    (reference / "timeline.json").write_text(
+        json.dumps(
+            [
+                {"author": "Quiet", "text": "modular storage", "reactions": 1, "comments": 0},
+                {"author": "Loud", "text": "tariff and sourcing", "reactions": 40, "comments": 9},
+            ]
+        ),
+        encoding="utf-8",
+    )
+    script = Path(__file__).resolve().parent.parent / "scripts" / "report_watch.py"
+    out = subprocess.run(
+        [sys.executable, str(script)], capture_output=True, text=True, cwd=tmp_path
+    ).stdout
+    assert out.index("Loud") < out.index("Quiet")
+    assert "관세·소싱" in out
+
+
+def test_watch_report_says_so_when_nothing_was_collected(tmp_path):
+    script = Path(__file__).resolve().parent.parent / "scripts" / "report_watch.py"
+    out = subprocess.run(
+        [sys.executable, str(script)], capture_output=True, text=True, cwd=tmp_path
+    ).stdout
+    assert "collect_linkedin.ps1" in out
