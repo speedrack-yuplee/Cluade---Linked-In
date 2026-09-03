@@ -7,7 +7,29 @@
 기본 기간은 최근 30일. 결과가 20건 미만이면 90일로 넓히고, 200건을 넘으면
 7일씩 나눠 돌린다.
 
-## 1순위 — 거래 단계 언어 (거의 전부 A·B급)
+## 0순위 — 채널별로 훑기 (아침 정리는 여기서 시작한다)
+
+발신 도메인으로 먼저 나누면 대부분이 정리된다. 전달된 메일이라 발신자가
+`halla147@speedrack.kr` 로 찍히는 경우에는 도메인 검색이 듣지 않으니,
+기간으로 전체를 가져와 본문의 원본 `From:` 으로 분류한다.
+
+```
+amazon.com OR sellercentral OR "Seller Central" OR ASIN OR FBA
+walmart.com OR "Retail Link" OR "Item 360"
+wayfair.com OR "Wayfair Partner"
+faire.com
+shopify OR myshopify OR "new order"
+```
+
+아마존 안에서 급한 것만 먼저 뽑을 때:
+
+```
+"Account Health" OR "policy violation" OR suspended OR suppressed
+"case ID" OR "we need more information" OR "documents required"
+"A-to-z" OR "buyer message" OR "intellectual property"
+```
+
+## 1순위 — 거래 단계 언어 (B2B 채널)
 
 ```
 quotation OR quote OR RFQ OR "request for quote"
