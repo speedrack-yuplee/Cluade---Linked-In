@@ -11,9 +11,9 @@
     "multifamily developers"
   ],
   "proof_points": [
-    "HANDiLOCK boltless joints, engineered and inspected in our own Korean factory",
+    "HANDiLOCK joints: the frame locks together by hand, with no bolts and no tools",
     "tool-free assembly in about ten minutes, with no drilling and no noise",
-    "up to 551 lb per tier and 2,755 lb per unit with a LiftBeam fitted",
+    "up to 551 lb per tier, and 2,755 lb per unit with a LiftBeam reinforcing bar fitted",
     "reversible laminated board, light wood on one face and soft white on the other",
     "shelf height adjustable in 1.18 inch intervals",
     "laminated on all six sides, anti-scratch and waterproof",
@@ -128,5 +128,20 @@
     "2026-12-25",
     "2026-12-31",
     "2027-01-01"
-  ]
+  ],
+  "coined_terms": {
+    "HANDiLOCK": [
+      "lock",
+      "by hand",
+      "no bolts",
+      "boltless",
+      "without bolts"
+    ],
+    "LiftBeam": [
+      "reinforc",
+      "per tier",
+      "load",
+      "beam"
+    ]
+  }
 }

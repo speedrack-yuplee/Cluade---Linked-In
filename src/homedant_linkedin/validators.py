@@ -84,6 +84,22 @@ def validate(draft: PostDraft, brand: Brand | None = None) -> list[Issue]:
     if brand is not None and brand.company.lower() not in lowered:
         issues.append(Issue("company", f"post never names {brand.company}"))
 
+    if brand is not None:
+        for term, explainers in brand.coined_terms.items():
+            if term.lower() not in lowered:
+                continue
+            # Remove the term first: "HANDiLOCK" contains "lock", so a naive
+            # search would let the name explain itself.
+            rest = lowered.replace(term.lower(), " ")
+            if not any(e.lower() in rest for e in explainers):
+                issues.append(
+                    Issue(
+                        "jargon",
+                        f"{term!r} is our own name and the post never says what it is; "
+                        f"add one of: {', '.join(explainers)}",
+                    )
+                )
+
     for claim in UNSUPPORTABLE_CLAIMS:
         if claim in lowered:
             issues.append(Issue("claims", f"unsupportable claim: {claim!r}"))

@@ -188,6 +188,10 @@ class Brand:
     founded: int | None = None
     capability: str = ""
     offer: str = ""
+    coined_terms: dict = field(default_factory=dict)
+    """A name we invented, mapped to the words that explain it. A post using
+    the name has to carry one of them."""
+
     recognitions: tuple[Recognition, ...] = ()
     trade_shows: tuple[TradeShow, ...] = ()
     blackout_dates: frozenset = frozenset()
@@ -211,6 +215,7 @@ class Brand:
             founded=raw.get("founded"),
             capability=raw.get("capability", ""),
             offer=raw.get("offer", ""),
+            coined_terms={k: tuple(v) for k, v in raw.get("coined_terms", {}).items()},
             recognitions=tuple(Recognition.from_dict(r) for r in raw.get("recognitions", ())),
             trade_shows=tuple(TradeShow.from_dict(s) for s in raw.get("trade_shows", ())),
             plan_anchor=date.fromisoformat(raw["plan_anchor"]) if raw.get("plan_anchor") else None,
