@@ -24,6 +24,66 @@ param(
 
 $ErrorActionPreference = "Stop"
 chcp 65001 > $null
+# chcp sets the console code page; PowerShell 5.1 decodes a piped child
+# process with [Console]::OutputEncoding, which chcp leaves alone. Without
+# this the UTF-8 opencli writes is read as cp949 and Korean is destroyed.
+[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false
+$OutputEncoding = New-Object System.Text.UTF8Encoding $false
+
+
+function ConvertTo-ReferenceSchema {
+    <#
+        opencli emits its own columns, and leaves raw newlines and quotes
+        inside raw_text so the document does not parse. raw_text duplicates
+        body, so it is dropped by line before parsing rather than repaired.
+        The result is the shape content/reference/README.md documents.
+    #>
+    param([string]$RawJson)
+
+    $kept = New-Object System.Collections.Generic.List[string]
+    $skipping = $false
+    foreach ($line in ($RawJson -split "`r?`n")) {
+        if ($skipping) {
+            if ($line -match '^\s*\},?\s*$') { $skipping = $false; $kept.Add($line) }
+            continue
+        }
+        if ($line -match '^\s*"raw_text"\s*:') {
+            if ($kept.Count -gt 0) {
+                $last = $kept[$kept.Count - 1].TrimEnd()
+                if ($last.EndsWith(",")) { $kept[$kept.Count - 1] = $last.Substring(0, $last.Length - 1) }
+            }
+            $skipping = $true
+            continue
+        }
+        $kept.Add($line)
+    }
+
+    $posts = ($kept -join "`n") | ConvertFrom-Json
+
+    $rows = foreach ($p in $posts) {
+        $body = if ($p.body) { [string]$p.body } else { "" }
+        $hook = ($body -split "`n" | Where-Object { $_.Trim() } | Select-Object -First 1)
+        $tags = @([regex]::Matches($body, "#(\w+)") | ForEach-Object { $_.Groups[1].Value })
+        $tagged = @()
+        if ($p.mentions) { $tagged = @(([string]$p.mentions) -split "\s*,\s*" | Where-Object { $_ }) }
+        [ordered]@{
+            posted_at   = $p.posted_at
+            pillar      = $null
+            topic       = $null
+            url         = $p.url
+            impressions = $p.impressions
+            reactions   = $p.reactions
+            comments    = $p.comments
+            reposts     = $p.reposts
+            hook        = $hook
+            hashtags    = $tags
+            tagged      = $tagged
+            has_image   = [bool]$p.media
+            body        = $body
+        }
+    }
+    return ($rows | ConvertTo-Json -Depth 6)
+}
 
 if (-not (Test-Path $RepoPath)) {
     throw "Repository not found at $RepoPath. Clone it first, or pass -RepoPath."
@@ -46,7 +106,7 @@ if (-not $json.TrimStart().StartsWith("[")) {
 
 New-Item -ItemType Directory -Force -Path "content\reference" | Out-Null
 $target = Join-Path $RepoPath "content\reference\posts.json"
-[IO.File]::WriteAllText($target, $json, [Text.UTF8Encoding]::new($false))
+[IO.File]::WriteAllText($target, (ConvertTo-ReferenceSchema $json), [Text.UTF8Encoding]::new($false))
 
 $count = ([regex]::Matches($json, '"rank"')).Count
 Write-Host "collected $count posts"

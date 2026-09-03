@@ -44,6 +44,24 @@ Register-ScheduledTask -TaskName "LinkedIn metrics" -Action $action -Trigger $tr
 opencli.cmd linkedin whoami
 ```
 
+## 저장되는 형식
+
+스크립트는 opencli 원본을 그대로 쓰지 않습니다. `content/reference/README.md`
+가 정한 형식으로 바꿔서 저장합니다.
+
+| README 항목 | 어디서 오나 |
+| --- | --- |
+| `posted_at` `impressions` `reactions` `comments` `reposts` `url` | opencli 그대로 |
+| `hook` | 본문 첫 줄 |
+| `hashtags` | 본문에서 `#단어` 추출 |
+| `tagged` | opencli 의 `mentions` |
+| `has_image` | `media` 유무 |
+| `pillar` `topic` | 비워둠 — 본문 보고 나중에 분류 |
+
+`raw_text` 는 버립니다. 본문(`body`)과 같은 내용인데, opencli 가 줄바꿈과
+따옴표를 이스케이프하지 않아 **JSON 을 깨뜨립니다.** 파싱 전에 줄 단위로
+걷어냅니다.
+
 ## 누구를 볼지 정하기
 
 `src/homedant_linkedin/data/watchlist.json` 에 있습니다. 세 종류입니다.
@@ -83,4 +101,5 @@ LinkedIn은 노출을 작성자에게만 보여줍니다. 남의 게시글은 **
 | --- | --- |
 | `opencli did not return JSON` | 크롬 로그아웃, 또는 확장 미연결 (`opencli.cmd doctor`) |
 | 수치가 전부 0 | 어댑터가 셀렉터를 못 찾음. `opencli adapter eject linkedin` 후 수정 |
+| 한글이 `?쇰볗` 처럼 깨짐 | `[Console]::OutputEncoding` 이 설정 안 됨. 스크립트를 최신본으로 pull |
 | `no change since the last run` | 정상입니다. 지난번과 같은 데이터라 커밋하지 않았습니다 |
