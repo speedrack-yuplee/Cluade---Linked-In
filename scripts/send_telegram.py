@@ -6,6 +6,9 @@ repository secrets, never committed. Uses the standard library only, so the
 workflow needs no extra install step.
 
     python scripts/send_telegram.py out/post.txt out/post.png
+    python scripts/send_telegram.py note.txt
+
+The image is optional: a plain note goes out as text alone.
 """
 
 from __future__ import annotations
@@ -55,7 +58,7 @@ def _post(token: str, method: str, fields: dict[str, str], files: dict[str, Path
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 2:
+    if not 1 <= len(argv) <= 2:
         print(__doc__)
         return 64
 
@@ -64,16 +67,23 @@ def main(argv: list[str]) -> int:
     if not token or not chat_id:
         raise SystemExit("TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set")
 
-    text_path, image_path = Path(argv[0]), Path(argv[1])
+    text_path = Path(argv[0])
+    image_path = Path(argv[1]) if len(argv) == 2 else None
     text = text_path.read_text(encoding="utf-8").strip()
 
-    _post(token, "sendPhoto", {"chat_id": chat_id, "caption": "LinkedIn draft"}, {"photo": image_path})
+    if image_path is not None:
+        _post(
+            token,
+            "sendPhoto",
+            {"chat_id": chat_id, "caption": "LinkedIn draft"},
+            {"photo": image_path},
+        )
     # The post goes as its own message so it can be copied in one tap, and so
     # a post longer than a photo caption is never truncated.
     for chunk in (text[i : i + 4000] for i in range(0, len(text), 4000)):
         _post(token, "sendMessage", {"chat_id": chat_id, "text": chunk})
 
-    print(f"sent {len(text)} characters and {image_path.name}")
+    print(f"sent {len(text)} characters" + (f" and {image_path.name}" if image_path else ""))
     return 0
 
 
