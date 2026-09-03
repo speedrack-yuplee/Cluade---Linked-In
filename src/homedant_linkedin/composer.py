@@ -172,6 +172,9 @@ def _compose_tradeshow(slot: Slot, catalog: Catalog) -> PostDraft:
             second,
         ),
         cta=cta,
+        closing=f"We also showed at {profile.show_history} this year."
+        if profile.exhibited_at and not running
+        else "",
         hashtags=_hashtags(slot, show.hashtags),
         points=profile.proof_points[:3],
     )
@@ -284,6 +287,8 @@ def _compose_supply(slot: Slot, catalog: Catalog) -> PostDraft:
             "wait on an ocean container, and a reset date does not move because a vessel did.",
             "Manufacturing sits in our own Korean factory, which means a specification change is a "
             "conversation with the plant rather than a negotiation with a contract manufacturer.",
+            f"We showed at {profile.show_history} this year, and the questions were the same at "
+            "every one of them.",
             profile.capability,
         ),
         cta=CONNECT_CTA.format(audiences=profile.audience_phrase),

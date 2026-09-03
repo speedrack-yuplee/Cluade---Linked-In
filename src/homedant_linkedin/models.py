@@ -188,6 +188,11 @@ class Brand:
     founded: int | None = None
     capability: str = ""
     offer: str = ""
+    exhibited_at: tuple[str, ...] = ()
+    """Shows the brand has stood at. Names only, because this is used in prose
+    rather than scheduled; a schedulable show needs dates and lives in
+    trade_shows."""
+
     coined_terms: dict = field(default_factory=dict)
     """A name we invented, mapped to the words that explain it. A post using
     the name has to carry one of them."""
@@ -216,11 +221,20 @@ class Brand:
             capability=raw.get("capability", ""),
             offer=raw.get("offer", ""),
             coined_terms={k: tuple(v) for k, v in raw.get("coined_terms", {}).items()},
+            exhibited_at=tuple(raw.get("exhibited_at", ())),
             recognitions=tuple(Recognition.from_dict(r) for r in raw.get("recognitions", ())),
             trade_shows=tuple(TradeShow.from_dict(s) for s in raw.get("trade_shows", ())),
             plan_anchor=date.fromisoformat(raw["plan_anchor"]) if raw.get("plan_anchor") else None,
             blackout_dates=frozenset(date.fromisoformat(d) for d in raw.get("blackout_dates", ())),
         )
+
+    @property
+    def show_history(self) -> str:
+        """The shows as a sentence: "a, b and c"."""
+        items = list(self.exhibited_at)
+        if len(items) < 2:
+            return items[0] if items else ""
+        return ", ".join(items[:-1]) + f" and {items[-1]}"
 
     @property
     def audience_phrase(self) -> str:

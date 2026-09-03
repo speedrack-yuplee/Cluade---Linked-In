@@ -118,3 +118,14 @@ def test_render_puts_the_hook_first_and_hashtags_last(catalog):
     rendered = draft.render()
     assert rendered.startswith(draft.hook)
     assert rendered.rstrip().endswith(f"#{draft.hashtags[-1]}")
+
+
+def test_the_show_history_reads_as_a_sentence(catalog):
+    assert catalog.brand_profile.show_history.endswith("NY NOW and DESIGN TOKYO")
+
+
+def test_a_show_post_carries_the_year_s_other_shows(catalog):
+    """A buyer meeting the brand at one show should know it stands at others."""
+    show = next(s for s in catalog.brand_profile.trade_shows if s.name == "High Point Market")
+    text = compose(Slot(PLAN_START, get_pillar("tradeshow"), show=show), catalog).render()
+    assert "NeoCon" in text and "National Hardware Show" in text
