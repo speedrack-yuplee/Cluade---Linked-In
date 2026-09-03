@@ -48,9 +48,33 @@ PYTHONPATH=src python -m homedant_linkedin plan
 | `next` | Write today's post and image into `out/` for an unattended run |
 | `calendar` | The whole plan up to `--until`, grouped by month |
 | `assets` | Which logo and badge files the images look for, and which are supplied |
+| `trends` | What the trade press our buyers read is talking about |
 
 Common flags: `--start YYYY-MM-DD`, `--weeks N`, `--marketplace US`,
 `--catalog path/to/products.json`, and `--json` on `plan` and `draft`.
+
+## Reading the trade press
+
+LinkedIn publishes no trending feed, so the agent does not pretend to have
+one. What it can read is the trade press those buyers read, and `trends`
+counts how often the terms we care about — FSC, modular, BIFMA, tariffs,
+FF&E — turn up across it. That is a reading list for whoever writes the
+week's post, not a ranking of LinkedIn itself.
+
+```bash
+PYTHONPATH=src python -m homedant_linkedin trends --days 30
+PYTHONPATH=src python -m homedant_linkedin trends --days 7 --json
+```
+
+The feed list and the watched terms both live in
+`src/homedant_linkedin/data/feeds.json`; edit that file rather than the code
+to follow a new publication or a new term. Nothing is installed for this: it
+fetches with `urllib` and parses with `ElementTree`.
+
+A feed that will not answer is named and skipped, so one dead publisher never
+costs you the rest. The command exits `1` only when *no* feed answered, which
+is the case worth distrusting — an empty result there means the network, not
+a quiet week.
 
 ```bash
 PYTHONPATH=src python -m homedant_linkedin plan --start 2026-09-08 --weeks 4

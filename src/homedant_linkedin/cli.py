@@ -42,6 +42,16 @@ def build_parser() -> argparse.ArgumentParser:
         if name != "validate":
             sp.add_argument("--json", action="store_true", help="emit JSON instead of text")
 
+    trends = sub.add_parser(
+        "trends",
+        help="what the trade press our buyers read is talking about",
+    )
+    trends.add_argument("--days", type=int, default=30, help="how far back to read (default 30, 0 for everything)")
+    trends.add_argument("--feeds", help="path to a feeds.json (defaults to the bundled list)")
+    trends.add_argument("--limit", type=int, default=20, help="how many terms to show (default 20)")
+    trends.add_argument("--timeout", type=float, default=20.0, help="seconds to wait on each feed")
+    trends.add_argument("--json", action="store_true", help="emit JSON instead of text")
+
     sub.add_parser("products", help="list the catalog")
     sub.add_parser("assets", help="show which logo and badge files the images look for")
 
@@ -279,6 +289,66 @@ def _cmd_next(args, catalog: Catalog, out) -> int:
     return 0
 
 
+def _cmd_trends(args, catalog: Catalog, out) -> int:
+    """Rank the watched terms across the trade press, busiest first.
+
+    This is a reading list for whoever writes the posts, not a LinkedIn
+    ranking: LinkedIn publishes no trending feed, so the honest proxy is what
+    the publications our buyers read are covering right now.
+
+    Exit codes: 0 read something, 1 every feed failed.
+    """
+    from . import feeds as trade_press
+
+    report = trade_press.report(
+        args.feeds,
+        days=args.days,
+        timeout=args.timeout,
+    )
+
+    if args.json:
+        print(
+            json.dumps(
+                {
+                    "days": report.days,
+                    "entries": len(report.entries),
+                    "errors": [{"feed": name, "error": message} for name, message in report.errors],
+                    "terms": [
+                        {
+                            "theme": hit.theme,
+                            "term": hit.term,
+                            "count": hit.count,
+                            "feeds": list(hit.feeds),
+                            "example": hit.example,
+                        }
+                        for hit in report.hits[: args.limit]
+                    ],
+                },
+                indent=2,
+                ensure_ascii=False,
+            ),
+            file=out,
+        )
+        return 1 if not report.entries and report.errors else 0
+
+    window = f"the last {report.days} days" if report.days else "every story on file"
+    print(f"{len(report.entries)} stories from {window}\n", file=out)
+    if report.hits:
+        print(f"{'term':<24} {'theme':<16} {'stories':>7}  sources", file=out)
+        print("-" * 78, file=out)
+        for hit in report.hits[: args.limit]:
+            print(f"{hit.term:<24} {hit.theme:<16} {hit.count:>7}  {', '.join(hit.feeds[:3])}", file=out)
+    elif report.entries:
+        print("none of the watched terms came up. Widen the window or the watch list.", file=out)
+
+    for name, message in report.errors:
+        print(f"\nunread: {name} ({message})", file=out)
+    if not report.entries and report.errors:
+        print("\nno feed answered. Check the network before trusting an empty result.", file=out)
+        return 1
+    return 0
+
+
 COMMANDS = {
     "plan": _cmd_plan,
     "draft": _cmd_draft,
@@ -287,6 +357,7 @@ COMMANDS = {
     "next": _cmd_next,
     "calendar": _cmd_calendar,
     "assets": _cmd_assets,
+    "trends": _cmd_trends,
 }
 
 

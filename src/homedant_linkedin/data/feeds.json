@@ -1,0 +1,103 @@
+{
+  "feeds": [
+    {
+      "name": "Furniture Today",
+      "url": "https://www.furnituretoday.com/feed/",
+      "segment": "retail"
+    },
+    {
+      "name": "Home News Now",
+      "url": "https://homenewsnow.com/feed/",
+      "segment": "retail"
+    },
+    {
+      "name": "Business of Home",
+      "url": "https://businessofhome.com/rss",
+      "segment": "retail"
+    },
+    {
+      "name": "Retail Dive",
+      "url": "https://www.retaildive.com/feeds/news/",
+      "segment": "retail"
+    },
+    {
+      "name": "Hospitality Design",
+      "url": "https://hospitalitydesign.com/feed/",
+      "segment": "hospitality"
+    },
+    {
+      "name": "Hotel Management",
+      "url": "https://www.hotelmanagement.net/rss.xml",
+      "segment": "hospitality"
+    },
+    {
+      "name": "Hospitality Net",
+      "url": "https://www.hospitalitynet.org/rss/global.xml",
+      "segment": "hospitality"
+    },
+    {
+      "name": "Multifamily Executive",
+      "url": "https://www.multifamilyexecutive.com/rss.xml",
+      "segment": "multifamily"
+    },
+    {
+      "name": "Bisnow Multifamily",
+      "url": "https://www.bisnow.com/rss/multifamily",
+      "segment": "multifamily"
+    }
+  ],
+  "watch": {
+    "sustainability": [
+      "FSC",
+      "low-VOC",
+      "recycled content",
+      "sustainable materials",
+      "eco-friendly",
+      "reclaimed wood",
+      "carbon"
+    ],
+    "modularity": [
+      "modular",
+      "multi-use",
+      "reconfigurable",
+      "flexible space",
+      "adaptive reuse",
+      "space saving"
+    ],
+    "durability": [
+      "commercial-grade",
+      "contract grade",
+      "abrasion",
+      "stain-repellent",
+      "durability",
+      "lifecycle cost",
+      "warranty"
+    ],
+    "compliance": [
+      "BIFMA",
+      "ADA",
+      "CAL TB 117",
+      "certification",
+      "compliance",
+      "test report"
+    ],
+    "supply chain": [
+      "tariff",
+      "lead time",
+      "nearshoring",
+      "container rates",
+      "inventory",
+      "sourcing",
+      "landed cost"
+    ],
+    "channel": [
+      "renovation cycle",
+      "PIP",
+      "FF&E",
+      "procurement",
+      "specifier",
+      "build-to-rent",
+      "boutique hotel"
+    ]
+  }
+}
