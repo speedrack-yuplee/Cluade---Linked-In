@@ -1,0 +1,27 @@
+name: LinkedIn metrics
+
+# Runs when collected metrics land, whichever branch they land on, and sends
+# the ranking to Telegram. Collection happens on the owner's machine, because
+# opencli needs the logged-in browser there; this is the other half.
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "content/reference/posts.json"
+  workflow_dispatch:
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Rank the posts
+        run: python scripts/report_posts.py --out digest.txt
+      - name: Send the digest
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/send_telegram.py digest.txt
