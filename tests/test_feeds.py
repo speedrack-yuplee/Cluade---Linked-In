@@ -31,6 +31,41 @@ def test_bundled_feed_list_loads():
     assert all(f.segment for f in feed_list)
 
 
+def test_bundled_list_covers_the_brand_own_channel():
+    """HOMEDANT sells boltless shelving into hardware and storage first.
+
+    The hospitality and multifamily feeds matter, but a list that drops the
+    brand's own channel would rank terms for someone else's business.
+    """
+    feed_list, watch = feeds.load_feeds()
+    segments = {f.segment for f in feed_list}
+    assert {"hardware", "storage"} <= segments
+    assert "shelving" in watch and "boltless" in watch["shelving"]
+
+
+def test_bundled_list_has_no_duplicate_feeds_or_terms():
+    """A term counted under two themes would double-count the same story."""
+    feed_list, watch = feeds.load_feeds()
+    urls = [f.url for f in feed_list]
+    names = [f.name for f in feed_list]
+    assert len(set(urls)) == len(urls)
+    assert len(set(names)) == len(names)
+    terms = [t for group in watch.values() for t in group]
+    assert len(set(terms)) == len(terms)
+
+
+def test_watch_terms_avoid_known_false_positives():
+    """`duty` matches "heavy-duty" and bare `reset` matches "reset password".
+
+    Both would fire on almost every shelving article, so the list carries the
+    narrower phrasing instead.
+    """
+    _, watch = feeds.load_feeds()
+    terms = {t.lower() for group in watch.values() for t in group}
+    assert "duty" not in terms
+    assert "reset" not in terms
+
+
 def test_parses_rss_items():
     feed = feeds.Feed(name="Trade Weekly", url="https://x/feed", segment="retail")
     entries = feeds.parse_feed(rss(item("Modular casegoods", "FSC certified", FRESH)), feed)

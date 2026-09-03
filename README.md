@@ -57,9 +57,23 @@ Common flags: `--start YYYY-MM-DD`, `--weeks N`, `--marketplace US`,
 
 LinkedIn publishes no trending feed, so the agent does not pretend to have
 one. What it can read is the trade press those buyers read, and `trends`
-counts how often the terms we care about — FSC, modular, BIFMA, tariffs,
-FF&E — turn up across it. That is a reading list for whoever writes the
-week's post, not a ranking of LinkedIn itself.
+counts how often the terms we care about turn up across it. That is a reading
+list for whoever writes the week's post, not a ranking of LinkedIn itself.
+
+The list leads with the channel we actually sell boltless shelving into —
+hardware and storage — and keeps the retail, hospitality and multifamily
+titles behind it:
+
+| Segment | Titles |
+| --- | --- |
+| hardware | Hardware Retailing (NHPA), HBS Dealer |
+| storage | Woodworking Network, Modern Storage Media |
+| retail | Furniture Today, Home News Now, Business of Home, Retail Dive |
+| hospitality | Hospitality Design, Hotel Management, Hospitality Net |
+| multifamily | Multifamily Executive, Bisnow Multifamily |
+
+Terms are grouped into eight themes: shelving, storage demand, retail channel,
+sustainability, durability, compliance, supply chain and project channel.
 
 ```bash
 PYTHONPATH=src python -m homedant_linkedin trends --days 30

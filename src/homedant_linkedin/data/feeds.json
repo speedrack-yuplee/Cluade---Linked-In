@@ -1,6 +1,26 @@
 {
   "feeds": [
     {
+      "name": "Hardware Retailing",
+      "url": "https://hardwareretailing.com/feed/",
+      "segment": "hardware"
+    },
+    {
+      "name": "HBS Dealer",
+      "url": "https://hbsdealer.com/rss.xml",
+      "segment": "hardware"
+    },
+    {
+      "name": "Woodworking Network",
+      "url": "https://www.woodworkingnetwork.com/rss.xml",
+      "segment": "storage"
+    },
+    {
+      "name": "Modern Storage Media",
+      "url": "https://www.modernstoragemedia.com/rss",
+      "segment": "storage"
+    },
+    {
       "name": "Furniture Today",
       "url": "https://www.furnituretoday.com/feed/",
       "segment": "retail"
@@ -47,28 +67,50 @@
     }
   ],
   "watch": {
+    "shelving": [
+      "boltless",
+      "shelving",
+      "racking",
+      "storage rack",
+      "load rating",
+      "load capacity",
+      "gauge steel",
+      "powder coat",
+      "ready-to-assemble",
+      "tool-free"
+    ],
+    "storage demand": [
+      "garage storage",
+      "closet",
+      "home organization",
+      "decluttering",
+      "self-storage",
+      "backroom",
+      "utility room",
+      "space saving"
+    ],
+    "retail channel": [
+      "planogram",
+      "category reset",
+      "assortment",
+      "private label",
+      "buying show",
+      "co-op",
+      "vendor",
+      "distributor",
+      "endcap"
+    ],
     "sustainability": [
       "FSC",
       "low-VOC",
       "recycled content",
       "sustainable materials",
       "eco-friendly",
-      "reclaimed wood",
-      "carbon"
-    ],
-    "modularity": [
-      "modular",
-      "multi-use",
-      "reconfigurable",
-      "flexible space",
-      "adaptive reuse",
-      "space saving"
+      "recycled steel"
     ],
     "durability": [
       "commercial-grade",
       "contract grade",
-      "abrasion",
-      "stain-repellent",
       "durability",
       "lifecycle cost",
       "warranty"
@@ -76,21 +118,23 @@
     "compliance": [
       "BIFMA",
       "ADA",
-      "CAL TB 117",
       "certification",
       "compliance",
-      "test report"
+      "test report",
+      "safety standard"
     ],
     "supply chain": [
       "tariff",
+      "import duty",
       "lead time",
       "nearshoring",
       "container rates",
       "inventory",
       "sourcing",
-      "landed cost"
+      "landed cost",
+      "Korea"
     ],
-    "channel": [
+    "project channel": [
       "renovation cycle",
       "PIP",
       "FF&E",
