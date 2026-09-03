@@ -25,6 +25,12 @@ claim the brand cannot substantiate.
 Third-party recognition outperformed product-led posts by 15 to 35 times, so
 the plan leads every cycle with it. See `content/posts/` for the source.
 
+## 링크드인 작업 지침
+
+`docs/LINKEDIN_PLAYBOOK.md` 에 링크드인을 읽는 법(OpenCLI), 경쟁사 게시물
+수집, 리드 발굴 경로, 하지 말아야 할 것이 정리돼 있습니다. 이 저장소를 보는
+모든 대화가 공유하는 문맥이니, 링크드인 작업은 거기서 시작하세요.
+
 ## Install
 
 ```bash
