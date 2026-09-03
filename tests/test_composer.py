@@ -143,3 +143,12 @@ def test_the_headline_load_figure_is_the_plain_one(catalog):
 def test_the_liftbeam_figure_says_it_needs_the_beam(catalog):
     liftbeam = next(p for p in catalog.brand_profile.proof_points if "551 lb" in p)
     assert "LiftBeam" in liftbeam and "raises" in liftbeam
+
+
+def test_no_hook_uses_a_flag_emoji(catalog):
+    """Windows renders a regional-indicator flag as bare letters, so 🇰🇷 reads
+    as "KR" mid-sentence. None of the account's own posts used one."""
+    drafts = compose_all(build_plan(catalog, start=PLAN_START, weeks=8), catalog)
+    flags = {chr(c) for c in range(0x1F1E6, 0x1F200)}
+    for draft in drafts:
+        assert not (flags & set(draft.render())), f"flag emoji in {draft.pillar.key}"

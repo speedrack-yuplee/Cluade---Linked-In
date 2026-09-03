@@ -138,7 +138,7 @@ def _show_hook(show, day, brand: str) -> str:
     if days <= 20:
         stand = f" We are at {show.location}." if show.booth else ""
         return f"Two weeks out from {show.name}, and the calendar is filling up.{stand}"
-    return f"{brand} is coming to {show.name}{where}! \U0001f1f0\U0001f1f7"
+    return f"{brand} is coming to {show.name}{where}!"
 
 
 def _compose_tradeshow(slot: Slot, catalog: Catalog) -> PostDraft:
