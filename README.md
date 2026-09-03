@@ -181,6 +181,28 @@ from the listing's `image_url` otherwise — lifestyle photography reads far
 better in a feed than a cut-out on white. Where neither is reachable the post
 falls back to the type-only layout rather than failing the run.
 
+## 영문 메일 해석과 답장
+
+들어온 영문 메일을 붙여 넣으면 한국어 번역, 상대의 진짜 의도, 그리고 바로
+보낼 수 있는 영문 답장 초안까지 한 번에 나옵니다. Claude Code에서
+`/email` 로 실행합니다.
+
+```
+/email
+Hello, we are a regional hardware chain with 42 stores...
+```
+
+브랜드 사실관계(`brand.json`)와 제품 사양(`products.json`)을 자동으로 읽기
+때문에 회사 설명을 매번 다시 붙여넣을 필요가 없습니다. 가격·MOQ·리드타임처럼
+지어내면 안 되는 값은 [`content/emails/facts.md`](content/emails/facts.md) 에
+적힌 값만 쓰고, 비어 있으면 `[[MOQ 확인]]` 표시로 남깁니다.
+
+메일 유형별 판단 기준과 답장 뼈대는 `.claude/skills/email/references/` 에
+있습니다 — 바이어 문의, 유통사 제안, 견적 요청, 전시회 미팅, 물류 클레임,
+마켓플레이스 계정, 스팸·사기 판별. 지난 메일은
+[`content/emails/`](content/emails/README.md) 에 남겨 두면 다음 메일에서
+문맥이 이어집니다.
+
 ## Existing posts
 
 `content/posts/` holds the LinkedIn posts that have already been published.
