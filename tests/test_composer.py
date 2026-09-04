@@ -118,3 +118,78 @@ def test_render_puts_the_hook_first_and_hashtags_last(catalog):
     rendered = draft.render()
     assert rendered.startswith(draft.hook)
     assert rendered.rstrip().endswith(f"#{draft.hashtags[-1]}")
+
+
+def test_the_show_history_reads_as_a_sentence(catalog):
+    assert catalog.brand_profile.show_history.endswith("NY NOW and DESIGN TOKYO")
+
+
+def test_a_show_post_carries_the_year_s_other_shows(catalog):
+    """A buyer meeting the brand at one show should know it stands at others."""
+    show = next(s for s in catalog.brand_profile.trade_shows if s.name == "High Point Market")
+    text = compose(Slot(PLAN_START, get_pillar("tradeshow"), show=show), catalog).render()
+    assert "NeoCon" in text and "National Hardware Show" in text
+
+
+def test_the_headline_load_figure_is_the_plain_one(catalog):
+    """551 lb needs a LiftBeam fitted. The bullets an image shows are the
+    first three, so the plain rating has to be among them and the fitted one
+    must not be."""
+    points = catalog.brand_profile.proof_points[:3]
+    assert any("264 lb per tier" in p for p in points)
+    assert not any("551 lb" in p for p in points)
+
+
+def test_the_liftbeam_figure_says_it_needs_the_beam(catalog):
+    liftbeam = next(p for p in catalog.brand_profile.proof_points if "551 lb" in p)
+    assert "LiftBeam" in liftbeam and "raises" in liftbeam
+
+
+def test_no_hook_uses_a_flag_emoji(catalog):
+    """Windows renders a regional-indicator flag as bare letters, so 🇰🇷 reads
+    as "KR" mid-sentence. None of the account's own posts used one."""
+    drafts = compose_all(build_plan(catalog, start=PLAN_START, weeks=8), catalog)
+    flags = {chr(c) for c in range(0x1F1E6, 0x1F200)}
+    for draft in drafts:
+        assert not (flags & set(draft.render())), f"flag emoji in {draft.pillar.key}"
+
+
+def test_every_post_ends_on_a_question(catalog):
+    """A message goes to an inbox the feed cannot see. The one post that drew
+    comments reached 709 impressions where the rest sat between 46 and 99, so
+    every post also asks something a reader can answer in a line."""
+    drafts = compose_all(build_plan(catalog, start=PLAN_START, weeks=8), catalog)
+    for draft in drafts:
+        assert draft.question, f"no question on {draft.pillar.key}"
+        assert draft.question.endswith("?")
+        assert len(draft.question) <= 110, f"too long to answer casually: {draft.pillar.key}"
+
+
+def test_the_question_is_the_last_line_before_the_hashtags(catalog):
+    drafts = compose_all(build_plan(catalog, start=PLAN_START, weeks=2), catalog)
+    for draft in drafts:
+        blocks = draft.render().split("\n\n")
+        assert blocks[-2] == draft.question
+
+
+def test_the_image_lines_are_not_the_same_three_every_week(catalog):
+    """The bullets are what the picture argues. Repeating the brand's proof
+    points under a different headline every post is what made the image read as
+    a template, so no post falls back to them."""
+    generic = tuple(catalog.brand_profile.proof_points[:3])
+    drafts = compose_all(build_plan(catalog, start=PLAN_START, weeks=8), catalog)
+    for draft in drafts:
+        assert len(draft.points) == 3, f"{draft.pillar.key} does not fill the image"
+        assert tuple(draft.points) != generic, f"{draft.pillar.key} fell back to the brand list"
+    assert len({tuple(d.points) for d in drafts}) >= 6
+
+
+def test_a_show_image_does_not_repeat_what_the_band_already_says(catalog):
+    """The countdown numeral and the footer band already carry the dates, the
+    venue and the stand, so the bullets have to earn their own space."""
+    drafts = compose_all(build_plan(catalog, start=PLAN_START, weeks=12), catalog)
+    for draft in (d for d in drafts if d.slot.show):
+        for point in draft.points:
+            assert draft.slot.show.venue not in point
+            assert draft.slot.show.dates not in point
+            assert not (draft.slot.show.booth and draft.slot.show.booth in point)

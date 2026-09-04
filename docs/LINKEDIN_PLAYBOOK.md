@@ -49,6 +49,16 @@
 
 크롬에 이미 로그인된 세션을 CDP로 빌려 쓰므로 **API 키가 필요 없습니다.**
 
+### 이미 자동화돼 있습니다
+
+`scripts/collect_linkedin.ps1` 이 이엽님 PC에서 이 명령들을 대신 돌리고,
+결과를 `claude/linkedin-metrics` 브랜치로 푸시합니다. 등록 방법은
+**`docs/COLLECTING.md`** 를 보세요. 수집된 것은
+`content/reference/posts-*.json` 에 쌓입니다.
+
+**아래 명령들은 그 스크립트가 무엇을 하는지 이해하고 직접 확인할 때** 쓰는
+것입니다. 정기 수집을 손으로 다시 만들지 마세요.
+
 ### ⚠️ 클라우드 세션에서는 안 됩니다
 
 Claude Code 웹/클라우드 컨테이너는 `linkedin.com` 이 네트워크 정책에
@@ -110,6 +120,10 @@ reactions, comments, reposts, media_urls, url
 ---
 
 ## 4. 경쟁사 게시물을 모으는 법
+
+`collect_linkedin.ps1` 이 이미 `timeline --limit 50` 과, 지정한 계정들의
+`posts --profile-url ... --limit 10` 을 함께 걷어 옵니다. 아래는 그 방식의
+근거이고, 새 계정을 추가할 때 참고하세요.
 
 `company` 는 회사 **정보**(업종·규모·본사·팔로워)만 주고, **회사 페이지
 게시물을 뽑는 명령은 없습니다.** `posts` 는 개인 프로필(`/in/`) 전용입니다.

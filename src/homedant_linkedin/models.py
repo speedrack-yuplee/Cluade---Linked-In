@@ -188,6 +188,15 @@ class Brand:
     founded: int | None = None
     capability: str = ""
     offer: str = ""
+    exhibited_at: tuple[str, ...] = ()
+    """Shows the brand has stood at. Names only, because this is used in prose
+    rather than scheduled; a schedulable show needs dates and lives in
+    trade_shows."""
+
+    coined_terms: dict = field(default_factory=dict)
+    """A name we invented, mapped to the words that explain it. A post using
+    the name has to carry one of them."""
+
     recognitions: tuple[Recognition, ...] = ()
     trade_shows: tuple[TradeShow, ...] = ()
     blackout_dates: frozenset = frozenset()
@@ -211,11 +220,21 @@ class Brand:
             founded=raw.get("founded"),
             capability=raw.get("capability", ""),
             offer=raw.get("offer", ""),
+            coined_terms={k: tuple(v) for k, v in raw.get("coined_terms", {}).items()},
+            exhibited_at=tuple(raw.get("exhibited_at", ())),
             recognitions=tuple(Recognition.from_dict(r) for r in raw.get("recognitions", ())),
             trade_shows=tuple(TradeShow.from_dict(s) for s in raw.get("trade_shows", ())),
             plan_anchor=date.fromisoformat(raw["plan_anchor"]) if raw.get("plan_anchor") else None,
             blackout_dates=frozenset(date.fromisoformat(d) for d in raw.get("blackout_dates", ())),
         )
+
+    @property
+    def show_history(self) -> str:
+        """The shows as a sentence: "a, b and c"."""
+        items = list(self.exhibited_at)
+        if len(items) < 2:
+            return items[0] if items else ""
+        return ", ".join(items[:-1]) + f" and {items[-1]}"
 
     @property
     def audience_phrase(self) -> str:
@@ -288,6 +307,14 @@ class PostDraft:
     """A line that follows the call to action, such as the thank-you the award
     posts end on."""
 
+    question: str = ""
+    """A question a reader can answer from their own experience in one line.
+
+    The account's best post carried eight comments and reached 709
+    impressions; every other post carried none or one and sat between 46 and
+    99. A message goes to an inbox the feed cannot see, so the post also has
+    to ask for something that costs a reader nothing to give."""
+
     hashtags: tuple[str, ...] = field(default=())
     points: tuple[str, ...] = ()
     """Proof points for the image. The posts themselves run as prose, so these
@@ -307,7 +334,7 @@ class PostDraft:
 
     def render(self) -> str:
         """The exact text to paste into LinkedIn."""
-        blocks = [self.hook, self.body, self.cta, self.closing]
+        blocks = [self.hook, self.body, self.cta, self.closing, self.question]
         if self.hashtags:
             blocks.append(" ".join(f"#{tag}" for tag in self.hashtags))
         return "\n\n".join(block for block in blocks if block)

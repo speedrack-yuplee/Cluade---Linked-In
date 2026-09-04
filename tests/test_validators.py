@@ -68,3 +68,28 @@ def test_too_many_hashtags_is_flagged(catalog):
 
 def test_a_run_of_blank_lines_is_flagged(catalog):
     assert any(i.rule == "spacing" for i in validate(replace(_draft(catalog), body="a\n\n\n\nb")))
+
+
+def test_a_coined_name_used_without_explaining_it_is_flagged(catalog):
+    """A buyer reading "HANDiLOCK" for the first time learns nothing from the
+    name alone, so a post using it has to say what it is."""
+    draft = replace(_draft(catalog), body="Homedant USA Inc builds HANDiLOCK frames.")
+    issues = validate(draft, catalog.brand_profile)
+    assert any(i.rule == "jargon" and "HANDiLOCK" in i.message for i in issues)
+
+
+def test_a_coined_name_with_its_explanation_passes(catalog):
+    draft = replace(
+        _draft(catalog),
+        body="Homedant USA Inc builds HANDiLOCK frames: they lock by hand, with no bolts.",
+    )
+    assert not any(i.rule == "jargon" for i in validate(draft, catalog.brand_profile))
+
+
+def test_a_post_that_asks_nothing_is_flagged(catalog):
+    assert any(i.rule == "question" for i in validate(replace(_draft(catalog), question="")))
+
+
+def test_a_closing_line_that_is_not_a_question_is_flagged(catalog):
+    draft = replace(_draft(catalog), question="Let me know your thoughts.")
+    assert any(i.rule == "question" for i in validate(draft))

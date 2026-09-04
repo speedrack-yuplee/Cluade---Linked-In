@@ -1,0 +1,83 @@
+{
+  "note": "Who to read, and why. profile_url is blank until someone fills it in; the collector reports what it could not resolve rather than guessing. opencli reads posts from /in/ profiles only — a company page cannot be read directly, so follow the company and its posts arrive through the timeline instead.",
+  "people": [
+    {
+      "name": "Angel Cho",
+      "why": "Overseas Sales at HOMEDANT, named with Leo Lee on the Lowe's vendor deck. Same audience, same room.",
+      "profile_url": ""
+    }
+  ],
+  "companies": [
+    {
+      "name": "CJ Olive Young",
+      "why": "A Korean retailer selling into the US. How they frame Korean-made for an American buyer is the same problem HOMEDANT has.",
+      "profile_url": ""
+    },
+    {
+      "name": "ABC News",
+      "why": "Requested. General news rather than trade press, so watch whether it earns its slot.",
+      "profile_url": ""
+    },
+    {
+      "name": "North American Hardware and Paint Association (NHPA)",
+      "why": "Gave the Retailers' Choice award. Tagging them is what carried the 709 post.",
+      "profile_url": ""
+    },
+    {
+      "name": "High Point Market Authority",
+      "why": "October show. Tag them in the countdown posts.",
+      "profile_url": ""
+    },
+    {
+      "name": "ANDMORE",
+      "why": "Runs the Suites at Market Square, where Space M-1007 is.",
+      "profile_url": ""
+    },
+    {
+      "name": "RangeMe",
+      "why": "Put HOMEDANT in front of 15,000 retail buyers once already.",
+      "profile_url": ""
+    },
+    {
+      "name": "NeoCon",
+      "why": "Exhibited June 2026. Hospitality and multifamily specifiers gather here.",
+      "profile_url": ""
+    },
+    {
+      "name": "Gladiator GarageWorks",
+      "why": "Named as a competitor on the Lowe's deck.",
+      "profile_url": ""
+    },
+    {
+      "name": "Edsal Manufacturing",
+      "why": "Named as a competitor on the Lowe's deck.",
+      "profile_url": ""
+    },
+    {
+      "name": "Seville Classics",
+      "why": "Named as a competitor on the Lowe's deck.",
+      "profile_url": ""
+    },
+    {
+      "name": "Furniture Today",
+      "why": "What the buyers read. Their headlines are next month's buyer questions.",
+      "profile_url": ""
+    },
+    {
+      "name": "Home News Now",
+      "why": "Home furnishings trade press.",
+      "profile_url": ""
+    },
+    {
+      "name": "Retail Dive",
+      "why": "Retail channel and merchandising news.",
+      "profile_url": ""
+    }
+  ],
+  "search_terms": [
+    "shelving buyer",
+    "storage category manager",
+    "hardlines merchant",
+    "FF&E procurement hospitality"
+  ]
+}

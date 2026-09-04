@@ -6,6 +6,46 @@ Homedant USA Inc의 링크드인 게시물을 계획·작성·검수하는 저�
 글은 아마존 구매자가 아니라 이들에게 쓰고, 리스팅 링크 대신 대화를
 요청하며 끝냅니다.
 
+## The company OneDrive is read-only. No exceptions.
+
+The Microsoft 365 connector reaches the Speedrack OneDrive, including
+`01_사진 ~ 05_본사 관련 자료`. Those are the company's master design files and
+photography. There is no second copy.
+
+Having write permission is not permission. In that drive you may only:
+
+- list folders (`sharepoint_folder_search`, `read_resource`)
+- open and look at files (`read_resource`)
+- search by name or content (`sharepoint_search`)
+
+You may **never** delete, overwrite, move, rename, or create anything there.
+That means `sharepoint_update_file`, `sharepoint_upload_file`,
+`sharepoint_delete_item`, `sharepoint_move_item`, `sharepoint_rename_item`,
+`sharepoint_copy_item` and `sharepoint_create_folder` are off limits for this
+drive, whatever the reason and however safe the change looks.
+
+If a change there seems necessary, say so and let Leo do it himself.
+
+## The working copy of the photography
+
+`scripts/sync_photos.ps1` runs on Leo's PC. It reads the master library and
+writes downscaled copies to his own OneDrive, under
+`해외영업3파트/업무/@업무/자동화/Image` — a different drive from the master
+library, and his to write to. Read that folder freely; it is what the picture
+for a post is chosen from.
+
+Writing there is still the script's job, not the connector's. The scheduled
+job on GitHub Actions cannot reach OneDrive at all, so a photo that actually
+ships in a post is copied into `assets/` in this repository. The original in
+the master library stays where it is, untouched.
+
+## Confidential material
+
+The repository is public. Pricing, margins, container volumes, competitor
+analysis and buyer terms from the Lowe's vendor deck are never committed and
+never published. Show organisers' logos and award badges go in only from the
+official exhibitor or winner kit.
+
 ## 링크드인 작업 전에 읽을 것
 
 **`docs/LINKEDIN_PLAYBOOK.md`** — 이 저장소를 보는 모든 대화가 공유하는
@@ -30,15 +70,6 @@ Homedant USA Inc의 링크드인 게시물을 계획·작성·검수하는 저�
 | `src/homedant_linkedin/data/brand.json` | 브랜드, 전시회, 수상 |
 | `src/homedant_linkedin/data/products.json` | 제품 카탈로그 |
 | `src/homedant_linkedin/data/feeds.json` | `trends` 가 읽는 매체와 키워드 |
-
-## 명령
-
-```bash
-PYTHONPATH=src python -m homedant_linkedin plan       # 게시 캘린더
-PYTHONPATH=src python -m homedant_linkedin draft      # 초안 렌더링
-PYTHONPATH=src python -m homedant_linkedin validate   # 검수, 문제 시 exit 1
-PYTHONPATH=src python -m homedant_linkedin trends     # 업계 매체 키워드
-```
 
 ## 개발
 

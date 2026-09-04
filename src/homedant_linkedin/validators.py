@@ -76,6 +76,11 @@ def validate(draft: PostDraft, brand: Brand | None = None) -> list[Issue]:
     if BRAND_HASHTAG not in draft.hashtags:
         issues.append(Issue("hashtags", f"#{BRAND_HASHTAG} is missing"))
 
+    if not draft.question.strip():
+        issues.append(Issue("question", "post asks the reader nothing"))
+    elif not draft.question.rstrip().endswith("?"):
+        issues.append(Issue("question", "the closing question is not a question"))
+
     if not draft.cta.strip():
         issues.append(Issue("cta", "post has no call to action"))
     elif not any(intent in draft.cta.lower() for intent in CTA_INTENTS):
@@ -83,6 +88,22 @@ def validate(draft: PostDraft, brand: Brand | None = None) -> list[Issue]:
 
     if brand is not None and brand.company.lower() not in lowered:
         issues.append(Issue("company", f"post never names {brand.company}"))
+
+    if brand is not None:
+        for term, explainers in brand.coined_terms.items():
+            if term.lower() not in lowered:
+                continue
+            # Remove the term first: "HANDiLOCK" contains "lock", so a naive
+            # search would let the name explain itself.
+            rest = lowered.replace(term.lower(), " ")
+            if not any(e.lower() in rest for e in explainers):
+                issues.append(
+                    Issue(
+                        "jargon",
+                        f"{term!r} is our own name and the post never says what it is; "
+                        f"add one of: {', '.join(explainers)}",
+                    )
+                )
 
     for claim in UNSUPPORTABLE_CLAIMS:
         if claim in lowered:
