@@ -39,8 +39,9 @@
     brand photography, cheapest first.
 
 .PARAMETER Only
-    Copy just these sets, by name. Use it to take the small ones first:
+    Copy just these sets, by name. Commas or spaces, either way:
     -Only logo,installations,sns,cutouts
+    -Only logo installations sns cutouts
 
 .PARAMETER Apply
     Write the files. Without it the script only reports.
@@ -93,6 +94,16 @@ if (-not $Sets) {
         "homedant-house" = "01_사진자료_IMAGE SOURCE\C02_홈던트하우스 선반_HS"
     }
 }
+
+# "powershell -File" hands every argument over as a plain string and never
+# splits one, so -Only logo,installations arrives as a single name with commas
+# in it and matches nothing. Splitting here means both forms work: the
+# comma-separated one people actually type, and the space-separated one
+# PowerShell binds to an array by itself.
+$Only = @($Only |
+    ForEach-Object { $_ -split "[,;]" } |
+    ForEach-Object { $_.Trim() } |
+    Where-Object { $_ })
 
 if ($Only.Count) {
     $picked = [ordered]@{}
