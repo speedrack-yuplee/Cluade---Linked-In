@@ -161,15 +161,15 @@ def _cmd_assets(args, catalog: Catalog, out) -> int:
     wanted += [(f"show: {s.name}", asset_path("shows", s.name)) for s in profile.trade_shows]
     wanted += [(f"award: {r.name}", asset_path("awards", r.name)) for r in profile.recognitions]
 
-    from .image import creatives_for
-    from .pillars import PILLARS
+    from .image import photo_pool
+
+    wanted += [("brand wordmark, reversed", ASSET_DIR / "logo-light.png")]
 
     print(f"asset directory: {ASSET_DIR}\n", file=out)
-    print("Ready-made panels, used as the post image where they exist:", file=out)
-    for pillar in PILLARS:
-        panels = creatives_for(pillar.key)
-        note = "  (drawn: the countdown or badge has to be current)" if pillar.needs in ("show", "recognition") else ""
-        print(f"  {pillar.name:<26} {len(panels)} panel(s){note}", file=out)
+    pool = photo_pool()
+    print(f"Photograph pool: {len(pool)} image(s), one step per post", file=out)
+    if len(pool) < 20:
+        print("  thin — run scripts/sync_photos.ps1 to widen it", file=out)
     print(file=out)
     for label, path in wanted:
         mark = "present" if path.exists() else "MISSING"
@@ -251,14 +251,11 @@ def _cmd_next(args, catalog: Catalog, out) -> int:
     text_path = directory / "post.txt"
     text_path.write_text(draft.render() + "\n", encoding="utf-8")
 
-    from .image import creative_for, photo_for, render  # late import: only this needs Pillow
+    from .image import photo_for, render  # late import: only this needs Pillow
 
-    panel = creative_for(draft)
-    photo = None if panel else photo_for(draft)
-    if panel:
-        print(f"image: {panel.parent.name}/{panel.name}", file=out)
-    elif photo is None and draft.slot.pictured:
-        print("note: product photo unavailable, using the type-only layout", file=out)
+    photo = photo_for(draft)
+    if photo is None and draft.slot.pictured:
+        print("note: no photograph available, using the type-only layout", file=out)
     image_path = render(draft, directory / "post.png", photo=photo)
     (directory / "post.json").write_text(
         json.dumps(

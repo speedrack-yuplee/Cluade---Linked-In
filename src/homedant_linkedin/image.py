@@ -10,10 +10,12 @@ a post always renders.
 from __future__ import annotations
 
 import re
+from datetime import date
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
+from .composer import _sentence
 from .models import PostDraft
 
 SIZE = 1200
@@ -58,32 +60,62 @@ def asset_path(kind: str, name: str) -> Path:
     return ASSET_DIR / kind / f"{slug(name)}.png"
 
 
-def creatives_for(pillar: str) -> list[Path]:
-    """Ready-made panels for ``pillar``, in name order.
+LIBRARY_DIR = ASSET_DIR / "library"
+PHOTO_POOL_DIRS = (
+    "library/sns",
+    "library/homedant-house",
+    "library/cutouts",
+    "library/web",
+    "products",
+)
+"""Where the photograph on a product post comes from.
 
-    The brand's own A+ content is finished artwork: on-brand, in English, and
-    better than anything the generated layout can do for a product argument.
-    Where a panel exists it becomes the post image, and the hook stays in the
-    caption where LinkedIn shows it anyway.
+The A+ panels used to be the image itself, one per pillar rotated by week. Two
+of those pillars only ever had one panel, so every seasonal and every supply
+post went out carrying the same picture — which is the fastest way to teach a
+feed to scroll past you. The panels stay in the repository as reference; the
+post now gets a photograph from the working copy of the library instead.
+"""
+
+
+def photo_pool() -> list[Path]:
+    """Every photograph a product post may be built on, in a stable order."""
+    out: list[Path] = []
+    for relative in PHOTO_POOL_DIRS:
+        directory = ASSET_DIR / relative
+        if not directory.is_dir():
+            continue
+        out += [
+            p
+            for p in sorted(directory.rglob("*"))
+            if p.suffix.lower() in PHOTO_SUFFIXES and not p.name.startswith(".")
+        ]
+    return out
+
+
+POOL_EPOCH = date(2026, 1, 1)
+POSTING_WEEKDAYS = (0, 2, 4)
+
+
+def _posting_index(day) -> int:
+    """How many posting days have passed since the epoch, counting this one.
+
+    Stepping the pool by the date itself circles: posting days are two and
+    three apart, so a modulo of the ordinal revisits the same handful of
+    pictures. Counting posting days steps the pool exactly once per post, so
+    the whole library is walked before anything repeats.
     """
-    directory = ASSET_DIR / "creatives" / pillar
-    if not directory.is_dir():
-        return []
-    return sorted(p for p in directory.iterdir() if p.suffix.lower() in {".jpg", ".jpeg", ".png"})
+    days = (day - POOL_EPOCH).days
+    whole, rest = divmod(days, 7)
+    return whole * len(POSTING_WEEKDAYS) + sum(
+        1 for w in POSTING_WEEKDAYS if (POOL_EPOCH.weekday() + rest) % 7 >= w
+    )
 
 
-def creative_for(draft: PostDraft) -> Path | None:
-    """The panel to run for ``draft``, rotated by week, or None.
-
-    Show and award posts always render: their images carry a countdown or a
-    badge that no fixed panel can state.
-    """
-    if draft.slot.show or draft.slot.recognition:
-        return None
-    panels = creatives_for(draft.pillar.key)
-    if not panels:
-        return None
-    return panels[draft.scheduled_for.isocalendar()[1] % len(panels)]
+def pooled_photo(day) -> Path | None:
+    """The photograph for ``day``, one step along the pool per post."""
+    pool = photo_pool()
+    return pool[_posting_index(day) % len(pool)] if pool else None
 
 
 def product_photo_path(asin: str) -> Path | None:
@@ -153,8 +185,8 @@ def _paste(canvas, art, box: tuple[int, int, int, int]) -> None:
 
 def _masthead(image, draw, dark: bool) -> int:
     """The wordmark, or the supplied logo. Returns the y the content starts at."""
-    logo = load_asset(ASSET_DIR / "logo.png")
-    if logo is not None and not dark:
+    logo = load_asset(ASSET_DIR / ("logo-light.png" if dark else "logo.png"))
+    if logo is not None:
         _paste(image, logo, (MARGIN, MARGIN, MARGIN + 380, MARGIN + 96))
         return MARGIN + 130
     ink = LIGHT_TEXT if dark else INK
@@ -175,16 +207,44 @@ def _band(image, draw, text: str, ground, ink) -> None:
     draw.text((MARGIN, top + (BAND - font.size) // 2 - 4), text, font=font, fill=ink)
 
 
+BULLET_FLOOR = SIZE - BAND - 26
+"""The lowest a bullet may reach. Below this it runs under the footer band and
+the reader sees half a sentence, which is worse than not saying it."""
+
+
 def _bullets(image, draw, points, top: int, width: int, ink, dot) -> int:
-    font = _font(REGULAR, 30)
-    y = top
-    for point in list(points)[:MAX_BULLETS]:
-        draw.ellipse([MARGIN + 4, y + 13, MARGIN + 16, y + 25], fill=dot)
-        for line in _wrap(draw, point, font, width - 46):
+    """Draw the points, shrinking to fit and dropping what still will not.
+
+    A supply post whose third point was one line too long had that line
+    painted over by the band. The type gets smaller first, and only what is
+    still too long is left out.
+    """
+    wanted = list(points)[:MAX_BULLETS]
+
+    def laid_out(size: int):
+        font = _font(REGULAR, size)
+        step = int(size * 1.4)
+        rows, y = [], top
+        for point in wanted:
+            lines = _wrap(draw, point, font, width - 46)
+            if y + len(lines) * step > BULLET_FLOOR:
+                break
+            rows.append((y, lines))
+            y += len(lines) * step + BULLET_GAP
+        return font, step, rows, y
+
+    for size in (30, 28, 26, 24, 22):
+        font, step, rows, end = laid_out(size)
+        if len(rows) == len(wanted):
+            break
+
+    for start, lines in rows:
+        draw.ellipse([MARGIN + 4, start + 13, MARGIN + 16, start + 25], fill=dot)
+        y = start
+        for line in lines:
             draw.text((MARGIN + 46, y), line, font=font, fill=ink)
-            y += BODY_LINE
-        y += BULLET_GAP
-    return y
+            y += step
+    return end
 
 
 def _footer_text(draft: PostDraft) -> str:
@@ -195,6 +255,8 @@ def _footer_text(draft: PostDraft) -> str:
         return f"{slot.show.venue}   ·   {slot.show.dates}{booth}"
     if slot.recognition:
         return f"{slot.recognition.event}   ·   {slot.recognition.venue}"
+    if slot.installation:
+        return "HOMEDANT boltless steel shelving"
     if slot.product:
         return f"{slot.product.short_title}   ·   Made in Korea"
     return "HOMEDANT   ·   The Best Organizing Solution"
@@ -253,20 +315,33 @@ def _layout_show(image, draw, draft: PostDraft, photo) -> None:
 
 
 def _layout_award(image, draw, draft: PostDraft, photo) -> None:
-    """The badge earns the space; the headline sits beside it."""
+    """The badge earns the space; the headline sits beside it.
+
+    The badge and the product both belong here: the badge says a third party
+    vouched for this, and the photograph says what they vouched for. So the
+    badge crowns the panel rather than replacing it.
+    """
     award = draft.slot.recognition
     top = _masthead(image, draw, dark=False)
     badge = load_asset(asset_path("awards", award.name))
 
     width = SIZE - 2 * MARGIN
+    panel_left = None
+    if photo is not None:
+        panel_left = 700
+        draw.rectangle([panel_left, 0, SIZE, SIZE - BAND], fill=PANEL)
+        photo_top = 300 if badge is not None else 150
+        _paste(image, photo.convert("RGBA"), (panel_left + 26, photo_top, SIZE - 26, SIZE - BAND - 50))
+        width = panel_left - MARGIN - 46
+
+    # After the panel, never before it: the panel is opaque and would paint
+    # over a badge placed first.
     if badge is not None:
-        _paste(image, badge, (SIZE - MARGIN - 320, top, SIZE - MARGIN, top + 320))
-        width = SIZE - 2 * MARGIN - 360
-    elif photo is not None:
-        panel = 700
-        draw.rectangle([panel, 0, SIZE, SIZE - BAND], fill=PANEL)
-        _paste(image, photo.convert("RGBA"), (panel + 26, 150, SIZE - 26, SIZE - BAND - 50))
-        width = panel - MARGIN - 46
+        if panel_left is None:
+            _paste(image, badge, (SIZE - MARGIN - 320, top, SIZE - MARGIN, top + 320))
+            width = SIZE - 2 * MARGIN - 360
+        else:
+            _paste(image, badge, (panel_left + 40, 60, SIZE - 40, 270))
 
     lines, font = _fit(draw, draft.hook, width, 5, 68, 36)
     y = top + 30
@@ -301,6 +376,203 @@ def _layout_product(image, draw, draft: PostDraft, photo) -> None:
     _band(image, draw, _footer_text(draft), accent, LIGHT_TEXT)
 
 
+def _cover(art, size: int):
+    """``art`` scaled to fill a ``size`` square and centre-cropped.
+
+    A room photograph is landscape and the feed wants a square, so the choice
+    is between letterboxing it and cropping it. Cropping keeps the picture
+    filling the frame, which is the whole point of using a real one.
+    """
+    art = art.convert("RGB")
+    scale = size / min(art.size)
+    art = art.resize((max(size, round(art.width * scale)), max(size, round(art.height * scale))), Image.LANCZOS)
+    left = (art.width - size) // 2
+    top = (art.height - size) // 2
+    return art.crop((left, top, left + size, top + size))
+
+
+def _scrim(image, top: int, opacity: int = 225) -> None:
+    """Darken the frame from ``top`` down, fading in over the first stretch.
+
+    Type over a photograph is unreadable wherever the photograph is pale, and
+    a hard-edged band across the picture looks like a mistake. A gradient does
+    neither.
+    """
+    overlay = Image.new("RGBA", (1, SIZE), (0, 0, 0, 0))
+    fade = int((SIZE - top) * 0.45) or 1
+    for y in range(top, SIZE):
+        alpha = min(opacity, int(opacity * (y - top) / fade))
+        overlay.putpixel((0, y), (14, 20, 24, alpha))
+    image.paste(
+        overlay.resize((SIZE, SIZE), Image.NEAREST),
+        (0, 0),
+        overlay.resize((SIZE, SIZE), Image.NEAREST),
+    )
+
+
+def _layout_reference(image, draw, draft: PostDraft, photo) -> None:
+    """The photograph is the image; the words sit in the dark at the bottom.
+
+    Nothing is drawn over the room itself. A real installation only carries a
+    post if it is allowed to look like a photograph rather than a template
+    with a picture pasted into a slot.
+    """
+    site = draft.slot.installation
+    room = photo if photo is not None else None
+    if room is None:
+        _layout_plain(image, draw, draft, None)
+        return
+
+    image.paste(_cover(room, SIZE), (0, 0))
+    _scrim(image, 520)
+
+    draw.text((MARGIN, MARGIN), "HOMEDANT", font=_font(BOLD, 44), fill=LIGHT_TEXT)
+    draw.rectangle([MARGIN, MARGIN + 62, MARGIN + 110, MARGIN + 68], fill=ACCENT)
+
+    label = "INSTALLED" if not site.named else site.customer.upper()
+    draw.text((MARGIN, 620), label, font=_font(BOLD, 30), fill=SHOW_ACCENT)
+
+    width = SIZE - 2 * MARGIN
+    lines, font = _fit(draw, _sentence(site.described_as), width, 2, 76, 44)
+    y = 668
+    for line in lines:
+        draw.text((MARGIN, y), line, font=font, fill=LIGHT_TEXT)
+        y += int(font.size * 1.16)
+
+    caption = _font(REGULAR, 34)
+    for line in _wrap(draw, _sentence(site.room), caption, width)[:2]:
+        draw.text((MARGIN, y + 18), line, font=caption, fill=(214, 214, 210))
+        y += int(caption.size * 1.3)
+
+    _bullets(image, draw, draft.points[1:], y + 40, width, LIGHT_TEXT, ACCENT)
+
+    foot = _font(REGULAR, 26)
+    draw.text(
+        (MARGIN, SIZE - MARGIN - 10),
+        f"Made in Korea since 1979   \u00b7   {_footer_text(draft)}",
+        font=foot,
+        fill=(170, 176, 178),
+    )
+
+
+def _layout_full(image, draw, draft: PostDraft, photo) -> None:
+    """The photograph is the whole frame; one line sits in the dark at the foot.
+
+    The same treatment the installation posts get, because it is the one that
+    stops a thumb: a room, not a slide. Used for any post whose hook can carry
+    the image on its own.
+    """
+    if photo is None:
+        _layout_product(image, draw, draft, None)
+        return
+
+    image.paste(_cover(photo.convert("RGB"), SIZE), (0, 0))
+    _scrim(image, 560)
+
+    logo = load_asset(ASSET_DIR / "logo-light.png")
+    if logo is not None:
+        _paste(image, logo, (MARGIN, MARGIN, MARGIN + 340, MARGIN + 86))
+    else:
+        draw.text((MARGIN, MARGIN), "HOMEDANT", font=_font(BOLD, 44), fill=LIGHT_TEXT)
+
+    width = SIZE - 2 * MARGIN
+    lines, font = _fit(draw, draft.hook, width, 4, 72, 40)
+    y = SIZE - MARGIN - 40 - len(lines) * int(font.size * 1.18)
+    for line in lines:
+        draw.text((MARGIN, y), line, font=font, fill=LIGHT_TEXT)
+        y += int(font.size * 1.18)
+
+    foot = _font(REGULAR, 26)
+    draw.text((MARGIN, SIZE - MARGIN - 6), _footer_text(draft), font=foot, fill=(178, 184, 186))
+
+
+def _layout_figure(image, draw, draft: PostDraft, photo) -> None:
+    """One number, set large, with the photograph behind the lower half.
+
+    A load rating or an assembly time is the whole argument on some posts, and
+    a numeral reads across a feed at a size a sentence never will.
+    """
+    accent = SEASON_ACCENT if draft.pillar.key == "seasonal" else ACCENT
+    figure, caption = _headline_figure(draft)
+    if figure is None:
+        _layout_product(image, draw, draft, photo)
+        return
+
+    draw.rectangle([0, 0, SIZE, SIZE], fill=GROUND)
+    if photo is not None:
+        band_top = 690
+        height = SIZE - band_top
+        covered = _cover(photo.convert("RGB"), SIZE)
+        # The middle of a shelving photograph holds the shelves; the top holds
+        # the ceiling, which is what a strip taken from the top would show.
+        middle = (SIZE - height) // 2
+        image.paste(covered.crop((0, middle, SIZE, middle + height)), (0, band_top))
+
+    top = _masthead(image, draw, dark=False)
+
+    numeral = _font(BOLD, 250)
+    while draw.textlength(figure, font=numeral) > SIZE - 2 * MARGIN and numeral.size > 110:
+        numeral = _font(BOLD, numeral.size - 10)
+    draw.text((MARGIN, top + 40), figure, font=numeral, fill=accent)
+
+    lines, font = _fit(draw, caption, SIZE - 2 * MARGIN, 2, 46, 30)
+    y = top + 40 + int(numeral.size * 1.02)
+    for line in lines:
+        draw.text((MARGIN, y), line, font=font, fill=INK)
+        y += int(font.size * 1.24)
+
+    _band(image, draw, _footer_text(draft), accent, LIGHT_TEXT)
+
+
+FIGURES = (
+    ("264 lb", "per tier, on the five-tier HOMEDANT House shelving"),
+    ("10 min", "to stand a unit up, by hand, with no tools"),
+    ("1979", "the year the factory opened, and it is still ours"),
+    ("1.18 in", "between tier heights, so the shelf fits the box"),
+    ("0 bolts", "HANDiLOCK locks the frame together by hand"),
+    ("6 sides", "laminated, anti-scratch and waterproof"),
+)
+
+
+def _headline_figure(draft: PostDraft):
+    """The number this post could lead on, or (None, None).
+
+    Only where the pillar's argument is a figure. A show carries a countdown
+    and an award carries a badge; neither wants a load rating instead.
+    """
+    if draft.slot.show or draft.slot.recognition or draft.slot.installation:
+        return None, None
+    return FIGURES[draft.slot.turn % len(FIGURES)]
+
+
+LAYOUT_CYCLE = ("product", "full", "figure")
+"""Three treatments, walked one per turn within a pillar.
+
+One template with the words swapped is what made a feed of these look like a
+single post repeated. A pillar now moves through a bulleted layout, a
+full-bleed photograph and a figure card before it comes back round.
+"""
+
+LAYOUT_OFFSET = {
+    "project": 0,
+    "retail": 1,
+    "manufacturing": 2,
+    "seasonal": 1,
+    "supply": 0,
+}
+"""Where each pillar enters the cycle.
+
+Every pillar starts at turn zero, so without an offset the first post of each
+one came out on the same template and the opening fortnight looked like one
+post five times.
+"""
+
+
+def _layout_key(draft: PostDraft) -> str:
+    turn = draft.slot.turn + LAYOUT_OFFSET.get(draft.pillar.key, 0)
+    return LAYOUT_CYCLE[turn % len(LAYOUT_CYCLE)]
+
+
 def _layout_plain(image, draw, draft: PostDraft, photo) -> None:
     """No subject to picture: the sentence carries it."""
     top = _masthead(image, draw, dark=False)
@@ -319,32 +591,30 @@ def _layout_plain(image, draw, draft: PostDraft, photo) -> None:
     _band(image, draw, _footer_text(draft), ACCENT, LIGHT_TEXT)
 
 
-def render(draft: PostDraft, path: str | Path, photo=None, use_creatives: bool = True) -> Path:
+def render(draft: PostDraft, path: str | Path, photo=None, use_creatives: bool = False) -> Path:
     """Write the image for ``draft`` and return the path it was written to.
 
-    A ready-made panel is copied out as-is where one covers this pillar;
-    otherwise the layout for the post's subject is drawn.
+    ``use_creatives`` is kept so older callers still work; it no longer does
+    anything, because a fixed panel per pillar is what made every seasonal post
+    look like the last one.
     """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    panel = creative_for(draft) if use_creatives else None
-    if panel is not None:
-        with Image.open(panel) as art:
-            art.convert("RGB").save(path, "PNG", optimize=True)
-        return path
-
     image = Image.new("RGB", (SIZE, SIZE), GROUND)
     draw = ImageDraw.Draw(image)
 
-    if draft.slot.show:
+    if draft.slot.installation:
+        _layout_reference(image, draw, draft, photo)
+    elif draft.slot.show:
         _layout_show(image, draw, draft, photo)
     elif draft.slot.recognition:
         _layout_award(image, draw, draft, photo)
-    elif draft.product:
-        _layout_product(image, draw, draft, photo)
     else:
-        _layout_plain(image, draw, draft, photo)
+        {"full": _layout_full, "figure": _layout_figure}.get(
+            _layout_key(draft),
+            _layout_product if draft.product else _layout_plain,
+        )(image, draw, draft, photo)
 
     image.save(path, "PNG", optimize=True)
     return path
@@ -360,17 +630,14 @@ def _open(path: Path):
 
 
 def _any_supplied_photo(day):
-    """Any supplied product photo, chosen by date.
+    """A photograph from the pool, chosen by date.
 
     A post that could carry a picture should not lose it because that day's
     rotation landed on a product whose photo has not been supplied and whose
     listing image cannot be reached.
     """
-    directory = ASSET_DIR / "products"
-    if not directory.is_dir():
-        return None
-    files = sorted(p for p in directory.iterdir() if p.suffix.lower() in PHOTO_SUFFIXES)
-    return _open(files[day.toordinal() % len(files)]) if files else None
+    chosen = pooled_photo(day)
+    return _open(chosen) if chosen else None
 
 
 def photo_for(draft: PostDraft, timeout: int = 20):
@@ -379,14 +646,25 @@ def photo_for(draft: PostDraft, timeout: int = 20):
     A file supplied for this product wins, then its listing image, then any
     other supplied photo.
     """
+    if draft.slot.installation:
+        # The picture for one of these is the room itself, already in the
+        # repository; nothing to fetch and nothing to fall back to.
+        return _open(ASSET_DIR / "library" / draft.slot.installation.photo)
+
+    # The library is deep enough that walking it beats showing the same
+    # listing cut twice a fortnight, so the pool leads and the product's own
+    # photograph is the fallback rather than the other way round.
+    pooled = _any_supplied_photo(draft.scheduled_for)
+    if pooled is not None:
+        return pooled
+
     product = draft.slot.pictured
     if product is None:
         return None
     local = product_photo_path(product.asin)
     if local is not None and (image := _open(local)) is not None:
         return image
-    fetched = fetch_product_image(product.image_url, timeout=timeout)
-    return fetched if fetched is not None else _any_supplied_photo(draft.scheduled_for)
+    return fetch_product_image(product.image_url, timeout=timeout)
 
 
 def fetch_product_image(url: str, timeout: int = 20):

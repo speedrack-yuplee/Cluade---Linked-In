@@ -70,18 +70,52 @@ def _usable_pillars(catalog: Catalog, pillars: tuple[Pillar, ...], start: date) 
         "product": len(catalog) > 0,
         "recognition": bool(profile.recognitions),
         "show": bool(_upcoming_shows(catalog, start)),
+        "installation": bool(catalog.installations),
         None: True,
     }
     return tuple(p for p in pillars if available.get(p.needs, False))
 
 
-COUNTDOWN_DAYS: tuple[int, ...] = (30, 14, 7, 2)
+COUNTDOWN_DAYS: tuple[int, ...] = (30, 7)
 """How far ahead of a show to force a post about it.
 
 A showroom space on an upper floor cannot rely on buyers wandering in, so the
 meetings have to be booked before the show. These posts are what books them,
 and they take priority over the ordinary rotation.
+
+Two milestones, not four. Four countdowns plus a post on every day of the run
+turned October into six posts about High Point Market out of thirteen — the
+same show name six times, which reads as one thing repeated rather than a
+company with something to say.
 """
+
+MAX_POSTS_PER_SHOW = 4
+"""Announcement, two countdowns and one from the floor. Past that a show
+crowds out every other subject in the month it falls in."""
+
+
+def _moment_dates(moments: list, days: list[date], pillars: tuple[Pillar, ...]) -> dict[date, tuple]:
+    """Which posting dates belong to a US retail moment, and to which.
+
+    A buyer's year turns on Halloween and Black Friday, not on our rotation, and
+    the buying conversation happens weeks ahead of the date itself. So each
+    moment claims the posting date nearest to when it is actually decided.
+    """
+    by_key = {p.key: p for p in pillars}
+    claimed: dict[date, tuple] = {}
+    for moment in moments:
+        if moment.is_holiday or not moment.angle:
+            continue
+        pillar = next((by_key[k] for k in moment.pillars if k in by_key), None)
+        if pillar is None:
+            continue
+        free = [d for d in days if d not in claimed]
+        if not free:
+            continue
+        nearest = min(free, key=lambda d: abs((d - moment.posts_on).days))
+        if abs((nearest - moment.posts_on).days) <= 3:
+            claimed[nearest] = (pillar, moment)
+    return claimed
 
 
 def _show_dates(shows: list, days: list[date]) -> dict[date, object]:
@@ -91,15 +125,21 @@ def _show_dates(shows: list, days: list[date]) -> dict[date, object]:
     posting date inside the show's own run is claimed by that show.
     """
     claimed: dict[date, object] = {}
+    taken: dict[str, int] = {}
+
+    def claim(day: date, show) -> None:
+        if day in claimed or taken.get(show.name, 0) >= MAX_POSTS_PER_SHOW:
+            return
+        claimed[day] = show
+        taken[show.name] = taken.get(show.name, 0) + 1
+
     upcoming = [s for s in shows if days and s.start >= days[0]]
     if upcoming and days:
         # A calendar that opens with a show ahead of it opens by announcing the
         # show: that is the post the meetings get booked from.
-        claimed[days[0]] = min(upcoming, key=lambda s: s.start)
+        claim(days[0], min(upcoming, key=lambda s: s.start))
+
     for show in shows:
-        for day in days:
-            if show.is_running(day):
-                claimed.setdefault(day, show)
         for offset in COUNTDOWN_DAYS:
             target = show.start - timedelta(days=offset)
             free = [d for d in days if d not in claimed and d <= show.start]
@@ -107,8 +147,63 @@ def _show_dates(shows: list, days: list[date]) -> dict[date, object]:
                 continue
             nearest = min(free, key=lambda d: abs((d - target).days))
             if abs((nearest - target).days) <= 3:
-                claimed[nearest] = show
+                claim(nearest, show)
+
+        # One post from the floor, not one for every day of the run: the
+        # remaining days of a week-long market would otherwise be the same
+        # show over and over.
+        running = [d for d in days if show.is_running(d)]
+        if running:
+            claim(running[0], show)
+
     return claimed
+
+
+MAX_POSTS_PER_RECOGNITION = 2
+REST_WEEKS_PER_RECOGNITION = 8
+"""How often one award may be raised again, and how many times at all.
+
+A countdown to a show that has not happened yet is news every time it runs.
+An award won in April is not: three posts about the same Retailers' Choice
+win inside four months is the same sentence three times. Two mentions, two
+months apart, is as much as one award carries.
+"""
+
+
+def _subject_for(pillar: Pillar, pools, cursors, spent, day):
+    """The subject this pillar would carry today, or None if it has none left.
+
+    Products cycle for ever — there is always another shelf to talk about. An
+    award does not: it is one piece of news, and saying it a third time in four
+    months is the same sentence three times.
+    """
+    if not pillar.needs:
+        return {}
+
+    key = (
+        f"product:{pillar.segment}"
+        if pillar.needs == "product" and pillar.segment
+        else pillar.needs
+    )
+    pool = pools[key]
+    if not pool:
+        return None
+
+    if pillar.needs != "recognition":
+        chosen = pool[cursors[key] % len(pool)]
+        cursors[key] += 1
+        return {pillar.needs: chosen}
+
+    # Take the award that has been rested longest and still has a turn left.
+    for award in sorted(pool, key=lambda a: len(spent.get(id(a), []))):
+        used = spent.get(id(award), [])
+        if len(used) >= MAX_POSTS_PER_RECOGNITION:
+            continue
+        if used and (day - used[-1]).days < REST_WEEKS_PER_RECOGNITION * 7:
+            continue
+        spent.setdefault(id(award), []).append(day)
+        return {"recognition": award}
+    return None
 
 
 def build_plan(
@@ -138,17 +233,34 @@ def build_plan(
         "product": catalog.products,
         "recognition": list(profile.recognitions),
         "show": _upcoming_shows(catalog, start),
+        "installation": catalog.installations,
     }
     for pillar in usable:
         if pillar.segment:
             pools[f"product:{pillar.segment}"] = _segment_pool(catalog, pillar.segment)
     cursors = dict.fromkeys(pools, 0)
 
-    days = [d for d in posting_dates(start, weeks, weekdays) if d not in profile.blackout_dates]
+    # Nothing goes out on a US federal holiday: the audience is not at a desk.
+    holidays = {m.date for m in catalog.moments if m.is_holiday}
+    days = [
+        d
+        for d in posting_dates(start, weeks, weekdays)
+        if d not in profile.blackout_dates and d not in holidays
+    ]
     show_pillar = next((p for p in usable if p.needs == "show"), None)
     claimed = _show_dates(pools["show"], days) if show_pillar else {}
 
+    # Shows are booked first; a retail moment fills a date the shows left.
+    moments = _moment_dates(catalog.moments, [d for d in days if d not in claimed], usable)
+
     slots: list[Slot] = []
+    spent: dict[int, list] = {}
+    turns: dict[str, int] = {}
+
+    def turn(pillar: Pillar) -> int:
+        turns[pillar.key] = turns.get(pillar.key, -1) + 1
+        return turns[pillar.key]
+
     index = 0
     for day in days:
         if day in claimed:
@@ -157,21 +269,44 @@ def build_plan(
                     scheduled_for=day,
                     pillar=show_pillar,
                     show=claimed[day],
+                    turn=turn(show_pillar),
                     feature=_feature(catalog, day),
                 )
             )
             continue
+        if day in moments:
+            pillar, moment = moments[day]
+            subject = {}
+            if pillar.needs:
+                key = f"product:{pillar.segment}" if pillar.needs == "product" and pillar.segment else pillar.needs
+                pool = pools[key]
+                subject[pillar.needs] = pool[cursors[key] % len(pool)]
+                cursors[key] += 1
+            if pillar.needs != "product":
+                subject["feature"] = _feature(catalog, day)
+            slots.append(
+                Slot(scheduled_for=day, pillar=pillar, moment=moment, turn=turn(pillar), **subject)
+            )
+            continue
+
         in_season = [p for p in rotation if not p.months or day.month in p.months]
-        pillar = in_season[index % len(in_season)]
-        index += 1
-        subject = {}
-        if pillar.needs:
-            key = f"product:{pillar.segment}" if pillar.needs == "product" and pillar.segment else pillar.needs
-            pool = pools[key]
-            subject[pillar.needs] = pool[cursors[key] % len(pool)]
-            cursors[key] += 1
-        if pillar.needs != "product":
+
+        # Walk the rotation until a pillar can actually supply a subject: a
+        # recognition that has had its two turns steps aside for whatever comes
+        # next rather than repeating itself.
+        chosen = None
+        for step in range(len(in_season)):
+            candidate = in_season[(index + step) % len(in_season)]
+            subject = _subject_for(candidate, pools, cursors, spent, day)
+            if subject is not None:
+                chosen, index = candidate, index + step + 1
+                break
+        if chosen is None:
+            index += 1
+            continue
+
+        if chosen.needs != "product":
             subject["feature"] = _feature(catalog, day)
-        slots.append(Slot(scheduled_for=day, pillar=pillar, **subject))
+        slots.append(Slot(scheduled_for=day, pillar=chosen, turn=turn(chosen), **subject))
 
     return slots

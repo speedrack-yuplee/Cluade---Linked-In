@@ -24,8 +24,17 @@ def test_posting_dates_rejects_zero_weeks():
 
 def test_plan_assigns_a_pillar_to_every_slot(catalog):
     slots = build_plan(catalog, start=PLAN_START, weeks=4)
-    assert len(slots) == 12
+    assert len(slots) == 11  # Labor Day takes the first Monday out
     assert all(slot.pillar in PILLARS for slot in slots)
+
+
+def test_nothing_goes_out_on_a_us_federal_holiday(catalog):
+    """The audience is not at a desk, so the post would be spent on nobody."""
+    slots = build_plan(catalog, start=PLAN_START, weeks=20)
+    scheduled = {s.scheduled_for for s in slots}
+    holidays = {m.date for m in catalog.moments if m.is_holiday}
+    assert holidays & set(posting_dates(PLAN_START, 20)), "no holiday fell on a posting day"
+    assert not (scheduled & holidays)
 
 
 def test_a_calendar_opens_by_announcing_the_next_show(catalog):
@@ -39,7 +48,8 @@ def test_recognition_leads_the_rotation_behind_the_show(catalog):
     """The award post outperformed product posts by more than an order of
     magnitude, so it opens the rotation proper."""
     slots = build_plan(catalog, start=PLAN_START, weeks=4)
-    rotation = [s for s in slots if s.pillar.key != "tradeshow"]
+    # A date claimed by a show or by a US retail moment is not the rotation.
+    rotation = [s for s in slots if s.pillar.key != "tradeshow" and not s.moment]
     assert rotation[0].pillar.key == "recognition"
     assert rotation[0].recognition is not None
 
@@ -93,9 +103,17 @@ def test_nothing_is_scheduled_on_a_blackout_date(catalog):
 
 
 def test_a_seasonal_pillar_only_runs_in_its_own_months(catalog):
+    """Unless it was timed to a US date. The Halloween buy is decided in
+    September, so a seasonal post can legitimately land before October — but
+    only when a moment put it there."""
     slots = build_plan(catalog, start=PLAN_START, weeks=20)
     seasonal = [s for s in slots if s.pillar.key == "seasonal"]
-    assert seasonal and all(s.scheduled_for.month in (10, 11, 12) for s in seasonal)
+    assert seasonal
+    for slot in seasonal:
+        if slot.moment:
+            assert slot.moment.posts_on.month == slot.scheduled_for.month
+            continue
+        assert slot.scheduled_for.month in (10, 11, 12)
 
 
 def test_slot_subject_labels_whatever_the_slot_carries(catalog):
@@ -112,3 +130,89 @@ def test_plan_rejects_an_empty_catalog(catalog):
 def test_get_pillar_raises_with_a_helpful_message():
     with pytest.raises(KeyError, match="known pillars"):
         get_pillar("nope")
+
+
+def test_one_show_cannot_take_over_the_month(catalog):
+    """High Point Market took six of October's thirteen posts: four countdown
+    milestones plus a post on every day of a week-long run. Six posts carrying
+    the same show name reads as one thing repeated, not as a company with
+    something to say."""
+    from collections import Counter
+
+    slots = [
+        s
+        for s in build_plan(catalog, start=date(2026, 9, 2), weeks=20)
+        if s.scheduled_for <= date(2026, 12, 31)
+    ]
+    per_show = Counter(s.show.name for s in slots if s.show)
+    for name, count in per_show.items():
+        assert count <= 4, f"{name} claimed {count} posts"
+
+    for month in {s.scheduled_for.month for s in slots}:
+        in_month = [s for s in slots if s.scheduled_for.month == month]
+        shows = sum(1 for s in in_month if s.pillar.key == "tradeshow")
+        assert shows * 3 <= len(in_month), f"month {month} is mostly one show"
+
+
+def test_every_pillar_gets_a_turn_before_the_year_ends(catalog):
+    """A rotation that never reaches a pillar is a pillar that does not exist."""
+    from collections import Counter
+
+    from homedant_linkedin.pillars import PILLARS
+
+    slots = [
+        s
+        for s in build_plan(catalog, start=date(2026, 9, 2), weeks=20)
+        if s.scheduled_for <= date(2026, 12, 31)
+    ]
+    seen = Counter(s.pillar.key for s in slots)
+    for pillar in PILLARS:
+        assert seen[pillar.key] >= 3, f"{pillar.key} came round only {seen[pillar.key]} times"
+
+
+def test_a_post_lands_near_the_date_it_is_about(catalog):
+    """The Black Friday post went out on 11 September, eleven weeks early,
+    because lead_days had been set to when the buy is decided rather than when
+    the post should appear. Nobody reading in September connects the two. The
+    argument that stock has to land early belongs in the words."""
+    slots = [
+        s
+        for s in build_plan(catalog, start=PLAN_START, weeks=20)
+        if s.moment
+    ]
+    assert slots, "no post was timed to a US retail date"
+    for slot in slots:
+        gap = (slot.moment.date - slot.scheduled_for).days
+        assert -7 <= gap <= 21, (
+            f"{slot.moment.name} posts {gap} days from the date it is about"
+        )
+
+
+def test_one_award_is_not_raised_again_and_again(catalog):
+    """A countdown to a show that has not happened is news every time it runs.
+    An award won in April is not: three posts about the same Retailers' Choice
+    win inside four months is one sentence said three times."""
+    from collections import Counter
+
+    from homedant_linkedin.planner import (
+        MAX_POSTS_PER_RECOGNITION,
+        REST_WEEKS_PER_RECOGNITION,
+    )
+
+    slots = [
+        s
+        for s in build_plan(catalog, start=PLAN_START, weeks=20)
+        if s.scheduled_for <= date(2026, 12, 31) and s.recognition
+    ]
+    counts = Counter(s.recognition.name for s in slots)
+    for name, n in counts.items():
+        assert n <= MAX_POSTS_PER_RECOGNITION, f"{name} came round {n} times"
+
+    when: dict[str, list] = {}
+    for slot in slots:
+        when.setdefault(slot.recognition.name, []).append(slot.scheduled_for)
+    for name, days in when.items():
+        for earlier, later in zip(days, days[1:]):
+            assert (later - earlier).days >= REST_WEEKS_PER_RECOGNITION * 7, (
+                f"{name} came back after {(later - earlier).days} days"
+            )

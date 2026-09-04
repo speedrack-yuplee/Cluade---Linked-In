@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, timedelta
 
 MAX_POST_CHARS = 3000
 """LinkedIn rejects a post body longer than this."""
@@ -246,6 +246,99 @@ class Brand:
 
 
 @dataclass(frozen=True)
+class Moment:
+    """A date the audience's own year turns on.
+
+    A buyer in the States is not thinking about our factory in September; they
+    are thinking about the reset that has to be on the floor before Halloween.
+    A post timed to one of these reads as someone who knows their year rather
+    than someone talking about themselves.
+    """
+
+    date: date
+    kind: str
+    """holiday (nothing is posted on one) or retail (a post may be timed to it)."""
+
+    name: str
+    ko: str = ""
+    angle: str = ""
+    """What there is to say about it, in our terms rather than the holiday's."""
+
+    lead_days: int = 0
+    """How far ahead the buying conversation happens. A post about Black Friday
+    storage in late November is too late to sell anything."""
+
+    pillars: tuple[str, ...] = ()
+
+    @property
+    def is_holiday(self) -> bool:
+        return self.kind == "holiday"
+
+    @property
+    def posts_on(self):
+        """The day a post about this should go out."""
+        return self.date - timedelta(days=self.lead_days)
+
+    @classmethod
+    def from_dict(cls, raw: dict) -> "Moment":
+        return cls(
+            date=date.fromisoformat(raw["date"]),
+            kind=raw.get("kind", "retail"),
+            name=raw["name"],
+            ko=raw.get("ko", ""),
+            angle=raw.get("angle", ""),
+            lead_days=int(raw.get("lead_days", 0)),
+            pillars=tuple(raw.get("pillars", ())),
+        )
+
+
+@dataclass(frozen=True)
+class Installation:
+    """A room the shelving actually went into, and the photograph of it.
+
+    A studio shot says what the product looks like. One of these says somebody
+    bought it, put it in a real building, and it is still standing there. For a
+    B2B feed that is the stronger argument, and it is one no stock photograph
+    or composite can make.
+    """
+
+    slug: str
+    customer: str
+    sector: str
+    described_as: str
+    room: str
+    situation: str
+    photo: str
+    named: bool = False
+    """Whether the post may say the customer's name.
+
+    A reference is the customer's to give. Until they have agreed, the post
+    describes the kind of place instead — which is what a buyer abroad is
+    asking about anyway."""
+
+    hashtags: tuple[str, ...] = ()
+
+    @property
+    def subject(self) -> str:
+        """How the post refers to this room."""
+        return self.customer if self.named else self.described_as
+
+    @classmethod
+    def from_dict(cls, raw: dict) -> "Installation":
+        return cls(
+            slug=raw["slug"],
+            customer=raw.get("customer", ""),
+            sector=raw.get("sector", ""),
+            described_as=raw.get("described_as", ""),
+            room=raw.get("room", ""),
+            situation=raw.get("situation", ""),
+            photo=raw["photo"],
+            named=bool(raw.get("named", False)),
+            hashtags=tuple(raw.get("hashtags", ())),
+        )
+
+
+@dataclass(frozen=True)
 class Pillar:
     """A recurring content theme. The plan rotates through these."""
 
@@ -254,7 +347,8 @@ class Pillar:
     intent: str
     hashtags: tuple[str, ...]
     needs: str | None = "product"
-    """What the slot must carry: "product", "recognition", "show", or None."""
+    """What the slot must carry: "product", "recognition", "show",
+    "installation", or None."""
 
     months: tuple[int, ...] = ()
     """Restrict the pillar to these calendar months. Empty means all year."""
@@ -274,13 +368,31 @@ class Slot:
     product: Product | None = None
     recognition: Recognition | None = None
     show: TradeShow | None = None
+    installation: Installation | None = None
+    moment: Moment | None = None
+    """A US retail date this post was timed to, where one falls due."""
+
+    turn: int = 0
+    """How many times this pillar has already come round in the plan.
+
+    The rotation of hooks counts on this rather than on the date: posting days
+    are two and three days apart, so any modulo of the date eventually lands
+    two neighbours on the same opening line."""
+
     feature: Product | None = None
     """A product shown in the image only. A show or brand post has no product
     subject, but it still has something to show."""
 
     @property
     def pictured(self) -> Product | None:
-        """The product the image should show, whether or not the text is about it."""
+        """The product the image should show, whether or not the text is about it.
+
+        None for an installation post: that image is the photograph of the
+        room, and a studio cut-out of some other unit on top of it would
+        contradict what the post is saying.
+        """
+        if self.installation:
+            return None
         return self.product or self.feature
 
     @property
@@ -292,6 +404,8 @@ class Slot:
             return self.recognition.name
         if self.show:
             return self.show.name
+        if self.installation:
+            return f"Installed: {self.installation.subject}"
         return "(brand)"
 
 
@@ -306,6 +420,14 @@ class PostDraft:
     closing: str = ""
     """A line that follows the call to action, such as the thank-you the award
     posts end on."""
+
+    question: str = ""
+    """A question a reader can answer from their own experience in one line.
+
+    The account's best post carried eight comments and reached 709
+    impressions; every other post carried none or one and sat between 46 and
+    99. A message goes to an inbox the feed cannot see, so the post also has
+    to ask for something that costs a reader nothing to give."""
 
     hashtags: tuple[str, ...] = field(default=())
     points: tuple[str, ...] = ()
@@ -326,7 +448,7 @@ class PostDraft:
 
     def render(self) -> str:
         """The exact text to paste into LinkedIn."""
-        blocks = [self.hook, self.body, self.cta, self.closing]
+        blocks = [self.hook, self.body, self.cta, self.closing, self.question]
         if self.hashtags:
             blocks.append(" ".join(f"#{tag}" for tag in self.hashtags))
         return "\n\n".join(block for block in blocks if block)
