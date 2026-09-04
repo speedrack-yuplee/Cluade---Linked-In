@@ -279,3 +279,51 @@ def test_the_opening_fortnight_is_not_one_template_five_times(catalog):
     )
     for earlier, later in zip(plain, plain[1:]):
         assert earlier != later, "two ordinary posts running on the same template"
+
+
+def test_a_detail_post_shows_the_part_its_sentence_names(catalog):
+    """The component layout is the one place the reader can check the words
+    against the picture, so the pairing has to be real: every claim names a
+    photograph that exists, and no claim is offered to a pillar it has nothing
+    to do with."""
+    from homedant_linkedin import image as image_module
+
+    details = image_module._details()
+    assert details, "no component details resolved — is assets/library/parts synced?"
+    for detail in details:
+        assert (image_module.PARTS_DIR / detail["photo"]).is_file()
+        assert detail["claim"].strip() and detail["caption"].strip()
+        assert detail.get("pillars"), f"{detail['claim']!r} belongs to no pillar"
+
+    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=17), catalog)
+    for draft in drafts:
+        chosen = image_module._detail_for(draft)
+        if chosen is None:
+            continue
+        assert draft.pillar.key in chosen["pillars"], (
+            f"{draft.pillar.key} post offered {chosen['claim']!r}"
+        )
+
+    # A show, an award and a reference post argue from their own subject.
+    special = [
+        d for d in drafts if d.slot.show or d.slot.recognition or d.slot.installation
+    ]
+    assert special
+    assert all(image_module._detail_for(d) is None for d in special)
+
+
+def test_a_detail_post_renders_without_the_rotation_photograph(catalog, tmp_path):
+    """The component is the picture, so the layout must not depend on the day's
+    pooled photograph being there."""
+    from homedant_linkedin import image as image_module
+
+    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=17), catalog)
+    details = [
+        d
+        for d in drafts
+        if image_module._detail_for(d) and image_module._layout_key(d) == "detail"
+    ]
+    assert details, "the plan never reaches the component layout"
+
+    written = image_module.render(details[0], tmp_path / "detail.png", photo=None)
+    assert written.exists() and written.stat().st_size > 0

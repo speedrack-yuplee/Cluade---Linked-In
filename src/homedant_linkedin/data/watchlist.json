@@ -16,11 +16,10 @@
       "priority": 1
     },
     {
-      "name": "Gladiator GarageWorks",
-      "why": "Named as a competitor on the Lowe's deck.",
-      "profile_url": "",
-      "follow_url": "https://www.linkedin.com/company/gladiator-systems",
-      "priority": 1
+      "name": "NewAge Products",
+      "priority": 1,
+      "follow_url": "https://www.linkedin.com/company/newage-products-inc-",
+      "note": "Garage and home storage out of Canada, selling into the same US big-box and direct channels we do, and posting regularly — which is what Gladiator's page does not. Taken as the fourth priority-one follow in its place."
     },
     {
       "name": "North American Hardware and Paint Association (NHPA)",
@@ -77,6 +76,14 @@
       "profile_url": "",
       "follow_url": "",
       "priority": 3
+    },
+    {
+      "name": "Gladiator GarageWorks",
+      "why": "Named as a competitor on the Lowe's deck.",
+      "profile_url": "",
+      "follow_url": "",
+      "priority": 3,
+      "note": "The gladiator-systems page carries four followers and no posts, so there is nothing to follow and nothing would arrive. Whirlpool runs the brand's marketing through its own channels. Left here as a name to watch for if a real page appears."
     },
     {
       "name": "Home News Now",

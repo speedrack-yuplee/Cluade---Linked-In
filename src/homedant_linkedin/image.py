@@ -525,6 +525,94 @@ def _layout_figure(image, draw, draft: PostDraft, photo) -> None:
     _band(image, draw, _footer_text(draft), accent, LIGHT_TEXT)
 
 
+PARTS_DIR = LIBRARY_DIR / "parts"
+DETAILS_FILE = Path(__file__).resolve().parent / "data" / "details.json"
+
+
+def _details() -> list[dict]:
+    """The claim/component pairs whose photograph is actually on disk.
+
+    The file is written against the design library, and the library is synced
+    from OneDrive by hand, so a detail can name a photograph this checkout does
+    not have. Dropping it here means a missing file costs one detail rather
+    than a blank panel in a published post.
+    """
+    global _DETAIL_CACHE
+    if _DETAIL_CACHE is None:
+        try:
+            import json
+
+            entries = json.loads(DETAILS_FILE.read_text(encoding="utf-8"))["details"]
+        except Exception:  # noqa: BLE001 - the other layouts still work without these
+            entries = []
+        _DETAIL_CACHE = [e for e in entries if (PARTS_DIR / e["photo"]).is_file()]
+    return _DETAIL_CACHE
+
+
+_DETAIL_CACHE: list[dict] | None = None
+
+
+def _detail_for(draft: PostDraft) -> dict | None:
+    """The component this post can argue from, or None.
+
+    Details are filtered to the pillar and then walked by the pillar's own
+    turn, so a pillar works through its own components rather than opening on
+    the same clip every time it comes round.
+    """
+    if draft.slot.show or draft.slot.recognition or draft.slot.installation:
+        return None
+    usable = [d for d in _details() if draft.pillar.key in d.get("pillars", ())]
+    if not usable:
+        return None
+    return usable[draft.slot.turn % len(usable)]
+
+
+def _layout_detail(image, draw, draft: PostDraft, photo) -> None:
+    """A claim, and the part that settles it.
+
+    The photograph here is not the rotation's: it is the one the sentence
+    names. Components are shot on white, so they sit on a white panel and are
+    fitted rather than cropped — half a bracket proves nothing.
+    """
+    detail = _detail_for(draft)
+    part = load_asset(PARTS_DIR / detail["photo"]) if detail else None
+    if part is None:
+        _layout_full(image, draw, draft, photo)
+        return
+
+    accent = SEASON_ACCENT if draft.pillar.key == "seasonal" else ACCENT
+    draw.rectangle([0, 0, SIZE, SIZE], fill=GROUND)
+    top = _masthead(image, draw, dark=False)
+    width = SIZE - 2 * MARGIN
+
+    lines, font = _fit(draw, detail["claim"], width, 2, 68, 40)
+    y = top + 26
+    for line in lines:
+        draw.text((MARGIN, y), line, font=font, fill=accent)
+        y += int(font.size * 1.2)
+
+    caption = _font(REGULAR, 27)
+    for line in _wrap(draw, detail["caption"], caption, width)[:2]:
+        y += 12
+        draw.text((MARGIN, y), line, font=caption, fill=MUTED)
+        y += int(caption.size * 1.3)
+
+    panel_top = max(y + 34, 520)
+    panel_bottom = SIZE - BAND - 30
+    draw.rectangle([MARGIN, panel_top, SIZE - MARGIN, panel_bottom], fill=PANEL)
+    _paste(
+        image,
+        part.convert("RGB"),
+        (MARGIN + 24, panel_top + 24, SIZE - MARGIN - 24, panel_bottom - 24),
+    )
+
+    # Not _footer_text: a castor bracket is common to the range, and naming
+    # one SKU under it invites the reader to check whether that SKU is the one
+    # in the photograph. The system is what the claim is about.
+    _band(image, draw, "HOMEDANT boltless steel shelving   ·   Made in Korea",
+          accent, LIGHT_TEXT)
+
+
 FIGURES = (
     ("264 lb", "per tier, on the five-tier HOMEDANT House shelving"),
     ("10 min", "to stand a unit up, by hand, with no tools"),
@@ -546,26 +634,31 @@ def _headline_figure(draft: PostDraft):
     return FIGURES[draft.slot.turn % len(FIGURES)]
 
 
-LAYOUT_CYCLE = ("product", "full", "figure")
-"""Three treatments, walked one per turn within a pillar.
+LAYOUT_CYCLE = ("product", "full", "figure", "detail")
+"""Four treatments, walked one per turn within a pillar.
 
 One template with the words swapped is what made a feed of these look like a
 single post repeated. A pillar now moves through a bulleted layout, a
-full-bleed photograph and a figure card before it comes back round.
+full-bleed photograph, a figure card and a component detail before it comes
+back round.
 """
 
 LAYOUT_OFFSET = {
-    "project": 0,
-    "retail": 1,
-    "manufacturing": 2,
-    "seasonal": 1,
-    "supply": 0,
+    "manufacturing": 0,
+    "project": 1,
+    "retail": 2,
+    "seasonal": 2,
+    "supply": 3,
 }
 """Where each pillar enters the cycle.
 
 Every pillar starts at turn zero, so without an offset the first post of each
 one came out on the same template and the opening fortnight looked like one
-post five times.
+post five times. These particular numbers are not arbitrary: pillars do not
+come round in a flat rotation once shows, awards and reference posts have
+taken their days, so the offsets were solved against the real plan for the one
+assignment that leaves no two consecutive posts on the same template and still
+reaches all four inside the first fortnight. test_image.py holds them to it.
 """
 
 
@@ -612,7 +705,11 @@ def render(draft: PostDraft, path: str | Path, photo=None, use_creatives: bool =
     elif draft.slot.recognition:
         _layout_award(image, draw, draft, photo)
     else:
-        {"full": _layout_full, "figure": _layout_figure}.get(
+        {
+            "full": _layout_full,
+            "figure": _layout_figure,
+            "detail": _layout_detail,
+        }.get(
             _layout_key(draft),
             _layout_product if draft.product else _layout_plain,
         )(image, draw, draft, photo)
