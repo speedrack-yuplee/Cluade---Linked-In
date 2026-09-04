@@ -19,8 +19,24 @@ git clone https://github.com/speedrack-yuplee/Cluade---Linked-In.git
 powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\Documents\Cluade---Linked-In\scripts\collect_linkedin.ps1"
 ```
 
-크롬 창이 뜨고 스크롤이 일어납니다. **끝날 때까지 건드리지 마세요.**
 끝나면 `claude/linkedin-metrics` 브랜치에 푸시됩니다.
+
+### 화면에 안 뜨게 하기
+
+기본값이 `-Window background` 입니다. 크롬 탭은 열리지만 **앞으로 나오지
+않습니다.** 다른 창에서 일하는 동안 돌려도 됩니다.
+
+opencli 버전이 이 값을 안 받으면 경고를 한 줄 찍고 예전처럼 화면에 띄워서
+다시 시도합니다. 그럴 때는 opencli 를 업데이트하거나, 아래 자동 실행으로
+자리에 없는 시간에 돌리세요.
+
+```powershell
+# 확인용 — 이 명령이 --window 값으로 무엇을 받는지 보여줍니다
+opencli.cmd linkedin posts --help
+```
+
+**완전히 안 보이게 하려면 자동 실행이 답입니다.** 아래 스케줄러 등록은
+`-WindowStyle Hidden` 으로 돌기 때문에 PowerShell 창도 뜨지 않습니다.
 
 ## 자동 실행 (주 1회)
 
@@ -30,12 +46,19 @@ powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\Documents\Cluade---Li
 $script = "$env:USERPROFILE\Documents\Cluade---Linked-In\scripts\collect_linkedin.ps1"
 $action = New-ScheduledTaskAction -Execute "powershell.exe" `
     -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$script`""
-$trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday -At 8am
+$trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday -At 7am
 Register-ScheduledTask -TaskName "LinkedIn metrics" -Action $action -Trigger $trigger
 ```
 
-월요일 오전 8시에 돕니다. 게시 요일(월·수·금)보다 앞이라, 그 주 콘텐츠를
-정하기 전에 지난주 성과가 들어옵니다.
+월요일 오전 7시에 돕니다. 출근 전이라 화면을 뺏길 일이 없고, 게시 요일
+(월·수·금)보다 앞이라 그 주 콘텐츠를 정하기 전에 지난주 성과가 들어옵니다.
+
+PC가 꺼져 있어 걸렀다면 켠 다음 따라잡게 하려면:
+
+```powershell
+Set-ScheduledTask -TaskName "LinkedIn metrics" `
+    -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable)
+```
 
 **크롬이 로그인된 상태여야 합니다.** 로그아웃되면 스크립트가 실패합니다.
 확인:

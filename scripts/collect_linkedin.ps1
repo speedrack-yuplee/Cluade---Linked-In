@@ -7,7 +7,12 @@
     happen here. The cloud session cannot reach linkedin.com; it reads what
     this script pushes.
 
-    Run it by hand, or from Task Scheduler weekly. See docs/COLLECTING.md.
+    It steals the screen if you let it. -Window decides: "background" drives
+    the tab without raising it, which is what you want while you are working.
+    Not every opencli build accepts it, so a run that is rejected for the flag
+    retries once in the foreground rather than collecting nothing.
+
+    Run it by hand, or from Task Scheduler. See docs/COLLECTING.md.
 
 .PARAMETER RepoPath
     Working copy of speedrack-yuplee/Cluade---Linked-In.
@@ -19,7 +24,9 @@
 param(
     [string]$RepoPath = "$env:USERPROFILE\Documents\Cluade---Linked-In",
     [string]$Branch = "claude/linkedin-metrics",
-    [int]$Limit = 40
+    [int]$Limit = 40,
+    [ValidateSet("background", "foreground")]
+    [string]$Window = "background"
 )
 
 $ErrorActionPreference = "Stop"
@@ -29,6 +36,42 @@ chcp 65001 > $null
 # this the UTF-8 opencli writes is read as cp949 and Korean is destroyed.
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false
 $OutputEncoding = New-Object System.Text.UTF8Encoding $false
+
+
+function Invoke-OpenCli {
+    <#
+        One opencli call, returned as a single string.
+
+        Two things go wrong often enough to handle here rather than at each
+        call site. A tab that opencli opened and closed can leave the bridge
+        holding an identity the browser no longer has ("stale page identity"),
+        which the next call resolves; and an opencli build that predates
+        --window background rejects the value, in which case foreground is
+        better than nothing. Both are retried once, and only once: a second
+        identical failure is a real one and the caller should see it.
+    #>
+    param([string[]]$Arguments, [int]$Attempts = 2)
+
+    $mode = $Window
+    for ($try = 1; $try -le $Attempts; $try++) {
+        $output = & opencli.cmd @Arguments --window $mode --keep-tab false 2>&1 |
+            Out-String -Width 100000
+
+        if ($output.TrimStart().StartsWith("[")) { return $output }
+
+        if ($mode -ne "foreground" -and $output -match "window|invalid|unknown|unrecognized") {
+            Write-Warning "opencli 가 --window $mode 를 받지 않습니다. 화면에 띄워서 다시 시도합니다."
+            $mode = "foreground"
+            continue
+        }
+        if ($try -lt $Attempts -and $output -match "stale page identity|Page not found") {
+            Start-Sleep -Seconds 3
+            continue
+        }
+        return $output
+    }
+    return $output
+}
 
 
 function ConvertTo-ReferenceSchema {
@@ -97,8 +140,7 @@ git pull --quiet origin $Branch 2>$null
 
 # Out-String -Width keeps PowerShell from wrapping long JSON lines, which
 # silently corrupts the file; WriteAllText avoids the UTF-16 default of ">".
-$json = opencli.cmd linkedin posts --limit $Limit -f json --window foreground --keep-tab false |
-    Out-String -Width 100000
+$json = Invoke-OpenCli @("linkedin", "posts", "--limit", "$Limit", "-f", "json")
 
 if (-not $json.TrimStart().StartsWith("[")) {
     throw "opencli did not return JSON. First 200 characters:`n$($json.Substring(0, [Math]::Min(200, $json.Length)))"
@@ -114,8 +156,7 @@ Write-Host "collected $count posts"
 # The feed: what the people and companies this account follows are posting.
 # Impressions are visible to a post's author only, so watched posts carry
 # reactions and comments and nothing more.
-$feed = opencli.cmd linkedin timeline --limit 50 -f json --window foreground --keep-tab false |
-    Out-String -Width 100000
+$feed = Invoke-OpenCli @("linkedin", "timeline", "--limit", "50", "-f", "json")
 if ($feed.TrimStart().StartsWith("[")) {
     [IO.File]::WriteAllText(
         (Join-Path $RepoPath "content\reference\timeline.json"), $feed, [Text.UTF8Encoding]::new($false))
@@ -133,8 +174,8 @@ if (Test-Path $watchPath) {
     $missing = @()
     foreach ($person in $watch.people) {
         if (-not $person.profile_url) { $missing += $person.name; continue }
-        $one = opencli.cmd linkedin posts --profile-url $person.profile_url --limit 10 -f json `
-            --window foreground --keep-tab false | Out-String -Width 100000
+        $one = Invoke-OpenCli @("linkedin", "posts", "--profile-url", $person.profile_url,
+                                "--limit", "10", "-f", "json")
         if ($one.TrimStart().StartsWith("[")) {
             $collected += [pscustomobject]@{ name = $person.name; url = $person.profile_url; posts = ($one | ConvertFrom-Json) }
         } else {
@@ -152,7 +193,21 @@ if (Test-Path $watchPath) {
     }
 }
 
-git add content/reference/posts.json content/reference/timeline.json content/reference/watched.json 2>$null
+# Only stage what actually got written. A skipped timeline used to abort the
+# whole run here, throwing away the posts that had already been collected.
+$staged = 0
+foreach ($file in @("content/reference/posts.json",
+                    "content/reference/timeline.json",
+                    "content/reference/watched.json")) {
+    if (Test-Path -LiteralPath (Join-Path $RepoPath $file)) {
+        git add $file
+        $staged++
+    }
+}
+if ($staged -eq 0) {
+    Write-Warning "수집된 파일이 없습니다. opencli.cmd doctor 로 확인해 주세요."
+    exit 1
+}
 if (git diff --cached --quiet) {
     Write-Host "no change since the last run"
     exit 0
