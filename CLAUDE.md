@@ -20,8 +20,18 @@ drive, whatever the reason and however safe the change looks.
 
 If a change there seems necessary, say so and let Leo do it himself.
 
-Anything this repository needs is copied in under `assets/`. The original stays
-where it is, untouched.
+## The working copy of the photography
+
+`scripts/sync_photos.ps1` runs on Leo's PC. It reads the master library and
+writes downscaled copies to his own OneDrive, under
+`해외영업3파트/업무/@업무/자동화/Image` — a different drive from the master
+library, and his to write to. Read that folder freely; it is what the picture
+for a post is chosen from.
+
+Writing there is still the script's job, not the connector's. The scheduled
+job on GitHub Actions cannot reach OneDrive at all, so a photo that actually
+ships in a post is copied into `assets/` in this repository. The original in
+the master library stays where it is, untouched.
 
 ## Confidential material
 
