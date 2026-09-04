@@ -168,3 +168,26 @@ def test_an_award_badge_and_the_product_both_survive(catalog, tmp_path, monkeypa
         present = {colour for _, colour in rendered.convert("RGB").getcolors(maxcolors=1_000_000)}
     assert (255, 0, 255) in present, "the badge was painted over"
     assert (0, 255, 0) in present, "the badge displaced the product photo"
+
+
+def test_the_retailers_choice_badge_is_cut_out_but_not_altered():
+    """Keying every white pixel would have taken the rules inside the disc with
+    it and let the ivory ground through, which alters someone else's mark. The
+    sheet behind the badge is what had to go, and only that."""
+    from PIL import Image as PILImage
+
+    from homedant_linkedin.image import asset_path
+
+    path = asset_path("awards", "Retailers' Choice Awards Winner")
+    assert path.exists(), "the NHPA winner badge has not been supplied"
+    with PILImage.open(path) as badge:
+        assert badge.mode == "RGBA", "the badge needs its transparency"
+        pixels = badge.convert("RGBA").load()
+        assert pixels[0, 0][3] == 0, "the page behind the badge is still there"
+        white_inside = sum(
+            1
+            for x in range(badge.width // 3, 2 * badge.width // 3)
+            for y in range(badge.height // 3, 2 * badge.height // 3)
+            if pixels[x, y][3] == 255 and min(pixels[x, y][:3]) > 240
+        )
+        assert white_inside > 500, "the white rules inside the disc were keyed out too"
