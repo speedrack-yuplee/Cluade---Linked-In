@@ -88,6 +88,13 @@ function Invoke-OpenCli {
     #>
     param([string[]]$Arguments, [int]$Attempts = 2)
 
+    # opencli writes progress to stderr. With $ErrorActionPreference at Stop
+    # that arrives as a NativeCommandError and kills the whole run before
+    # anything can look at what opencli actually said — which is how a single
+    # failed call took the script down with nothing collected and nothing to
+    # diagnose. Inside this function a non-zero exit is data, not an event.
+    $ErrorActionPreference = "Continue"
+
     $mode = $Window
     for ($try = 1; $try -le $Attempts; $try++) {
         $output = & opencli.cmd @Arguments --window $mode --keep-tab false 2>&1 |
@@ -95,16 +102,26 @@ function Invoke-OpenCli {
 
         if ($output.TrimStart().StartsWith("[")) { return $output }
 
-        if ($mode -ne "foreground" -and $output -match "window|invalid|unknown|unrecognized") {
-            Write-Warning "opencli 가 --window $mode 를 받지 않습니다. 화면에 띄워서 다시 시도합니다."
-            $mode = "foreground"
-            continue
-        }
+        # Order matters. A stale page is the common failure and is fixed by
+        # asking again; falling back to the foreground for it would put the
+        # window back on the screen for a problem that had nothing to do with
+        # the window.
         if ($try -lt $Attempts -and $output -match "stale page identity|Page not found") {
             Start-Sleep -Seconds 3
             continue
         }
-        return $output
+        if ($mode -ne "foreground" -and
+            $output -match "--window|unknown option|unrecognized|invalid value") {
+            Write-Warning "opencli 가 --window $mode 를 받지 않습니다. 화면에 띄워서 다시 시도합니다."
+            $mode = "foreground"
+            continue
+        }
+        break
+    }
+
+    if (-not $output.TrimStart().StartsWith("[")) {
+        Write-Warning "opencli ($($Arguments -join ' ')) 가 JSON 을 주지 않았습니다:"
+        Write-Host ($output.Trim()) -ForegroundColor DarkYellow
     }
     return $output
 }
@@ -169,10 +186,19 @@ if (-not (Test-Path $RepoPath)) {
 }
 Set-Location $RepoPath
 
-git fetch origin --quiet
-git checkout $Branch --quiet 2>$null
-if ($LASTEXITCODE -ne 0) { git checkout -b $Branch --quiet }
-git pull --quiet origin $Branch 2>$null
+# The working tree is left exactly where Leo had it.
+#
+# This used to check $Branch out here, which swapped every file under scripts/
+# for whatever the metrics branch happened to hold — including the sibling
+# scripts this one calls, which is why hide_browser.ps1 "did not exist" a
+# second after it was pulled. It also left the checkout parked on the metrics
+# branch after the run, so the next pull of the content branch merged two
+# branches that both edit these scripts, and PowerShell met a conflict marker.
+#
+# The results go to $Branch through a worktree instead: a second checkout in
+# TEMP that git manages, committed and pushed from there and then removed.
+$Original = (git rev-parse --abbrev-ref HEAD).Trim()
+git fetch origin --quiet 2>$null
 
 # Out-String -Width keeps PowerShell from wrapping long JSON lines, which
 # silently corrupts the file; WriteAllText avoids the UTF-16 default of ">".
@@ -188,8 +214,12 @@ if (-not $json.TrimStart().StartsWith("[")) {
     throw "opencli did not return JSON. First 200 characters:`n$($json.Substring(0, [Math]::Min(200, $json.Length)))"
 }
 
-New-Item -ItemType Directory -Force -Path "content\reference" | Out-Null
-$target = Join-Path $RepoPath "content\reference\posts.json"
+# Collected files are staged outside the checkout. Writing them into it would
+# leave uncommitted changes on whichever branch Leo is working on, and those
+# are what turn the next pull into a conflict.
+$Staging = Join-Path $env:TEMP "homedant-collect"
+New-Item -ItemType Directory -Force -Path $Staging | Out-Null
+$target = Join-Path $Staging "posts.json"
 [IO.File]::WriteAllText($target, (ConvertTo-ReferenceSchema $json), [Text.UTF8Encoding]::new($false))
 
 $count = ([regex]::Matches($json, '"rank"')).Count
@@ -201,7 +231,7 @@ Write-Host "collected $count posts"
 $feed = Invoke-OpenCli @("linkedin", "timeline", "--limit", "50", "-f", "json")
 if ($feed.TrimStart().StartsWith("[")) {
     [IO.File]::WriteAllText(
-        (Join-Path $RepoPath "content\reference\timeline.json"), $feed, [Text.UTF8Encoding]::new($false))
+        (Join-Path $Staging "timeline.json"), $feed, [Text.UTF8Encoding]::new($false))
     Write-Host "collected $((([regex]::Matches($feed, '"rank"')).Count)) feed posts"
 } else {
     Write-Warning "timeline returned no JSON; skipping"
@@ -226,7 +256,7 @@ if (Test-Path $watchPath) {
     }
     if ($collected.Count) {
         [IO.File]::WriteAllText(
-            (Join-Path $RepoPath "content\reference\watched.json"),
+            (Join-Path $Staging "watched.json"),
             ($collected | ConvertTo-Json -Depth 8), [Text.UTF8Encoding]::new($false))
         Write-Host "collected $($collected.Count) watched profiles"
     }
@@ -237,25 +267,49 @@ if (Test-Path $watchPath) {
 
 Stop-BrowserHiding
 
-# Only stage what actually got written. A skipped timeline used to abort the
-# whole run here, throwing away the posts that had already been collected.
-$staged = 0
-foreach ($file in @("content/reference/posts.json",
-                    "content/reference/timeline.json",
-                    "content/reference/watched.json")) {
-    if (Test-Path -LiteralPath (Join-Path $RepoPath $file)) {
-        git add $file
-        $staged++
-    }
-}
-if ($staged -eq 0) {
+$produced = @("posts.json", "timeline.json", "watched.json") |
+    Where-Object { Test-Path -LiteralPath (Join-Path $Staging $_) }
+if (-not $produced) {
     Write-Warning "수집된 파일이 없습니다. opencli.cmd doctor 로 확인해 주세요."
     exit 1
 }
-if (git diff --cached --quiet) {
-    Write-Host "no change since the last run"
-    exit 0
+
+# A worktree, so the branch Leo is on is never checked out from under him and
+# never left switched afterwards. Removed again whatever happens, including
+# when the push fails: a stale worktree makes the next run refuse to add one.
+$Tree = Join-Path $env:TEMP "homedant-metrics"
+git worktree remove --force $Tree 2>$null | Out-Null
+Remove-Item -LiteralPath $Tree -Recurse -Force -ErrorAction SilentlyContinue
+
+if (git ls-remote --exit-code --heads origin $Branch 2>$null) {
+    git worktree add --quiet -B $Branch $Tree "origin/$Branch"
+} else {
+    git worktree add --quiet -b $Branch $Tree
 }
-git commit -m "Refresh LinkedIn metrics ($count own posts, $(Get-Date -Format yyyy-MM-dd))" --quiet
-git push -u origin $Branch --quiet
-Write-Host "pushed to $Branch"
+
+try {
+    $into = Join-Path $Tree "content\reference"
+    New-Item -ItemType Directory -Force -Path $into | Out-Null
+    foreach ($file in $produced) {
+        Copy-Item -LiteralPath (Join-Path $Staging $file) -Destination $into -Force
+    }
+
+    git -C $Tree add content/reference
+    if (git -C $Tree diff --cached --quiet) {
+        Write-Host "no change since the last run"
+    } else {
+        git -C $Tree commit -m "Refresh LinkedIn metrics ($count own posts, $(Get-Date -Format yyyy-MM-dd))" --quiet
+        git -C $Tree push -u origin $Branch --quiet
+        Write-Host "pushed to $Branch"
+    }
+} finally {
+    git worktree remove --force $Tree 2>$null | Out-Null
+    Remove-Item -LiteralPath $Tree -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+$now = (git rev-parse --abbrev-ref HEAD).Trim()
+if ($now -ne $Original) {
+    Write-Warning "브랜치가 $Original 에서 $now 로 바뀌었습니다. 이러면 안 됩니다."
+} else {
+    Write-Host "작업 브랜치 그대로: $Original"
+}

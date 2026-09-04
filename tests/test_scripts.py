@@ -56,3 +56,45 @@ def test_the_watcher_moves_windows_rather_than_minimising_them():
     assert "StopFile" in body and "MaxMinutes" in body, (
         "the watcher must be able to stop on its own if the run never does"
     )
+
+
+def test_the_collector_never_checks_out_another_branch():
+    """It used to switch the working tree to the metrics branch mid-run, which
+    replaced every file under scripts/ — including the sibling scripts this one
+    calls — and left the checkout parked there afterwards, so the next pull of
+    the content branch merged two branches that both edit these scripts and
+    PowerShell was handed a conflict marker to parse. Results go through a
+    worktree now; the checkout is not to be touched."""
+    body = next(
+        s for s in SCRIPTS if s.name == "collect_linkedin.ps1"
+    ).read_text(encoding="utf-8")
+
+    for line in body.splitlines():
+        code = line.split("#", 1)[0]
+        assert "git checkout" not in code, f"still switches branches: {line.strip()}"
+
+    assert "git worktree add" in body
+    assert body.count("git worktree remove") >= 2, (
+        "a worktree left behind makes the next run refuse to add one"
+    )
+    assert "rev-parse --abbrev-ref HEAD" in body, "nothing checks the branch survived"
+
+
+def test_a_failing_opencli_call_says_what_it_said():
+    """opencli writes to stderr, and under $ErrorActionPreference = Stop that is
+    a terminating NativeCommandError — the run died with nothing collected and
+    nothing to diagnose. Inside the wrapper a non-zero exit has to be data."""
+    body = next(
+        s for s in SCRIPTS if s.name == "collect_linkedin.ps1"
+    ).read_text(encoding="utf-8")
+
+    wrapper = body[body.index("function Invoke-OpenCli") : body.index("function ConvertTo-Reference")]
+    assert '$ErrorActionPreference = "Continue"' in wrapper
+    assert "Write-Host" in wrapper, "a failure that prints nothing cannot be diagnosed"
+
+    stale = wrapper.index("stale page identity")
+    window = wrapper.index("--window|unknown option")
+    assert stale < window, (
+        "a stale page must be retried before falling back to the foreground, "
+        "or an unrelated failure puts the window back on the screen"
+    )
