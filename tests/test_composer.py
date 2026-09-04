@@ -170,3 +170,26 @@ def test_the_question_is_the_last_line_before_the_hashtags(catalog):
     for draft in drafts:
         blocks = draft.render().split("\n\n")
         assert blocks[-2] == draft.question
+
+
+def test_the_image_lines_are_not_the_same_three_every_week(catalog):
+    """The bullets are what the picture argues. Repeating the brand's proof
+    points under a different headline every post is what made the image read as
+    a template, so no post falls back to them."""
+    generic = tuple(catalog.brand_profile.proof_points[:3])
+    drafts = compose_all(build_plan(catalog, start=PLAN_START, weeks=8), catalog)
+    for draft in drafts:
+        assert len(draft.points) == 3, f"{draft.pillar.key} does not fill the image"
+        assert tuple(draft.points) != generic, f"{draft.pillar.key} fell back to the brand list"
+    assert len({tuple(d.points) for d in drafts}) >= 6
+
+
+def test_a_show_image_does_not_repeat_what_the_band_already_says(catalog):
+    """The countdown numeral and the footer band already carry the dates, the
+    venue and the stand, so the bullets have to earn their own space."""
+    drafts = compose_all(build_plan(catalog, start=PLAN_START, weeks=12), catalog)
+    for draft in (d for d in drafts if d.slot.show):
+        for point in draft.points:
+            assert draft.slot.show.venue not in point
+            assert draft.slot.show.dates not in point
+            assert not (draft.slot.show.booth and draft.slot.show.booth in point)

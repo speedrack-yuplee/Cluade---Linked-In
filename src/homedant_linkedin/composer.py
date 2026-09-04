@@ -3,8 +3,11 @@
 The templates follow the account's own posts, which run as prose rather than
 bullet lists: a hook that states the news or asks the reader's question, a
 paragraph giving it meaning, a paragraph on what the shelving does, an
-invitation to connect, and a thank-you where a third party is involved. Proof
-points are carried separately for the image, which does use a list.
+invitation to connect, and a thank-you where a third party is involved.
+
+The three lines the image carries are composed here too, so the picture argues
+what the post argues rather than restating the same brand facts under a
+different headline every week.
 """
 
 from __future__ import annotations
@@ -95,6 +98,15 @@ def _variant(slot: Slot, options: tuple[str, ...]) -> str:
     return options[slot.scheduled_for.isocalendar()[1] % len(options)]
 
 
+def _points(slot: Slot, options: tuple[tuple[str, ...], ...]) -> tuple[str, ...]:
+    """The image's three lines, rotated in step with the hook.
+
+    Passed the same number of options as the hook has, so the picture and the
+    opening line are always the same argument.
+    """
+    return _variant(slot, options)
+
+
 def _hashtags(slot: Slot, extra: tuple[str, ...] = ()) -> tuple[str, ...]:
     """Pillar hashtags plus any the subject carries, in order, without repeats."""
     seen: dict[str, None] = {}
@@ -137,7 +149,13 @@ def _compose_recognition(slot: Slot, catalog: Catalog) -> PostDraft:
             cta=CONNECT_CTA.format(audiences=profile.audience_phrase),
             question=_question(slot),
             hashtags=_hashtags(slot, award.hashtags),
-            points=profile.proof_points[:3],
+            points=(
+                f"{award.award or award.name}, {award.event} {award.date.year}",
+                f"Selected by {award.org}",
+                f"The same range on the floor at {show.name}"
+                if show
+                else "The same range the judges looked at",
+            ),
         )
 
     where = f" in {award.city}" if award.city else ""
@@ -160,7 +178,11 @@ def _compose_recognition(slot: Slot, catalog: Catalog) -> PostDraft:
         ),
         question=_question(slot),
         hashtags=_hashtags(slot, award.hashtags),
-        points=profile.proof_points[:3],
+        points=(
+            award.award or award.name,
+            f"{award.event}, {award.date.year}" + (f", {award.city}" if award.city else ""),
+            profile.proof_points[0],
+        ),
     )
 
 
@@ -195,6 +217,11 @@ def _compose_tradeshow(slot: Slot, catalog: Catalog) -> PostDraft:
             "anyone who wants to sit down with dimensions and a pack spec."
         )
         cta = f"Message me and I will come and meet you at the entrance. \u2014 {profile.author}"
+        points = (
+            "The full boltless steel shelving range is up on the stand",
+            "A table free for anyone who wants to sit down with dimensions and a pack spec",
+            f"Message {profile.author} and we will meet you at the entrance",
+        )
     else:
         second = (
             "Bring the dimensions you are working with and we will tell you on the spot whether we "
@@ -203,6 +230,11 @@ def _compose_tradeshow(slot: Slot, catalog: Catalog) -> PostDraft:
         cta = (
             "If you are attending, message me and we will book a time before the calendar fills. "
             f"\u2014 {profile.author}"
+        )
+        points = (
+            "Bring your dimensions and we will tell you on the spot whether a unit fits",
+            "Boltless steel shelving, assembled by hand in about ten minutes",
+            f"Meetings are booking now \u2014 message {profile.author} to hold a time",
         )
 
     return PostDraft(
@@ -219,7 +251,7 @@ def _compose_tradeshow(slot: Slot, catalog: Catalog) -> PostDraft:
         else "",
         question=_question(slot),
         hashtags=_hashtags(slot, show.hashtags),
-        points=profile.proof_points[:3],
+        points=points,
     )
 
 
@@ -249,7 +281,10 @@ def _compose_project(slot: Slot, catalog: Catalog) -> PostDraft:
         cta="Send me your floor plan and unit count and we will come back with a layout and a quote.",
         question=_question(slot),
         hashtags=_hashtags(slot),
-        points=product.highlights[:3],
+        points=(
+            "Goes in with no construction work and no damage to the finishes",
+            *product.highlights[:2],
+        ),
     )
 
 
@@ -277,7 +312,10 @@ def _compose_retail(slot: Slot, catalog: Catalog) -> PostDraft:
         cta="Message me for a line sheet, case pack and pallet configuration.",
         question=_question(slot),
         hashtags=_hashtags(slot),
-        points=product.highlights[:3],
+        points=(
+            "Shelf height adjusts in 1.18 inch intervals, so the shelf fits the box",
+            *product.highlights[:2],
+        ),
     )
 
 
@@ -309,7 +347,31 @@ def _compose_manufacturing(slot: Slot, catalog: Catalog) -> PostDraft:
         cta="If you are evaluating a supplier, ask me for our test reports. We will send them.",
         question=_question(slot),
         hashtags=_hashtags(slot),
-        points=profile.proof_points[:3],
+        points=_points(
+            slot,
+            (
+                (
+                    "HANDiLOCK joints carry the load the bolt used to carry",
+                    product.highlights[0],
+                    "Engineered and inspected in our own Korean factory",
+                ),
+                (
+                    "Assembled by hand in about ten minutes",
+                    "No tools, no drilling and no noise",
+                    "Fewer parts is fewer ways to get it wrong",
+                ),
+                (
+                    f"Our own factory in Korea since {profile.founded}",
+                    "A specification change is a phone call, not a negotiation",
+                    "Engineered and inspected in-house rather than bought in",
+                ),
+                (
+                    "Reversible board: light wood on one face, soft white on the other",
+                    "One SKU, two rooms it belongs in",
+                    "Laminated on all six sides, anti-scratch and waterproof",
+                ),
+            ),
+        ),
     )
 
 
@@ -340,7 +402,11 @@ def _compose_supply(slot: Slot, catalog: Catalog) -> PostDraft:
         cta=CONNECT_CTA.format(audiences=profile.audience_phrase),
         question=_question(slot),
         hashtags=_hashtags(slot),
-        points=(*profile.proof_points[-2:], profile.proof_points[2]),
+        points=(
+            "CA and GA warehouses, so a domestic order does not wait on a container",
+            f"Our own Korean factory since {profile.founded}",
+            "A specification change is a conversation with the plant",
+        ),
     )
 
 
@@ -370,7 +436,10 @@ def _compose_seasonal(slot: Slot, catalog: Catalog) -> PostDraft:
         cta="Message me for a line sheet if you are still building your Q4 storage set.",
         question=_question(slot),
         hashtags=_hashtags(slot),
-        points=product.highlights[:3],
+        points=(
+            "The same unit sells twice a year: decorations up, decorations away",
+            *product.highlights[:2],
+        ),
     )
 
 
