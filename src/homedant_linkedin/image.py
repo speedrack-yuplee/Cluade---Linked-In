@@ -253,20 +253,33 @@ def _layout_show(image, draw, draft: PostDraft, photo) -> None:
 
 
 def _layout_award(image, draw, draft: PostDraft, photo) -> None:
-    """The badge earns the space; the headline sits beside it."""
+    """The badge earns the space; the headline sits beside it.
+
+    The badge and the product both belong here: the badge says a third party
+    vouched for this, and the photograph says what they vouched for. So the
+    badge crowns the panel rather than replacing it.
+    """
     award = draft.slot.recognition
     top = _masthead(image, draw, dark=False)
     badge = load_asset(asset_path("awards", award.name))
 
     width = SIZE - 2 * MARGIN
+    panel_left = None
+    if photo is not None:
+        panel_left = 700
+        draw.rectangle([panel_left, 0, SIZE, SIZE - BAND], fill=PANEL)
+        photo_top = 300 if badge is not None else 150
+        _paste(image, photo.convert("RGBA"), (panel_left + 26, photo_top, SIZE - 26, SIZE - BAND - 50))
+        width = panel_left - MARGIN - 46
+
+    # After the panel, never before it: the panel is opaque and would paint
+    # over a badge placed first.
     if badge is not None:
-        _paste(image, badge, (SIZE - MARGIN - 320, top, SIZE - MARGIN, top + 320))
-        width = SIZE - 2 * MARGIN - 360
-    elif photo is not None:
-        panel = 700
-        draw.rectangle([panel, 0, SIZE, SIZE - BAND], fill=PANEL)
-        _paste(image, photo.convert("RGBA"), (panel + 26, 150, SIZE - 26, SIZE - BAND - 50))
-        width = panel - MARGIN - 46
+        if panel_left is None:
+            _paste(image, badge, (SIZE - MARGIN - 320, top, SIZE - MARGIN, top + 320))
+            width = SIZE - 2 * MARGIN - 360
+        else:
+            _paste(image, badge, (panel_left + 40, 60, SIZE - 40, 270))
 
     lines, font = _fit(draw, draft.hook, width, 5, 68, 36)
     y = top + 30

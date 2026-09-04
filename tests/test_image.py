@@ -144,3 +144,27 @@ def test_the_high_point_logo_is_the_horizontal_lockup(catalog):
     with PILImage.open(path) as logo:
         assert logo.mode == "RGBA", "the logo needs its transparency"
         assert logo.width / logo.height > 2, "that is not the horizontal lockup"
+
+
+def test_an_award_badge_and_the_product_both_survive(catalog, tmp_path, monkeypatch):
+    """The badge says someone vouched for the product; the photograph says what
+    they vouched for. Neither may paint over the other, and the panel is opaque
+    so the badge has to be drawn after it."""
+    from PIL import Image as PILImage
+
+    from homedant_linkedin import image as image_module
+
+    badge = PILImage.new("RGBA", (300, 300), (255, 0, 255, 255))
+    monkeypatch.setattr(
+        image_module, "load_asset", lambda path: badge if "awards" in str(path) else None
+    )
+
+    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 2), weeks=1), catalog)
+    award = next(d for d in drafts if d.pillar.key == "recognition")
+    photo = PILImage.new("RGB", (700, 1200), (0, 255, 0))
+    path = image_module.render(award, tmp_path / "award.png", photo=photo, use_creatives=False)
+
+    with PILImage.open(path) as rendered:
+        present = {colour for _, colour in rendered.convert("RGB").getcolors(maxcolors=1_000_000)}
+    assert (255, 0, 255) in present, "the badge was painted over"
+    assert (0, 255, 0) in present, "the badge displaced the product photo"
