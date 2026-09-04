@@ -7,10 +7,15 @@
     happen here. The cloud session cannot reach linkedin.com; it reads what
     this script pushes.
 
-    It steals the screen if you let it. -Window decides: "background" drives
-    the tab without raising it, which is what you want while you are working.
-    Not every opencli build accepts it, so a run that is rejected for the flag
-    retries once in the foreground rather than collecting nothing.
+    It steals the screen if you let it, and -Window background did not stop
+    that on this machine. So the window is dealt with from the outside as well:
+    hide_browser.ps1 runs alongside and moves whatever browser window comes up
+    off the desktop, keeping focus where it was. Pass -ShowBrowser to watch it
+    work; otherwise nothing appears in front of you.
+
+    There is no version of this that runs in the cloud. opencli drives the
+    Chrome session that is logged in to LinkedIn, that session is on this PC,
+    and linkedin.com is blocked from the cloud session besides.
 
     Run it by hand, or from Task Scheduler. See docs/COLLECTING.md.
 
@@ -26,7 +31,8 @@ param(
     [string]$Branch = "claude/linkedin-metrics",
     [int]$Limit = 40,
     [ValidateSet("background", "foreground")]
-    [string]$Window = "background"
+    [string]$Window = "background",
+    [switch]$ShowBrowser
 )
 
 $ErrorActionPreference = "Stop"
@@ -36,6 +42,36 @@ chcp 65001 > $null
 # this the UTF-8 opencli writes is read as cp949 and Korean is destroyed.
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false
 $OutputEncoding = New-Object System.Text.UTF8Encoding $false
+
+
+$HideJob = $null
+$HideStop = Join-Path $env:TEMP "homedant-collect-$PID.stop"
+
+function Start-BrowserHiding {
+    if ($ShowBrowser) { return }
+    $watcher = Join-Path $PSScriptRoot "hide_browser.ps1"
+    if (-not (Test-Path -LiteralPath $watcher)) {
+        Write-Warning "hide_browser.ps1 이 없습니다. 창이 화면에 보일 수 있습니다."
+        return
+    }
+    Remove-Item -LiteralPath $HideStop -ErrorAction SilentlyContinue
+    $script:HideJob = Start-Job -ScriptBlock {
+        param($script, $stop)
+        & powershell.exe -ExecutionPolicy Bypass -NoProfile -File $script -StopFile $stop
+    } -ArgumentList $watcher, $HideStop
+}
+
+function Stop-BrowserHiding {
+    # The stop file, not Stop-Job: the watcher is a child process and killing
+    # the job would leave it running with windows still to park.
+    New-Item -ItemType File -Path $HideStop -Force | Out-Null
+    if ($script:HideJob) {
+        Wait-Job $script:HideJob -Timeout 5 | Out-Null
+        Remove-Job $script:HideJob -Force -ErrorAction SilentlyContinue
+        $script:HideJob = $null
+    }
+    Remove-Item -LiteralPath $HideStop -ErrorAction SilentlyContinue
+}
 
 
 function Invoke-OpenCli {
@@ -140,6 +176,12 @@ git pull --quiet origin $Branch 2>$null
 
 # Out-String -Width keeps PowerShell from wrapping long JSON lines, which
 # silently corrupts the file; WriteAllText avoids the UTF-16 default of ">".
+# $ErrorActionPreference is Stop, so any failure below unwinds the script. The
+# watcher is a separate process and would keep parking windows after it, so it
+# is stopped on the way out as well as at the end.
+trap { Stop-BrowserHiding; break }
+
+Start-BrowserHiding
 $json = Invoke-OpenCli @("linkedin", "posts", "--limit", "$Limit", "-f", "json")
 
 if (-not $json.TrimStart().StartsWith("[")) {
@@ -192,6 +234,8 @@ if (Test-Path $watchPath) {
         Write-Host "no profile_url yet, skipped: $($missing -join ', ')"
     }
 }
+
+Stop-BrowserHiding
 
 # Only stage what actually got written. A skipped timeline used to abort the
 # whole run here, throwing away the posts that had already been collected.

@@ -23,20 +23,26 @@ powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\Documents\Cluade---Li
 
 ### 화면에 안 뜨게 하기
 
-기본값이 `-Window background` 입니다. 크롬 탭은 열리지만 **앞으로 나오지
-않습니다.** 다른 창에서 일하는 동안 돌려도 됩니다.
+**클라우드에서는 못 돌립니다.** opencli 는 이 PC의 로그인된 크롬을 몰아야
+하고, 그 세션은 여기에만 있습니다. 게다가 클라우드 세션은 linkedin.com 에
+접근 자체가 막혀 있습니다. 그래서 **옮기는 대신 안 보이게** 합니다.
 
-opencli 버전이 이 값을 안 받으면 경고를 한 줄 찍고 예전처럼 화면에 띄워서
-다시 시도합니다. 그럴 때는 opencli 를 업데이트하거나, 아래 자동 실행으로
-자리에 없는 시간에 돌리세요.
+`-Window background` 만으로는 창이 앞으로 나왔습니다. 그래서
+`hide_browser.ps1` 이 같이 돌면서 **올라오는 브라우저 창을 화면 밖으로
+밀어냅니다.** 포커스는 원래 쓰던 창에 그대로 있습니다.
+
+최소화가 아니라 **화면 밖으로 보내는** 이유가 있습니다. 최소화된 크롬은
+렌더링을 줄이다 결국 멈추는데, opencli 는 안 그려진 페이지를 빈 페이지로
+읽습니다. 화면 밖에 있으면 보이던 때와 똑같이 계속 그립니다.
+
+작동을 눈으로 보고 싶으면:
 
 ```powershell
-# 확인용 — 이 명령이 --window 값으로 무엇을 받는지 보여줍니다
-opencli.cmd linkedin posts --help
+powershell -ExecutionPolicy Bypass -File .\scripts\collect_linkedin.ps1 -ShowBrowser
 ```
 
-**완전히 안 보이게 하려면 자동 실행이 답입니다.** 아래 스케줄러 등록은
-`-WindowStyle Hidden` 으로 돌기 때문에 PowerShell 창도 뜨지 않습니다.
+**그래도 완전히 자리를 안 뺏기려면 자동 실행이 답입니다.** 아래 스케줄러
+등록은 `-WindowStyle Hidden` 이라 PowerShell 창도 안 뜹니다.
 
 ## 자동 실행 (주 1회)
 
