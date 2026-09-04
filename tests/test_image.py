@@ -74,33 +74,19 @@ def test_a_missing_asset_is_none_rather_than_an_error(tmp_path):
     assert load_asset(tmp_path / "nothing.png") is None
 
 
-def test_a_ready_made_panel_is_used_for_a_product_pillar(catalog, tmp_path):
-    """The brand's own A+ content beats anything the layout can draw."""
-    from homedant_linkedin.image import creative_for
+def test_a_show_post_always_renders_its_own_countdown(catalog, tmp_path):
+    """No stock picture can state how many days are left, so the show layout
+    draws the number itself."""
+    from PIL import Image as PILImage
 
-    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=6), catalog)
-    retail = next(d for d in drafts if d.pillar.key == "retail")
-    panel = creative_for(retail)
-    assert panel is not None and panel.parent.name == "retail"
-
-
-def test_a_show_post_always_renders_its_own_countdown(catalog):
-    """No fixed panel can state how many days are left."""
-    from homedant_linkedin.image import creative_for
+    from homedant_linkedin import image as image_module
 
     drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=6), catalog)
     show = next(d for d in drafts if d.pillar.key == "tradeshow")
-    award = next(d for d in drafts if d.pillar.key == "recognition")
-    assert creative_for(show) is None
-    assert creative_for(award) is None
-
-
-def test_use_creatives_can_be_turned_off(catalog, tmp_path):
-    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=6), catalog)
-    retail = next(d for d in drafts if d.pillar.key == "retail")
-    drawn = render(retail, tmp_path / "drawn.png", use_creatives=False)
-    panel = render(retail, tmp_path / "panel.png")
-    assert drawn.read_bytes() != panel.read_bytes()
+    path = image_module.render(show, tmp_path / "show.png", photo=image_module.photo_for(show))
+    with PILImage.open(path) as art:
+        ground = art.convert("RGB").getpixel((10, 10))
+    assert ground == image_module.SHOW_GROUND, "the show card lost its steel ground"
 
 
 def test_a_supplied_photo_stands_in_when_the_listing_image_is_unreachable(catalog):
@@ -214,3 +200,62 @@ def test_a_reference_image_is_the_photograph(catalog, tmp_path):
         # fewer distinct colours than a photograph does.
         top = rendered.convert("RGB").crop((0, 200, image_module.SIZE, 480))
         assert len(top.getcolors(maxcolors=1_000_000)) > 2_000
+
+
+def test_no_two_posts_in_a_row_carry_the_same_picture(catalog):
+    """Seasonal and supply each had exactly one ready-made panel, so every
+    seasonal post went out with the same image as the last one. A feed learns
+    to scroll past that."""
+    from homedant_linkedin.image import photo_pool, pooled_photo
+
+    assert len(photo_pool()) > 20, "the working copy of the library is not in place"
+    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=16), catalog)
+    chosen = [
+        pooled_photo(d.scheduled_for)
+        for d in drafts
+        if not (d.slot.show or d.slot.recognition or d.slot.installation)
+    ]
+    assert len(chosen) > 20
+    for earlier, later in zip(chosen, chosen[1:]):
+        assert earlier != later, "two posts running on the same photograph"
+    # Over a quarter the pool should be walked, not circled in a tight loop.
+    assert len(set(chosen)) >= len(chosen) * 0.8
+
+
+def test_the_masthead_uses_the_supplied_wordmark_on_both_grounds():
+    """A dark show card cannot carry the black-on-white logo."""
+    from PIL import Image as PILImage
+
+    from homedant_linkedin.image import ASSET_DIR
+
+    for name in ("logo.png", "logo-light.png"):
+        path = ASSET_DIR / name
+        assert path.exists(), f"{name} has not been supplied"
+        with PILImage.open(path) as art:
+            assert art.mode == "RGBA", f"{name} needs its transparency"
+            assert art.convert("RGBA").load()[0, 0][3] == 0, f"{name} still has its background"
+
+
+def test_no_bullet_is_painted_over_by_the_footer_band():
+    """A supply post's third point ran one line too long and the band covered
+    it, so the reader saw half a sentence."""
+    from PIL import Image as PILImage, ImageDraw
+
+    from homedant_linkedin import image as image_module
+
+    canvas = PILImage.new("RGB", (image_module.SIZE, image_module.SIZE), image_module.GROUND)
+    draw = ImageDraw.Draw(canvas)
+    long_points = (
+        "CA and GA warehouses, so a domestic order does not wait on an ocean container",
+        "Our own Korean factory since 1979, where a specification change is a phone call",
+        "A specification change is a conversation with the plant rather than a negotiation "
+        "with a contract manufacturer somewhere else",
+    )
+    for top in (400, 560, 700, 820):
+        end = image_module._bullets(
+            canvas, draw, long_points, top, image_module.SIZE - 2 * image_module.MARGIN,
+            image_module.INK, image_module.ACCENT,
+        )
+        assert end <= image_module.BULLET_FLOOR + image_module.BULLET_GAP, (
+            f"bullets starting at {top} reach {end}, past the band at {image_module.BULLET_FLOOR}"
+        )
