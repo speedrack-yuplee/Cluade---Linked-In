@@ -65,6 +65,7 @@ PHOTO_POOL_DIRS = (
     "library/sns",
     "library/homedant-house",
     "library/cutouts",
+    "library/parts",
     "library/web",
     "products",
 )

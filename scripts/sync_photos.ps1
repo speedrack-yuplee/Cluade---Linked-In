@@ -40,8 +40,8 @@
 
 .PARAMETER Only
     Copy just these sets, by name. Commas or spaces, either way:
-    -Only logo,installations,sns,cutouts
-    -Only logo installations sns cutouts
+    -Only logo,installations,parts,sns,cutouts
+    -Only logo installations parts sns cutouts
 
 .PARAMETER Apply
     Write the files. Without it the script only reports.
@@ -87,6 +87,12 @@ if (-not $Sets) {
         # Cut-outs on a clear ground: the only photographs that can be dropped
         # into a layout without bringing someone else's background with them.
         "cutouts"        = "01_사진자료_IMAGE SOURCE\A==================공통 이미지=================\누끼"
+        # Every component, reshot to one standard in 2026: the fixing clip, the
+        # wall bracket, the J-hook, the curtain roller, the castor, the safety
+        # foot. A post that claims the frame locks together by hand can show
+        # the clip that does it, which no third photograph of a whole unit can.
+        # Small, and the most useful set per megabyte in the library.
+        "parts"          = "01_사진자료_IMAGE SOURCE\A==================공통 이미지=================\250724_이미지 표준\제품 이미지"
         # The overseas HOMEDANT House masters. This is the deep one — 26 GB at
         # the source, a few hundred MB once downscaled — and it is what takes
         # the pool from a few dozen photographs to a few hundred, which is what
