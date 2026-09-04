@@ -1,0 +1,49 @@
+name: Fetch backgrounds
+
+# The room photographs a product gets composited into. The cloud session picks
+# them and writes assets/backgrounds/sources.json, but its egress policy answers
+# 403 to the stock CDNs, so the download happens on a runner and lands back in
+# the repository. Run by hand after adding an entry.
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "Fetch just this slug"
+        required: false
+      force:
+        description: "Re-download what is already committed"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install Pillow
+
+      - name: Download the backgrounds
+        run: |
+          python scripts/fetch_backgrounds.py \
+            ${{ inputs.only && format('--only {0}', inputs.only) || '' }} \
+            ${{ inputs.force && '--force' || '' }}
+
+      - name: Commit whatever came down
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/backgrounds
+          if git diff --cached --quiet; then
+            echo "nothing new"
+          else
+            git commit -m "Add room backgrounds fetched from licensed stock"
+            git push
+          fi

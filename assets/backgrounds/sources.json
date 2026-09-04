@@ -1,0 +1,41 @@
+{
+  "_comment": [
+    "Rooms a HOMEDANT unit gets composited into. Only sites whose licence",
+    "allows commercial use without attribution: Pexels and Unsplash. Never a",
+    "Google Images result, which is copyrighted unless it says otherwise.",
+    "Add an entry, then run the 'Fetch backgrounds' workflow; the runner",
+    "downloads it, because this session's egress policy blocks the CDNs."
+  ],
+  "backgrounds": [
+    {
+      "slug": "school-classroom-wood",
+      "scene": "school",
+      "note": "Empty classroom, wooden desks, green board. Warm light from the left.",
+      "page": "https://www.pexels.com/photo/photo-of-empty-class-room-2675061/"
+    },
+    {
+      "slug": "school-classroom-modern",
+      "scene": "school",
+      "note": "Empty classroom with bookshelves and a whiteboard. Closest to a room that needs storage.",
+      "page": "https://www.pexels.com/photo/an-empty-classroom-6981007/"
+    },
+    {
+      "slug": "school-science-lab",
+      "scene": "school",
+      "note": "Laboratory with a bench, a table and a sink. The science-room request.",
+      "page": "https://www.pexels.com/photo/a-laboratory-with-a-bench-a-table-and-a-sink-18471461/"
+    },
+    {
+      "slug": "warehouse-concrete",
+      "scene": "warehouse",
+      "note": "Warehouse with a concrete floor, racking already in shot.",
+      "page": "https://www.pexels.com/photo/warehouse-with-concrete-floor-4483609/"
+    },
+    {
+      "slug": "warehouse-empty",
+      "scene": "warehouse",
+      "note": "Empty concrete warehouse. Clean back wall, room for a unit.",
+      "page": "https://www.pexels.com/photo/empty-concrete-warehouse-5505927/"
+    }
+  ]
+}
