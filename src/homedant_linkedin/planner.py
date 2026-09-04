@@ -207,6 +207,12 @@ def build_plan(
     moments = _moment_dates(catalog.moments, [d for d in days if d not in claimed], usable)
 
     slots: list[Slot] = []
+    turns: dict[str, int] = {}
+
+    def turn(pillar: Pillar) -> int:
+        turns[pillar.key] = turns.get(pillar.key, -1) + 1
+        return turns[pillar.key]
+
     index = 0
     for day in days:
         if day in claimed:
@@ -215,6 +221,7 @@ def build_plan(
                     scheduled_for=day,
                     pillar=show_pillar,
                     show=claimed[day],
+                    turn=turn(show_pillar),
                     feature=_feature(catalog, day),
                 )
             )
@@ -229,7 +236,9 @@ def build_plan(
                 cursors[key] += 1
             if pillar.needs != "product":
                 subject["feature"] = _feature(catalog, day)
-            slots.append(Slot(scheduled_for=day, pillar=pillar, moment=moment, **subject))
+            slots.append(
+                Slot(scheduled_for=day, pillar=pillar, moment=moment, turn=turn(pillar), **subject)
+            )
             continue
 
         in_season = [p for p in rotation if not p.months or day.month in p.months]
@@ -243,6 +252,6 @@ def build_plan(
             cursors[key] += 1
         if pillar.needs != "product":
             subject["feature"] = _feature(catalog, day)
-        slots.append(Slot(scheduled_for=day, pillar=pillar, **subject))
+        slots.append(Slot(scheduled_for=day, pillar=pillar, turn=turn(pillar), **subject))
 
     return slots

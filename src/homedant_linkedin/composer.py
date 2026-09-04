@@ -103,12 +103,14 @@ def _question(slot: Slot) -> str:
 
 
 def _variant(slot: Slot, options: tuple[str, ...]) -> str:
-    """One of several openings, rotated by ISO week.
+    """One of several openings, rotated by the date itself.
 
-    A hook that repeats every fortnight stops being read, so each pillar keeps
-    a small set and the week decides which one runs.
+    A hook that repeats stops being read, so each pillar keeps a small set. The
+    week was the wrong counter, and so was the date: posting days sit two and
+    three days apart, so any modulo of either eventually lands two neighbours
+    on the same line. Counting the pillar's own turns cannot.
     """
-    return options[slot.scheduled_for.isocalendar()[1] % len(options)]
+    return options[slot.turn % len(options)]
 
 
 def _points(slot: Slot, options: tuple[tuple[str, ...], ...]) -> tuple[str, ...]:
@@ -199,7 +201,7 @@ def _compose_recognition(slot: Slot, catalog: Catalog) -> PostDraft:
     )
 
 
-def _show_hook(show, day, brand: str) -> str:
+def _show_hook(show, day, brand: str, turn: int = 0) -> str:
     """The opening line, in the register the account already uses.
 
     The countdown form ("2 Days to Go") is copied from the NY NOW post; the
@@ -215,7 +217,12 @@ def _show_hook(show, day, brand: str) -> str:
     if days <= 20:
         stand = f" We are at {show.location}." if show.booth else ""
         return f"Two weeks out from {show.name}, and the calendar is filling up.{stand}"
-    return f"{brand} is coming to {show.name}{where}!"
+    far = (
+        f"{brand} is coming to {show.name}{where}!",
+        f"We are taking the full boltless range to {show.name}{where}. "
+        "The calendar opens now.",
+    )
+    return far[turn % len(far)]
 
 
 def _compose_tradeshow(slot: Slot, catalog: Catalog) -> PostDraft:
@@ -252,7 +259,7 @@ def _compose_tradeshow(slot: Slot, catalog: Catalog) -> PostDraft:
 
     return PostDraft(
         slot=slot,
-        hook=_show_hook(show, day, profile.brand),
+        hook=_show_hook(show, day, profile.brand, slot.turn),
         body=_paragraphs(
             f"{profile.company} is at {show.venue}, {show.dates}, with our {profile.offer}.",
             profile.capability,

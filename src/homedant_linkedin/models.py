@@ -372,6 +372,13 @@ class Slot:
     moment: Moment | None = None
     """A US retail date this post was timed to, where one falls due."""
 
+    turn: int = 0
+    """How many times this pillar has already come round in the plan.
+
+    The rotation of hooks counts on this rather than on the date: posting days
+    are two and three days apart, so any modulo of the date eventually lands
+    two neighbours on the same opening line."""
+
     feature: Product | None = None
     """A product shown in the image only. A show or brand post has no product
     subject, but it still has something to show."""

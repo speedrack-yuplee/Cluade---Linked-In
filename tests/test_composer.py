@@ -221,3 +221,15 @@ def test_a_reference_post_does_not_name_the_customer_without_permission(catalog)
         text = draft.render()
         assert site.customer not in text, f"{site.customer} was named without permission"
         assert site.described_as.lower() in text.lower()
+
+
+def test_two_posts_from_one_pillar_never_open_the_same_way(catalog):
+    """Rotating on the ISO week put two supply posts in the same week, so both
+    opened 'A reset date does not move because a vessel did.'"""
+    drafts = compose_all(build_plan(catalog, start=PLAN_START, weeks=20), catalog)
+    by_pillar: dict[str, list[str]] = {}
+    for draft in drafts:
+        by_pillar.setdefault(draft.pillar.key, []).append(draft.hook)
+    for key, hooks in by_pillar.items():
+        for earlier, later in zip(hooks, hooks[1:]):
+            assert earlier != later, f"{key} opened the same way twice running"
