@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Collect LinkedIn post metrics and push them to the repository.
 

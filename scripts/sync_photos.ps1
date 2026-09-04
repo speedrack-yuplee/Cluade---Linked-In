@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Copy downscaled product photography out of the company design library.
 
