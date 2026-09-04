@@ -35,8 +35,12 @@
 
 .PARAMETER Sets
     Which parts of the library to copy, as "destination folder = source path
-    relative to Source". Defaults to the three that carry usable product and
-    brand photography.
+    relative to Source". Defaults to the five that carry usable product and
+    brand photography, cheapest first.
+
+.PARAMETER Only
+    Copy just these sets, by name. Use it to take the small ones first:
+    -Only logo,installations,sns,cutouts
 
 .PARAMETER Apply
     Write the files. Without it the script only reports.
@@ -50,6 +54,7 @@ param(
     [string]$RepoPath = "$env:USERPROFILE\Documents\Cluade---Linked-In",
     [string]$Destination = $null,
     [System.Collections.Specialized.OrderedDictionary]$Sets = $null,
+    [string[]]$Only = @(),
     [int]$MaxEdge = 1600,
     [int]$Quality = 82,
     [switch]$Apply
@@ -68,17 +73,34 @@ if (-not $Destination) { $Destination = Join-Path $RepoPath "assets\library" }
 
 if (-not $Sets) {
     $Sets = [ordered]@{
+        # Small, and needed on every generated image.
+        "logo"           = "01_사진자료_IMAGE SOURCE\D01_브랜드로고"
         # Photographs of units standing in real rooms someone bought them for:
         # a university store, a testing laboratory, a back of house. Worth more
         # to a B2B post than any studio shot, and worth more than compositing a
         # unit into a stock photograph, because the question "which school?"
-        # has an answer. 57 MB, so this is the one to run first.
-        "installations" = "01_사진자료_IMAGE SOURCE\B05_특판 이미지\설치이미지추가"
+        # has an answer. 57 MB, so this is the cheap one.
+        "installations"  = "01_사진자료_IMAGE SOURCE\B05_특판 이미지\설치이미지추가"
         # Already sized and cropped for social, so the least work to reuse.
-        "sns"           = "02_해외 디자인자료(아마존_월마트)\A03-01_글로벌_SNS"
-        # Small, and needed on every generated image.
-        "logo"          = "01_사진자료_IMAGE SOURCE\D01_브랜드로고"
+        "sns"            = "02_해외 디자인자료(아마존_월마트)\A03-01_글로벌_SNS"
+        # Cut-outs on a clear ground: the only photographs that can be dropped
+        # into a layout without bringing someone else's background with them.
+        "cutouts"        = "01_사진자료_IMAGE SOURCE\A==================공통 이미지=================\누끼"
+        # The overseas HOMEDANT House masters. This is the deep one — 26 GB at
+        # the source, a few hundred MB once downscaled — and it is what takes
+        # the pool from a few dozen photographs to a few hundred, which is what
+        # stops a month of posts looking like one post.
+        "homedant-house" = "01_사진자료_IMAGE SOURCE\C02_홈던트하우스 선반_HS"
     }
+}
+
+if ($Only.Count) {
+    $picked = [ordered]@{}
+    foreach ($name in $Only) {
+        if ($Sets.Contains($name)) { $picked[$name] = $Sets[$name] }
+        else { Write-Host "[알 수 없는 세트] $name" -ForegroundColor Yellow }
+    }
+    $Sets = $picked
 }
 
 # Folders whose contents must not leave the library. The repository this

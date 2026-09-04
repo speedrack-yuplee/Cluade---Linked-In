@@ -61,7 +61,7 @@ def asset_path(kind: str, name: str) -> Path:
 
 
 LIBRARY_DIR = ASSET_DIR / "library"
-PHOTO_POOL_DIRS = ("library/sns", "products")
+PHOTO_POOL_DIRS = ("library/sns", "library/homedant-house", "library/cutouts", "products")
 """Where the photograph on a product post comes from.
 
 The A+ panels used to be the image itself, one per pillar rotated by week. Two
