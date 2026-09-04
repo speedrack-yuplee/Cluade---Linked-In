@@ -27,6 +27,14 @@ PILLARS: tuple[Pillar, ...] = (
         needs="show",
     ),
     Pillar(
+        key="reference",
+        name="Installed reference",
+        intent="A room the shelving is standing in, photographed after it went up. What the "
+        "building needed, and what the install actually took.",
+        hashtags=("HOMEDANT", "SteelShelving", "StorageSolutions", "KoreanMade", "B2B"),
+        needs="installation",
+    ),
+    Pillar(
         key="project",
         name="Project solution",
         intent="Open with the storage problem a hospitality or multifamily project runs into, "

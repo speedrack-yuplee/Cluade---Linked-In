@@ -29,6 +29,15 @@ def _paragraphs(*blocks: str) -> str:
     return "\n\n".join(block.strip() for block in blocks if block and block.strip())
 
 
+def _sentence(text: str) -> str:
+    """``text`` with its first letter raised and the rest left alone.
+
+    str.capitalize lowercases everything after the first character, which turns
+    "a university in Korea" into "a university in korea".
+    """
+    return text[:1].upper() + text[1:]
+
+
 def _and_list(items: list[str]) -> str:
     if len(items) < 2:
         return items[0] if items else ""
@@ -60,6 +69,10 @@ QUESTIONS: dict[str, tuple[str, ...]] = {
         "Which day are you walking the floor?",
         "What are you sourcing at this one?",
         "Who else should we be talking to while we are there?",
+    ),
+    "reference": (
+        "Where does the storage go in your buildings when there is no room left for it?",
+        "What is the longest you have waited on a fit-out that should have taken an afternoon?",
     ),
     "project": (
         "Where does storage run out first in your units: the entry, the bathroom, or the closet?",
@@ -255,6 +268,50 @@ def _compose_tradeshow(slot: Slot, catalog: Catalog) -> PostDraft:
     )
 
 
+def _compose_reference(slot: Slot, catalog: Catalog) -> PostDraft:
+    """A room it went into, and what the install actually took.
+
+    The photograph does the arguing, so the text stays out of its way: what the
+    building needed, what went in, and the one thing about it a specifier would
+    not have expected.
+    """
+    site = slot.installation
+    profile = catalog.brand_profile
+
+    return PostDraft(
+        slot=slot,
+        hook=_variant(
+            slot,
+            (
+                f"This is {site.room} at {site.subject}. The shelving went up by hand, "
+                "in an afternoon.",
+                f"{_sentence(site.subject)} needed {site.room} to hold more, "
+                "without a contractor and without touching the building.",
+            ),
+        ),
+        body=_paragraphs(
+            site.situation,
+            "So the frame goes together by hand. HANDiLOCK joints lock the uprights to the "
+            "beams with no bolts and no tools, which means no drilling, no noise and nothing "
+            "to lose on the floor. Tier heights move afterwards, in 1.18 inch steps, as what "
+            "the room holds changes.",
+            f"{profile.company} has been making steel shelving in its own Korean factory "
+            f"since {profile.founded}. Rooms like this one are where it ends up.",
+        ),
+        cta=(
+            "Send me the room dimensions and what has to go in it, and I will come back with "
+            f"a layout and a quote. \u2014 {profile.author}"
+        ),
+        question=_question(slot),
+        hashtags=_hashtags(slot, site.hashtags),
+        points=(
+            _sentence(site.room),
+            "Assembled by hand, no bolts and no drilling",
+            "Tier heights adjust in 1.18 inch steps",
+        ),
+    )
+
+
 def _compose_project(slot: Slot, catalog: Catalog) -> PostDraft:
     product = slot.product
     profile = catalog.brand_profile
@@ -445,6 +502,7 @@ def _compose_seasonal(slot: Slot, catalog: Catalog) -> PostDraft:
 
 _COMPOSERS = {
     "recognition": _compose_recognition,
+    "reference": _compose_reference,
     "tradeshow": _compose_tradeshow,
     "project": _compose_project,
     "retail": _compose_retail,
@@ -453,7 +511,12 @@ _COMPOSERS = {
     "supply": _compose_supply,
 }
 
-_SUBJECT_ATTR = {"product": "product", "recognition": "recognition", "show": "show"}
+_SUBJECT_ATTR = {
+    "product": "product",
+    "recognition": "recognition",
+    "show": "show",
+    "installation": "installation",
+}
 
 
 def compose(slot: Slot, catalog: Catalog) -> PostDraft:

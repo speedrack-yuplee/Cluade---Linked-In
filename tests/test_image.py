@@ -24,7 +24,7 @@ def test_a_product_photo_narrows_the_text_column_without_failing(catalog, tmp_pa
     """A post renders with or without a photo; the CDN is not always reachable."""
     from PIL import Image as PILImage
 
-    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=1), catalog)
+    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=3), catalog)
     product_post = next(d for d in drafts if d.product)
     photo = PILImage.new("RGB", (600, 600), (200, 200, 200))
     with_photo = render(product_post, tmp_path / "with.png", photo=photo, use_creatives=False)
@@ -191,3 +191,26 @@ def test_the_retailers_choice_badge_is_cut_out_but_not_altered():
             if pixels[x, y][3] == 255 and min(pixels[x, y][:3]) > 240
         )
         assert white_inside > 500, "the white rules inside the disc were keyed out too"
+
+
+def test_a_reference_image_is_the_photograph(catalog, tmp_path):
+    """The room is the argument, so nothing is painted over it but the words at
+    the bottom. A panel or a studio cut-out here would contradict the post."""
+    from PIL import Image as PILImage
+
+    from homedant_linkedin import image as image_module
+
+    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=4), catalog)
+    reference = next(d for d in drafts if d.pillar.key == "reference")
+    assert reference.slot.pictured is None, "a studio product crept onto an installation post"
+
+    photo = image_module.photo_for(reference)
+    assert photo is not None, "the installation photograph is not in the repository"
+
+    path = image_module.render(reference, tmp_path / "ref.png", photo=photo, use_creatives=False)
+    with PILImage.open(path) as rendered:
+        assert rendered.size == (image_module.SIZE, image_module.SIZE)
+        # The top half is the room, untouched: a solid ground would leave far
+        # fewer distinct colours than a photograph does.
+        top = rendered.convert("RGB").crop((0, 200, image_module.SIZE, 480))
+        assert len(top.getcolors(maxcolors=1_000_000)) > 2_000

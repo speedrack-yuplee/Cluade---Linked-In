@@ -14,6 +14,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
+from .composer import _sentence
 from .models import PostDraft
 
 SIZE = 1200
@@ -78,7 +79,7 @@ def creative_for(draft: PostDraft) -> Path | None:
     Show and award posts always render: their images carry a countdown or a
     badge that no fixed panel can state.
     """
-    if draft.slot.show or draft.slot.recognition:
+    if draft.slot.show or draft.slot.recognition or draft.slot.installation:
         return None
     panels = creatives_for(draft.pillar.key)
     if not panels:
@@ -195,6 +196,8 @@ def _footer_text(draft: PostDraft) -> str:
         return f"{slot.show.venue}   ·   {slot.show.dates}{booth}"
     if slot.recognition:
         return f"{slot.recognition.event}   ·   {slot.recognition.venue}"
+    if slot.installation:
+        return "HOMEDANT boltless steel shelving"
     if slot.product:
         return f"{slot.product.short_title}   ·   Made in Korea"
     return "HOMEDANT   ·   The Best Organizing Solution"
@@ -314,6 +317,85 @@ def _layout_product(image, draw, draft: PostDraft, photo) -> None:
     _band(image, draw, _footer_text(draft), accent, LIGHT_TEXT)
 
 
+def _cover(art, size: int):
+    """``art`` scaled to fill a ``size`` square and centre-cropped.
+
+    A room photograph is landscape and the feed wants a square, so the choice
+    is between letterboxing it and cropping it. Cropping keeps the picture
+    filling the frame, which is the whole point of using a real one.
+    """
+    art = art.convert("RGB")
+    scale = size / min(art.size)
+    art = art.resize((max(size, round(art.width * scale)), max(size, round(art.height * scale))), Image.LANCZOS)
+    left = (art.width - size) // 2
+    top = (art.height - size) // 2
+    return art.crop((left, top, left + size, top + size))
+
+
+def _scrim(image, top: int, opacity: int = 225) -> None:
+    """Darken the frame from ``top`` down, fading in over the first stretch.
+
+    Type over a photograph is unreadable wherever the photograph is pale, and
+    a hard-edged band across the picture looks like a mistake. A gradient does
+    neither.
+    """
+    overlay = Image.new("RGBA", (1, SIZE), (0, 0, 0, 0))
+    fade = int((SIZE - top) * 0.45) or 1
+    for y in range(top, SIZE):
+        alpha = min(opacity, int(opacity * (y - top) / fade))
+        overlay.putpixel((0, y), (14, 20, 24, alpha))
+    image.paste(
+        overlay.resize((SIZE, SIZE), Image.NEAREST),
+        (0, 0),
+        overlay.resize((SIZE, SIZE), Image.NEAREST),
+    )
+
+
+def _layout_reference(image, draw, draft: PostDraft, photo) -> None:
+    """The photograph is the image; the words sit in the dark at the bottom.
+
+    Nothing is drawn over the room itself. A real installation only carries a
+    post if it is allowed to look like a photograph rather than a template
+    with a picture pasted into a slot.
+    """
+    site = draft.slot.installation
+    room = photo if photo is not None else None
+    if room is None:
+        _layout_plain(image, draw, draft, None)
+        return
+
+    image.paste(_cover(room, SIZE), (0, 0))
+    _scrim(image, 520)
+
+    draw.text((MARGIN, MARGIN), "HOMEDANT", font=_font(BOLD, 44), fill=LIGHT_TEXT)
+    draw.rectangle([MARGIN, MARGIN + 62, MARGIN + 110, MARGIN + 68], fill=ACCENT)
+
+    label = "INSTALLED" if not site.named else site.customer.upper()
+    draw.text((MARGIN, 620), label, font=_font(BOLD, 30), fill=SHOW_ACCENT)
+
+    width = SIZE - 2 * MARGIN
+    lines, font = _fit(draw, _sentence(site.described_as), width, 2, 76, 44)
+    y = 668
+    for line in lines:
+        draw.text((MARGIN, y), line, font=font, fill=LIGHT_TEXT)
+        y += int(font.size * 1.16)
+
+    caption = _font(REGULAR, 34)
+    for line in _wrap(draw, _sentence(site.room), caption, width)[:2]:
+        draw.text((MARGIN, y + 18), line, font=caption, fill=(214, 214, 210))
+        y += int(caption.size * 1.3)
+
+    _bullets(image, draw, draft.points[1:], y + 40, width, LIGHT_TEXT, ACCENT)
+
+    foot = _font(REGULAR, 26)
+    draw.text(
+        (MARGIN, SIZE - MARGIN - 10),
+        f"Made in Korea since 1979   \u00b7   {_footer_text(draft)}",
+        font=foot,
+        fill=(170, 176, 178),
+    )
+
+
 def _layout_plain(image, draw, draft: PostDraft, photo) -> None:
     """No subject to picture: the sentence carries it."""
     top = _masthead(image, draw, dark=False)
@@ -350,7 +432,9 @@ def render(draft: PostDraft, path: str | Path, photo=None, use_creatives: bool =
     image = Image.new("RGB", (SIZE, SIZE), GROUND)
     draw = ImageDraw.Draw(image)
 
-    if draft.slot.show:
+    if draft.slot.installation:
+        _layout_reference(image, draw, draft, photo)
+    elif draft.slot.show:
         _layout_show(image, draw, draft, photo)
     elif draft.slot.recognition:
         _layout_award(image, draw, draft, photo)
@@ -392,6 +476,11 @@ def photo_for(draft: PostDraft, timeout: int = 20):
     A file supplied for this product wins, then its listing image, then any
     other supplied photo.
     """
+    if draft.slot.installation:
+        # The picture for one of these is the room itself, already in the
+        # repository; nothing to fetch and nothing to fall back to.
+        return _open(ASSET_DIR / "library" / draft.slot.installation.photo)
+
     product = draft.slot.pictured
     if product is None:
         return None

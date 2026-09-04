@@ -246,6 +246,52 @@ class Brand:
 
 
 @dataclass(frozen=True)
+class Installation:
+    """A room the shelving actually went into, and the photograph of it.
+
+    A studio shot says what the product looks like. One of these says somebody
+    bought it, put it in a real building, and it is still standing there. For a
+    B2B feed that is the stronger argument, and it is one no stock photograph
+    or composite can make.
+    """
+
+    slug: str
+    customer: str
+    sector: str
+    described_as: str
+    room: str
+    situation: str
+    photo: str
+    named: bool = False
+    """Whether the post may say the customer's name.
+
+    A reference is the customer's to give. Until they have agreed, the post
+    describes the kind of place instead — which is what a buyer abroad is
+    asking about anyway."""
+
+    hashtags: tuple[str, ...] = ()
+
+    @property
+    def subject(self) -> str:
+        """How the post refers to this room."""
+        return self.customer if self.named else self.described_as
+
+    @classmethod
+    def from_dict(cls, raw: dict) -> "Installation":
+        return cls(
+            slug=raw["slug"],
+            customer=raw.get("customer", ""),
+            sector=raw.get("sector", ""),
+            described_as=raw.get("described_as", ""),
+            room=raw.get("room", ""),
+            situation=raw.get("situation", ""),
+            photo=raw["photo"],
+            named=bool(raw.get("named", False)),
+            hashtags=tuple(raw.get("hashtags", ())),
+        )
+
+
+@dataclass(frozen=True)
 class Pillar:
     """A recurring content theme. The plan rotates through these."""
 
@@ -254,7 +300,8 @@ class Pillar:
     intent: str
     hashtags: tuple[str, ...]
     needs: str | None = "product"
-    """What the slot must carry: "product", "recognition", "show", or None."""
+    """What the slot must carry: "product", "recognition", "show",
+    "installation", or None."""
 
     months: tuple[int, ...] = ()
     """Restrict the pillar to these calendar months. Empty means all year."""
@@ -274,13 +321,21 @@ class Slot:
     product: Product | None = None
     recognition: Recognition | None = None
     show: TradeShow | None = None
+    installation: Installation | None = None
     feature: Product | None = None
     """A product shown in the image only. A show or brand post has no product
     subject, but it still has something to show."""
 
     @property
     def pictured(self) -> Product | None:
-        """The product the image should show, whether or not the text is about it."""
+        """The product the image should show, whether or not the text is about it.
+
+        None for an installation post: that image is the photograph of the
+        room, and a studio cut-out of some other unit on top of it would
+        contradict what the post is saying.
+        """
+        if self.installation:
+            return None
         return self.product or self.feature
 
     @property
@@ -292,6 +347,8 @@ class Slot:
             return self.recognition.name
         if self.show:
             return self.show.name
+        if self.installation:
+            return f"Installed: {self.installation.subject}"
         return "(brand)"
 
 

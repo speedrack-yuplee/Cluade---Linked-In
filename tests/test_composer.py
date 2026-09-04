@@ -193,3 +193,19 @@ def test_a_show_image_does_not_repeat_what_the_band_already_says(catalog):
             assert draft.slot.show.venue not in point
             assert draft.slot.show.dates not in point
             assert not (draft.slot.show.booth and draft.slot.show.booth in point)
+
+
+def test_a_reference_post_does_not_name_the_customer_without_permission(catalog):
+    """A reference is the customer's name to give, not ours to take. Until they
+    have agreed, the post says what kind of place it was — which is what a
+    buyer abroad is asking about anyway."""
+    drafts = compose_all(build_plan(catalog, start=PLAN_START, weeks=12), catalog)
+    references = [d for d in drafts if d.pillar.key == "reference"]
+    assert references, "the reference pillar never came round"
+    for draft in references:
+        site = draft.slot.installation
+        if site.named:
+            continue
+        text = draft.render()
+        assert site.customer not in text, f"{site.customer} was named without permission"
+        assert site.described_as.lower() in text.lower()

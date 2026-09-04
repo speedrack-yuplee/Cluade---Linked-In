@@ -70,6 +70,7 @@ def _usable_pillars(catalog: Catalog, pillars: tuple[Pillar, ...], start: date) 
         "product": len(catalog) > 0,
         "recognition": bool(profile.recognitions),
         "show": bool(_upcoming_shows(catalog, start)),
+        "installation": bool(catalog.installations),
         None: True,
     }
     return tuple(p for p in pillars if available.get(p.needs, False))
@@ -138,6 +139,7 @@ def build_plan(
         "product": catalog.products,
         "recognition": list(profile.recognitions),
         "show": _upcoming_shows(catalog, start),
+        "installation": catalog.installations,
     }
     for pillar in usable:
         if pillar.segment:
