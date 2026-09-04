@@ -12,9 +12,21 @@ PLAN_START = date(2026, 9, 7)  # a Monday, so every week contributes three slots
 
 
 def test_every_slot_in_a_plan_composes(catalog):
-    drafts = compose_all(build_plan(catalog, start=PLAN_START, weeks=6), catalog)
-    assert len(drafts) == 18
+    slots = build_plan(catalog, start=PLAN_START, weeks=6)
+    drafts = compose_all(slots, catalog)
+    assert len(drafts) == len(slots)
     assert all(draft.render().strip() for draft in drafts)
+
+
+def test_a_post_timed_to_a_us_date_opens_on_that_date(catalog):
+    """The pillar decides what the post is about; the moment decides how it
+    walks in. Our own hook is not lost — it becomes the paragraph after."""
+    drafts = compose_all(build_plan(catalog, start=PLAN_START, weeks=12), catalog)
+    timed = [d for d in drafts if d.slot.moment]
+    assert timed, "no post was timed to a US retail date"
+    for draft in timed:
+        assert draft.hook == draft.slot.moment.angle
+        assert len(draft.hook) <= 210
 
 
 def _unposted(award):

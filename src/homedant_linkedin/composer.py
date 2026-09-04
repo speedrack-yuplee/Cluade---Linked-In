@@ -519,6 +519,25 @@ _SUBJECT_ATTR = {
 }
 
 
+def _timed_to_moment(draft: PostDraft) -> PostDraft:
+    """Re-open ``draft`` on the US date it was timed to.
+
+    The pillar still decides what the post is about; the moment decides how it
+    walks in. Our own hook is not thrown away — it becomes the paragraph after,
+    which is where the argument was going to start anyway.
+    """
+    from dataclasses import replace
+
+    moment = draft.slot.moment
+    if moment is None or not moment.angle:
+        return draft
+    return replace(
+        draft,
+        hook=moment.angle,
+        body=_paragraphs(draft.hook, draft.body),
+    )
+
+
 def compose(slot: Slot, catalog: Catalog) -> PostDraft:
     """Render one slot. Raises for a pillar with no composer or no subject."""
     try:
@@ -528,7 +547,7 @@ def compose(slot: Slot, catalog: Catalog) -> PostDraft:
     needs = slot.pillar.needs
     if needs and getattr(slot, _SUBJECT_ATTR[needs]) is None:
         raise ValueError(f"pillar {slot.pillar.key!r} requires a {needs} but the slot has none")
-    return composer(slot, catalog)
+    return _timed_to_moment(composer(slot, catalog))
 
 
 def compose_all(slots, catalog: Catalog) -> list[PostDraft]:

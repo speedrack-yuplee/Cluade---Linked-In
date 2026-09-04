@@ -5,12 +5,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from .models import Brand, Installation, Product
+from .models import Brand, Installation, Moment, Product
 
 DATA_DIR = Path(__file__).parent / "data"
 DEFAULT_CATALOG_PATH = DATA_DIR / "products.json"
 DEFAULT_BRAND_PATH = DATA_DIR / "brand.json"
 DEFAULT_INSTALLATIONS_PATH = DATA_DIR / "installations.json"
+DEFAULT_MOMENTS_PATH = DATA_DIR / "moments.json"
 
 
 class Catalog:
@@ -48,6 +49,16 @@ class Catalog:
     @property
     def products(self) -> list[Product]:
         return list(self._products)
+
+    @property
+    def moments(self) -> list[Moment]:
+        """The US retail and holiday calendar, in date order."""
+        if not DEFAULT_MOMENTS_PATH.exists():
+            return []
+        raw = json.loads(DEFAULT_MOMENTS_PATH.read_text(encoding="utf-8"))
+        return sorted(
+            (Moment.from_dict(m) for m in raw.get("moments", ())), key=lambda m: m.date
+        )
 
     @property
     def installations(self) -> list[Installation]:

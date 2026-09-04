@@ -15,9 +15,14 @@ def test_the_calendar_opens_on_the_anchor(catalog):
 
 
 def test_the_post_due_on_a_posting_day_matches_the_calendar(catalog):
-    draft = due_on(catalog, date(2026, 9, 7))
+    draft = due_on(catalog, date(2026, 9, 9))
     assert draft is not None
-    assert draft.scheduled_for == date(2026, 9, 7)
+    assert draft.scheduled_for == date(2026, 9, 9)
+
+
+def test_nothing_is_due_on_a_us_federal_holiday(catalog):
+    """7 September 2026 is a Monday and Labor Day."""
+    assert due_on(catalog, date(2026, 9, 7)) is None
 
 
 def test_the_rotation_is_counted_from_the_anchor_not_from_today(catalog):

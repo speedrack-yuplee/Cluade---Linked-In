@@ -94,6 +94,30 @@ MAX_POSTS_PER_SHOW = 4
 crowds out every other subject in the month it falls in."""
 
 
+def _moment_dates(moments: list, days: list[date], pillars: tuple[Pillar, ...]) -> dict[date, tuple]:
+    """Which posting dates belong to a US retail moment, and to which.
+
+    A buyer's year turns on Halloween and Black Friday, not on our rotation, and
+    the buying conversation happens weeks ahead of the date itself. So each
+    moment claims the posting date nearest to when it is actually decided.
+    """
+    by_key = {p.key: p for p in pillars}
+    claimed: dict[date, tuple] = {}
+    for moment in moments:
+        if moment.is_holiday or not moment.angle:
+            continue
+        pillar = next((by_key[k] for k in moment.pillars if k in by_key), None)
+        if pillar is None:
+            continue
+        free = [d for d in days if d not in claimed]
+        if not free:
+            continue
+        nearest = min(free, key=lambda d: abs((d - moment.posts_on).days))
+        if abs((nearest - moment.posts_on).days) <= 3:
+            claimed[nearest] = (pillar, moment)
+    return claimed
+
+
 def _show_dates(shows: list, days: list[date]) -> dict[date, object]:
     """Which posting dates belong to a show, and to which show.
 
@@ -169,9 +193,18 @@ def build_plan(
             pools[f"product:{pillar.segment}"] = _segment_pool(catalog, pillar.segment)
     cursors = dict.fromkeys(pools, 0)
 
-    days = [d for d in posting_dates(start, weeks, weekdays) if d not in profile.blackout_dates]
+    # Nothing goes out on a US federal holiday: the audience is not at a desk.
+    holidays = {m.date for m in catalog.moments if m.is_holiday}
+    days = [
+        d
+        for d in posting_dates(start, weeks, weekdays)
+        if d not in profile.blackout_dates and d not in holidays
+    ]
     show_pillar = next((p for p in usable if p.needs == "show"), None)
     claimed = _show_dates(pools["show"], days) if show_pillar else {}
+
+    # Shows are booked first; a retail moment fills a date the shows left.
+    moments = _moment_dates(catalog.moments, [d for d in days if d not in claimed], usable)
 
     slots: list[Slot] = []
     index = 0
@@ -186,6 +219,19 @@ def build_plan(
                 )
             )
             continue
+        if day in moments:
+            pillar, moment = moments[day]
+            subject = {}
+            if pillar.needs:
+                key = f"product:{pillar.segment}" if pillar.needs == "product" and pillar.segment else pillar.needs
+                pool = pools[key]
+                subject[pillar.needs] = pool[cursors[key] % len(pool)]
+                cursors[key] += 1
+            if pillar.needs != "product":
+                subject["feature"] = _feature(catalog, day)
+            slots.append(Slot(scheduled_for=day, pillar=pillar, moment=moment, **subject))
+            continue
+
         in_season = [p for p in rotation if not p.months or day.month in p.months]
         pillar = in_season[index % len(in_season)]
         index += 1

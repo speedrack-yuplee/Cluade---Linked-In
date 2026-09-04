@@ -24,8 +24,17 @@ def test_posting_dates_rejects_zero_weeks():
 
 def test_plan_assigns_a_pillar_to_every_slot(catalog):
     slots = build_plan(catalog, start=PLAN_START, weeks=4)
-    assert len(slots) == 12
+    assert len(slots) == 11  # Labor Day takes the first Monday out
     assert all(slot.pillar in PILLARS for slot in slots)
+
+
+def test_nothing_goes_out_on_a_us_federal_holiday(catalog):
+    """The audience is not at a desk, so the post would be spent on nobody."""
+    slots = build_plan(catalog, start=PLAN_START, weeks=20)
+    scheduled = {s.scheduled_for for s in slots}
+    holidays = {m.date for m in catalog.moments if m.is_holiday}
+    assert holidays & set(posting_dates(PLAN_START, 20)), "no holiday fell on a posting day"
+    assert not (scheduled & holidays)
 
 
 def test_a_calendar_opens_by_announcing_the_next_show(catalog):
@@ -39,7 +48,8 @@ def test_recognition_leads_the_rotation_behind_the_show(catalog):
     """The award post outperformed product posts by more than an order of
     magnitude, so it opens the rotation proper."""
     slots = build_plan(catalog, start=PLAN_START, weeks=4)
-    rotation = [s for s in slots if s.pillar.key != "tradeshow"]
+    # A date claimed by a show or by a US retail moment is not the rotation.
+    rotation = [s for s in slots if s.pillar.key != "tradeshow" and not s.moment]
     assert rotation[0].pillar.key == "recognition"
     assert rotation[0].recognition is not None
 
@@ -93,9 +103,17 @@ def test_nothing_is_scheduled_on_a_blackout_date(catalog):
 
 
 def test_a_seasonal_pillar_only_runs_in_its_own_months(catalog):
+    """Unless it was timed to a US date. The Halloween buy is decided in
+    September, so a seasonal post can legitimately land before October — but
+    only when a moment put it there."""
     slots = build_plan(catalog, start=PLAN_START, weeks=20)
     seasonal = [s for s in slots if s.pillar.key == "seasonal"]
-    assert seasonal and all(s.scheduled_for.month in (10, 11, 12) for s in seasonal)
+    assert seasonal
+    for slot in seasonal:
+        if slot.moment:
+            assert slot.moment.posts_on.month == slot.scheduled_for.month
+            continue
+        assert slot.scheduled_for.month in (10, 11, 12)
 
 
 def test_slot_subject_labels_whatever_the_slot_carries(catalog):

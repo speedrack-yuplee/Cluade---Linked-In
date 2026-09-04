@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, timedelta
 
 MAX_POST_CHARS = 3000
 """LinkedIn rejects a post body longer than this."""
@@ -246,6 +246,53 @@ class Brand:
 
 
 @dataclass(frozen=True)
+class Moment:
+    """A date the audience's own year turns on.
+
+    A buyer in the States is not thinking about our factory in September; they
+    are thinking about the reset that has to be on the floor before Halloween.
+    A post timed to one of these reads as someone who knows their year rather
+    than someone talking about themselves.
+    """
+
+    date: date
+    kind: str
+    """holiday (nothing is posted on one) or retail (a post may be timed to it)."""
+
+    name: str
+    ko: str = ""
+    angle: str = ""
+    """What there is to say about it, in our terms rather than the holiday's."""
+
+    lead_days: int = 0
+    """How far ahead the buying conversation happens. A post about Black Friday
+    storage in late November is too late to sell anything."""
+
+    pillars: tuple[str, ...] = ()
+
+    @property
+    def is_holiday(self) -> bool:
+        return self.kind == "holiday"
+
+    @property
+    def posts_on(self):
+        """The day a post about this should go out."""
+        return self.date - timedelta(days=self.lead_days)
+
+    @classmethod
+    def from_dict(cls, raw: dict) -> "Moment":
+        return cls(
+            date=date.fromisoformat(raw["date"]),
+            kind=raw.get("kind", "retail"),
+            name=raw["name"],
+            ko=raw.get("ko", ""),
+            angle=raw.get("angle", ""),
+            lead_days=int(raw.get("lead_days", 0)),
+            pillars=tuple(raw.get("pillars", ())),
+        )
+
+
+@dataclass(frozen=True)
 class Installation:
     """A room the shelving actually went into, and the photograph of it.
 
@@ -322,6 +369,9 @@ class Slot:
     recognition: Recognition | None = None
     show: TradeShow | None = None
     installation: Installation | None = None
+    moment: Moment | None = None
+    """A US retail date this post was timed to, where one falls due."""
+
     feature: Product | None = None
     """A product shown in the image only. A show or brand post has no product
     subject, but it still has something to show."""

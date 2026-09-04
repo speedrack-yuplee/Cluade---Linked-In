@@ -31,9 +31,12 @@ def test_plan_leads_with_the_show_announcement():
 
 
 def test_plan_prints_one_line_per_post():
+    """Four, not six: Labor Day falls on the Monday of the second week and
+    nothing goes out on a US federal holiday."""
     code, output = _run(["plan", "--start", "2026-09-01", "--weeks", "2"])
     assert code == 0
-    assert output.count("2026-") == 5
+    assert output.count("2026-") == 4
+    assert "2026-09-07" not in output
 
 
 def test_plan_json_is_machine_readable():

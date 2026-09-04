@@ -1,0 +1,110 @@
+{
+  "_comment": [
+    "The US retail and holiday calendar the audience actually works to.",
+    "A buyer in the States is not thinking about our factory in September; they",
+    "are thinking about the reset that has to be on the floor before Halloween",
+    "and the container that has to land before Black Friday. A post timed to",
+    "that reads as someone who knows their year.",
+    "",
+    "'kind' decides how the calendar draws it and whether it can carry a post:",
+    "  holiday  — a federal holiday. Marked on the calendar; nothing is posted",
+    "             on one, and the planner treats it as a blackout.",
+    "  retail   — a selling moment. Marked, and a post may be timed to it.",
+    "  ours     — HOMEDANT's own dates, which come from brand.json.",
+    "",
+    "'lead_days' is how far ahead the buying conversation happens: a post about",
+    "Black Friday storage in late November is too late to sell anything."
+  ],
+  "moments": [
+    {
+      "date": "2026-09-07",
+      "kind": "holiday",
+      "name": "Labor Day",
+      "ko": "노동절"
+    },
+    {
+      "date": "2026-09-15",
+      "kind": "retail",
+      "name": "Back to School winds down",
+      "ko": "신학기 마무리",
+      "lead_days": 0,
+      "angle": "The dorm and classroom orders are placed and installed. What the buildings learned about their storage this year is what they will specify next year.",
+      "pillars": ["reference", "project"]
+    },
+    {
+      "date": "2026-10-12",
+      "kind": "holiday",
+      "name": "Columbus Day / Indigenous Peoples' Day",
+      "ko": "콜럼버스 데이"
+    },
+    {
+      "date": "2026-10-31",
+      "kind": "retail",
+      "name": "Halloween",
+      "ko": "핼러윈",
+      "lead_days": 45,
+      "angle": "Decorations come out of storage and go back into it three weeks later. The bins have to live somewhere for the other eleven months.",
+      "pillars": ["seasonal", "retail"]
+    },
+    {
+      "date": "2026-11-11",
+      "kind": "holiday",
+      "name": "Veterans Day",
+      "ko": "재향군인의 날"
+    },
+    {
+      "date": "2026-11-26",
+      "kind": "holiday",
+      "name": "Thanksgiving",
+      "ko": "추수감사절"
+    },
+    {
+      "date": "2026-11-27",
+      "kind": "retail",
+      "name": "Black Friday",
+      "ko": "블랙프라이데이",
+      "lead_days": 75,
+      "angle": "The stock for this week landed in September. A reset date does not move because a vessel did, which is what domestic warehousing is for.",
+      "pillars": ["supply", "retail"]
+    },
+    {
+      "date": "2026-11-28",
+      "kind": "retail",
+      "name": "Small Business Saturday",
+      "ko": "스몰비즈니스 새터데이",
+      "lead_days": 60,
+      "angle": "An independent retailer resets a bay with what fits on one pallet, not one container.",
+      "pillars": ["retail"]
+    },
+    {
+      "date": "2026-11-30",
+      "kind": "retail",
+      "name": "Cyber Monday",
+      "ko": "사이버먼데이",
+      "lead_days": 75,
+      "angle": "Every online order is a box that leaves a back room. The back room is the constraint nobody merchandises.",
+      "pillars": ["supply", "project"]
+    },
+    {
+      "date": "2026-12-25",
+      "kind": "holiday",
+      "name": "Christmas Day",
+      "ko": "크리스마스"
+    },
+    {
+      "date": "2026-12-26",
+      "kind": "retail",
+      "name": "Boxing week returns",
+      "ko": "반품·정리 주간",
+      "lead_days": 30,
+      "angle": "The week after Christmas is the year's biggest sort: returns in, decorations away, garages emptied out in January.",
+      "pillars": ["seasonal"]
+    },
+    {
+      "date": "2027-01-01",
+      "kind": "holiday",
+      "name": "New Year's Day",
+      "ko": "새해"
+    }
+  ]
+}
