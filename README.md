@@ -25,6 +25,12 @@ claim the brand cannot substantiate.
 Third-party recognition outperformed product-led posts by 15 to 35 times, so
 the plan leads every cycle with it. See `content/posts/` for the source.
 
+## 링크드인 작업 지침
+
+`docs/LINKEDIN_PLAYBOOK.md` 에 링크드인을 읽는 법(OpenCLI), 경쟁사 게시물
+수집, 리드 발굴 경로, 하지 말아야 할 것이 정리돼 있습니다. 이 저장소를 보는
+모든 대화가 공유하는 문맥이니, 링크드인 작업은 거기서 시작하세요.
+
 ## Install
 
 ```bash
@@ -48,9 +54,47 @@ PYTHONPATH=src python -m homedant_linkedin plan
 | `next` | Write today's post and image into `out/` for an unattended run |
 | `calendar` | The whole plan up to `--until`, grouped by month |
 | `assets` | Which logo and badge files the images look for, and which are supplied |
+| `trends` | What the trade press our buyers read is talking about |
 
 Common flags: `--start YYYY-MM-DD`, `--weeks N`, `--marketplace US`,
 `--catalog path/to/products.json`, and `--json` on `plan` and `draft`.
+
+## Reading the trade press
+
+LinkedIn publishes no trending feed, so the agent does not pretend to have
+one. What it can read is the trade press those buyers read, and `trends`
+counts how often the terms we care about turn up across it. That is a reading
+list for whoever writes the week's post, not a ranking of LinkedIn itself.
+
+The list leads with the channel we actually sell boltless shelving into —
+hardware and storage — and keeps the retail, hospitality and multifamily
+titles behind it:
+
+| Segment | Titles |
+| --- | --- |
+| hardware | Hardware Retailing (NHPA), HBS Dealer |
+| storage | Woodworking Network, Modern Storage Media |
+| retail | Furniture Today, Home News Now, Business of Home, Retail Dive |
+| hospitality | Hospitality Design, Hotel Management, Hospitality Net |
+| multifamily | Multifamily Executive, Bisnow Multifamily |
+
+Terms are grouped into eight themes: shelving, storage demand, retail channel,
+sustainability, durability, compliance, supply chain and project channel.
+
+```bash
+PYTHONPATH=src python -m homedant_linkedin trends --days 30
+PYTHONPATH=src python -m homedant_linkedin trends --days 7 --json
+```
+
+The feed list and the watched terms both live in
+`src/homedant_linkedin/data/feeds.json`; edit that file rather than the code
+to follow a new publication or a new term. Nothing is installed for this: it
+fetches with `urllib` and parses with `ElementTree`.
+
+A feed that will not answer is named and skipped, so one dead publisher never
+costs you the rest. The command exits `1` only when *no* feed answered, which
+is the case worth distrusting — an empty result there means the network, not
+a quiet week.
 
 ```bash
 PYTHONPATH=src python -m homedant_linkedin plan --start 2026-09-08 --weeks 4

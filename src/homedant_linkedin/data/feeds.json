@@ -1,0 +1,147 @@
+{
+  "feeds": [
+    {
+      "name": "Hardware Retailing",
+      "url": "https://hardwareretailing.com/feed/",
+      "segment": "hardware"
+    },
+    {
+      "name": "HBS Dealer",
+      "url": "https://hbsdealer.com/rss.xml",
+      "segment": "hardware"
+    },
+    {
+      "name": "Woodworking Network",
+      "url": "https://www.woodworkingnetwork.com/rss.xml",
+      "segment": "storage"
+    },
+    {
+      "name": "Modern Storage Media",
+      "url": "https://www.modernstoragemedia.com/rss",
+      "segment": "storage"
+    },
+    {
+      "name": "Furniture Today",
+      "url": "https://www.furnituretoday.com/feed/",
+      "segment": "retail"
+    },
+    {
+      "name": "Home News Now",
+      "url": "https://homenewsnow.com/feed/",
+      "segment": "retail"
+    },
+    {
+      "name": "Business of Home",
+      "url": "https://businessofhome.com/rss",
+      "segment": "retail"
+    },
+    {
+      "name": "Retail Dive",
+      "url": "https://www.retaildive.com/feeds/news/",
+      "segment": "retail"
+    },
+    {
+      "name": "Hospitality Design",
+      "url": "https://hospitalitydesign.com/feed/",
+      "segment": "hospitality"
+    },
+    {
+      "name": "Hotel Management",
+      "url": "https://www.hotelmanagement.net/rss.xml",
+      "segment": "hospitality"
+    },
+    {
+      "name": "Hospitality Net",
+      "url": "https://www.hospitalitynet.org/rss/global.xml",
+      "segment": "hospitality"
+    },
+    {
+      "name": "Multifamily Executive",
+      "url": "https://www.multifamilyexecutive.com/rss.xml",
+      "segment": "multifamily"
+    },
+    {
+      "name": "Bisnow Multifamily",
+      "url": "https://www.bisnow.com/rss/multifamily",
+      "segment": "multifamily"
+    }
+  ],
+  "watch": {
+    "shelving": [
+      "boltless",
+      "shelving",
+      "racking",
+      "storage rack",
+      "load rating",
+      "load capacity",
+      "gauge steel",
+      "powder coat",
+      "ready-to-assemble",
+      "tool-free"
+    ],
+    "storage demand": [
+      "garage storage",
+      "closet",
+      "home organization",
+      "decluttering",
+      "self-storage",
+      "backroom",
+      "utility room",
+      "space saving"
+    ],
+    "retail channel": [
+      "planogram",
+      "category reset",
+      "assortment",
+      "private label",
+      "buying show",
+      "co-op",
+      "vendor",
+      "distributor",
+      "endcap"
+    ],
+    "sustainability": [
+      "FSC",
+      "low-VOC",
+      "recycled content",
+      "sustainable materials",
+      "eco-friendly",
+      "recycled steel"
+    ],
+    "durability": [
+      "commercial-grade",
+      "contract grade",
+      "durability",
+      "lifecycle cost",
+      "warranty"
+    ],
+    "compliance": [
+      "BIFMA",
+      "ADA",
+      "certification",
+      "compliance",
+      "test report",
+      "safety standard"
+    ],
+    "supply chain": [
+      "tariff",
+      "import duty",
+      "lead time",
+      "nearshoring",
+      "container rates",
+      "inventory",
+      "sourcing",
+      "landed cost",
+      "Korea"
+    ],
+    "project channel": [
+      "renovation cycle",
+      "PIP",
+      "FF&E",
+      "procurement",
+      "specifier",
+      "build-to-rent",
+      "boutique hotel"
+    ]
+  }
+}
