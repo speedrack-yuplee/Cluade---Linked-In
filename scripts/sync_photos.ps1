@@ -13,9 +13,11 @@
     writes, moves, renames or deletes anything in it. Everything it produces
     goes to -Destination.
 
-    The destination sits in Leo's own OneDrive, so the cloud session can read
-    the working copy through the Microsoft 365 connector and pick from it
-    without anything being handed over by chat.
+    The copies land in the repository, because that is the only place the cloud
+    session can open them as files: it can look at OneDrive through the
+    connector, but it cannot read bytes out of it, and a photograph has to be
+    readable to be composited or cropped. Leo's own Image folder is for
+    finished work coming the other way, not for copies of originals.
 
     It runs as a dry run by default and reports what it would copy. Pass -Apply
     to actually write. Re-running is incremental: a photo already copied and
@@ -24,8 +26,12 @@
 .PARAMETER Source
     The design library root. Read only.
 
+.PARAMETER RepoPath
+    Working copy of speedrack-yuplee/Cluade---Linked-In. The photos land under
+    assets/library there.
+
 .PARAMETER Destination
-    Where the downscaled copies go.
+    Overrides where the copies go. Normally left alone.
 
 .PARAMETER Sets
     Which parts of the library to copy, as "destination folder = source path
@@ -41,7 +47,8 @@
 #>
 param(
     [string]$Source = "$env:USERPROFILE\OneDrive - 스피드랙\박 상희의 파일 - 01_사진 ~ 05_본사 관련 자료\01_사진 ~ 05_본사 관련 자료",
-    [string]$Destination = "$env:USERPROFILE\OneDrive - 스피드랙\해외영업3파트\업무\@업무\자동화\Image",
+    [string]$RepoPath = "$env:USERPROFILE\Documents\Cluade---Linked-In",
+    [string]$Destination = $null,
     [System.Collections.Specialized.OrderedDictionary]$Sets = $null,
     [int]$MaxEdge = 1600,
     [int]$Quality = 82,
@@ -57,15 +64,20 @@ $OutputEncoding = New-Object System.Text.UTF8Encoding $false
 
 Add-Type -AssemblyName System.Drawing
 
+if (-not $Destination) { $Destination = Join-Path $RepoPath "assets\library" }
+
 if (-not $Sets) {
     $Sets = [ordered]@{
-        # The overseas HOMEDANT House masters: the lifestyle photography the
-        # LinkedIn posts are actually about.
-        "homedant-house" = "01_사진자료_IMAGE SOURCE\C02_홈던트하우스 선반_HS"
+        # Photographs of units standing in real rooms someone bought them for:
+        # a university store, a testing laboratory, a back of house. Worth more
+        # to a B2B post than any studio shot, and worth more than compositing a
+        # unit into a stock photograph, because the question "which school?"
+        # has an answer. 57 MB, so this is the one to run first.
+        "installations" = "01_사진자료_IMAGE SOURCE\B05_특판 이미지\설치이미지추가"
         # Already sized and cropped for social, so the least work to reuse.
-        "sns"            = "02_해외 디자인자료(아마존_월마트)\A03-01_글로벌_SNS"
+        "sns"           = "02_해외 디자인자료(아마존_월마트)\A03-01_글로벌_SNS"
         # Small, and needed on every generated image.
-        "logo"           = "01_사진자료_IMAGE SOURCE\D01_브랜드로고"
+        "logo"          = "01_사진자료_IMAGE SOURCE\D01_브랜드로고"
     }
 }
 
@@ -81,8 +93,7 @@ $ExcludedSegments = @(
     "Test Rite",
     "테스트라이트",
     "IndexLiving",
-    "인덱스리빙",
-    "특판"
+    "인덱스리빙"
 )
 
 $ImageSuffixes = @(".jpg", ".jpeg", ".png")
@@ -150,6 +161,7 @@ if (-not (Test-Path -LiteralPath $Source)) {
 Write-Host ""
 Write-Host "원본 (읽기 전용) : $Source"
 Write-Host "사본 저장 위치   : $Destination"
+Write-Host "                   (저장소 안입니다. 이엽님 Image 폴더에는 결과물만 들어갑니다.)"
 Write-Host "축소             : 긴 변 $MaxEdge px, JPEG 품질 $Quality"
 if (-not $Apply) {
     Write-Host "모드             : DRY RUN — 아무것도 쓰지 않습니다. 실제로 복사하려면 -Apply" -ForegroundColor Yellow
