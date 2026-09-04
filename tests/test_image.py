@@ -53,7 +53,7 @@ def test_the_band_names_the_product_without_the_asin(catalog):
     """The ASIN means nothing to a buyer reading the feed."""
     from homedant_linkedin.image import _footer_text
 
-    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=2), catalog)
+    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=3), catalog)
     product_post = next(d for d in drafts if d.product)
     band = _footer_text(product_post)
     assert product_post.product.short_title in band

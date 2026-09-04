@@ -168,3 +168,21 @@ def test_every_pillar_gets_a_turn_before_the_year_ends(catalog):
     seen = Counter(s.pillar.key for s in slots)
     for pillar in PILLARS:
         assert seen[pillar.key] >= 3, f"{pillar.key} came round only {seen[pillar.key]} times"
+
+
+def test_a_post_lands_near_the_date_it_is_about(catalog):
+    """The Black Friday post went out on 11 September, eleven weeks early,
+    because lead_days had been set to when the buy is decided rather than when
+    the post should appear. Nobody reading in September connects the two. The
+    argument that stock has to land early belongs in the words."""
+    slots = [
+        s
+        for s in build_plan(catalog, start=PLAN_START, weeks=20)
+        if s.moment
+    ]
+    assert slots, "no post was timed to a US retail date"
+    for slot in slots:
+        gap = (slot.moment.date - slot.scheduled_for).days
+        assert -7 <= gap <= 21, (
+            f"{slot.moment.name} posts {gap} days from the date it is about"
+        )
