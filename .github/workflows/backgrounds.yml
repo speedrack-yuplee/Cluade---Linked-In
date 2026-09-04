@@ -31,6 +31,8 @@ jobs:
       - run: pip install Pillow
 
       - name: Download the backgrounds
+        # A query that finds nothing must not throw away the ones that worked.
+        continue-on-error: true
         run: |
           python scripts/fetch_backgrounds.py \
             ${{ inputs.only && format('--only {0}', inputs.only) || '' }} \

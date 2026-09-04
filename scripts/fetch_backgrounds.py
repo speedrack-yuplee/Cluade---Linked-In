@@ -2,17 +2,19 @@
 
 The cloud session cannot reach the stock CDNs: the egress policy answers 403 to
 CONNECT for images.pexels.com and images.unsplash.com. A GitHub Actions runner
-is not behind that policy, so the choosing happens in the session and the
-downloading happens here.
+is not behind that policy — but Pexels and Unsplash answer 403 to a runner too,
+because they turn away datacenter addresses. So neither end can fetch from them
+and the source has to be one that serves machines.
 
-Each entry in assets/backgrounds/sources.json names a photo page rather than a
-file. The page carries an og:image pointing at the full-size original, so the
-direct URL never has to be guessed, and the same code works for Pexels and
-Unsplash alike.
+Openverse does. It indexes openly licensed photography across Flickr, Wikimedia
+and others, needs no API key, and states each result's licence in the response
+rather than leaving it to be inferred. Only CC0 and public-domain results are
+kept, so a picture in a HOMEDANT post never carries an attribution obligation
+that a LinkedIn caption would have to satisfy.
 
-Photographer and page are recorded in credits.json. Neither licence requires
-attribution, but a picture used in company marketing should be traceable to the
-licence it came in under.
+Entries in sources.json name a search, not a file, because which photograph is
+available under those terms is not knowable from here. What actually came down
+is written to credits.json with its licence and landing page, for review.
 """
 
 from __future__ import annotations
@@ -20,8 +22,8 @@ from __future__ import annotations
 import argparse
 import io
 import json
-import re
 import sys
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -32,20 +34,19 @@ BACKGROUNDS = ROOT / "assets" / "backgrounds"
 SOURCES = BACKGROUNDS / "sources.json"
 CREDITS = BACKGROUNDS / "credits.json"
 
+API = "https://api.openverse.org/v1/images/"
 MAX_EDGE = 1600
 QUALITY = 88
+MIN_WIDTH = 1200
+"""A background is composited into and then cropped, so anything narrower than
+the finished 1200 px post image is no use."""
 
-# Some stock sites answer a bare urllib request with a challenge page.
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/126.0 Safari/537.36",
-    "Accept-Language": "en-US,en;q=0.9",
-}
+FREE_LICENCES = {"cc0", "pdm"}
+"""Licences that carry no attribution condition. Everything else is skipped:
+a CC BY photo is free to use but obliges a credit line, and a caption that has
+to carry one is a caption that will eventually go out without it."""
 
-ALLOWED_HOSTS = ("pexels.com", "unsplash.com", "pixabay.com")
-"""Sites whose licence covers commercial use. A page anywhere else is refused
-rather than downloaded, so a copyrighted photo cannot reach a HOMEDANT post by
-someone pasting a link into sources.json."""
+HEADERS = {"User-Agent": "homedant-linkedin/1.0 (+https://github.com/speedrack-yuplee)"}
 
 
 def _get(url: str, timeout: int = 40) -> bytes:
@@ -54,33 +55,28 @@ def _get(url: str, timeout: int = 40) -> bytes:
         return response.read()
 
 
-def _meta(html: str, prop: str) -> str | None:
-    """The content of one og/twitter meta tag, whichever order the attributes
-    were written in."""
-    for pattern in (
-        rf'<meta[^>]+(?:property|name)=["\']{prop}["\'][^>]+content=["\']([^"\']+)["\']',
-        rf'<meta[^>]+content=["\']([^"\']+)["\'][^>]+(?:property|name)=["\']{prop}["\']',
-    ):
-        found = re.search(pattern, html, re.IGNORECASE)
-        if found:
-            return found.group(1)
-    return None
-
-
-def resolve(page: str) -> tuple[str, str]:
-    """The image URL and the credit line for a photo page."""
-    html = _get(page).decode("utf-8", "replace")
-    image = _meta(html, "og:image")
-    if not image:
-        raise RuntimeError("no og:image on the page")
-    title = _meta(html, "og:title") or ""
-    return image, title.strip()
+def search(query: str, wanted: int = 40) -> list[dict]:
+    """Openverse results for ``query`` that are usable without attribution."""
+    parameters = urllib.parse.urlencode(
+        {
+            "q": query,
+            "license": ",".join(sorted(FREE_LICENCES)),
+            "license_type": "commercial,modification",
+            "size": "large",
+            "page_size": wanted,
+            "mature": "false",
+        }
+    )
+    payload = json.loads(_get(f"{API}?{parameters}").decode("utf-8"))
+    return payload.get("results", [])
 
 
 def save(data: bytes, target: Path) -> tuple[int, int]:
     """Write ``data`` to ``target`` with its long edge at most MAX_EDGE."""
     with Image.open(io.BytesIO(data)) as art:
         art = art.convert("RGB")
+        if art.width < MIN_WIDTH:
+            raise RuntimeError(f"only {art.width}px wide")
         scale = min(1.0, MAX_EDGE / max(art.size))
         if scale < 1.0:
             art = art.resize(
@@ -89,6 +85,46 @@ def save(data: bytes, target: Path) -> tuple[int, int]:
         target.parent.mkdir(parents=True, exist_ok=True)
         art.save(target, "JPEG", quality=QUALITY, optimize=True)
         return art.size
+
+
+def fetch(entry: dict) -> dict:
+    """The first result for this entry that downloads and is big enough.
+
+    Openverse indexes other people's servers, so a result can be gone, be a
+    thumbnail, or not be an image at all. Working down the list rather than
+    trusting the first hit is what makes the run finish.
+    """
+    slug = entry["slug"]
+    target = BACKGROUNDS / f"{slug}.jpg"
+    problems: list[str] = []
+
+    for candidate in search(entry["query"]):
+        licence = (candidate.get("license") or "").lower()
+        if licence not in FREE_LICENCES:
+            continue
+        url = candidate.get("url")
+        if not url:
+            continue
+        try:
+            width, height = save(_get(url), target)
+        except Exception as exc:  # noqa: BLE001 - try the next candidate
+            problems.append(f"{url}: {exc}")
+            continue
+        return {
+            "slug": slug,
+            "scene": entry.get("scene", ""),
+            "size": f"{width}x{height}",
+            "licence": f"{licence} {candidate.get('license_version', '')}".strip(),
+            "creator": candidate.get("creator") or "",
+            "title": candidate.get("title") or "",
+            "landing": candidate.get("foreign_landing_url") or "",
+            "source": candidate.get("source") or "",
+        }
+
+    raise RuntimeError(
+        f"no usable result for {entry['query']!r}"
+        + (f" (tried {len(problems)})" if problems else "")
+    )
 
 
 def main() -> int:
@@ -105,32 +141,19 @@ def main() -> int:
         slug = entry["slug"]
         if arguments.only and slug != arguments.only:
             continue
-
-        page = entry["page"]
-        if not any(host in page for host in ALLOWED_HOSTS):
-            failures.append(f"{slug}: {page} is not a licensed stock site")
-            continue
-
-        target = BACKGROUNDS / f"{slug}.jpg"
-        if target.exists() and not arguments.force:
+        if (BACKGROUNDS / f"{slug}.jpg").exists() and not arguments.force:
             print(f"  have  {slug}")
             continue
 
         try:
-            url, title = resolve(page)
-            width, height = save(_get(url), target)
-        except Exception as exc:  # noqa: BLE001 - one bad page must not stop the rest
+            credit = fetch(entry)
+        except Exception as exc:  # noqa: BLE001 - one bad query must not stop the rest
             failures.append(f"{slug}: {exc}")
             print(f"  FAIL  {slug}: {exc}")
             continue
 
-        credits[slug] = {
-            "page": page,
-            "title": title,
-            "scene": entry.get("scene", ""),
-            "licence": "Pexels" if "pexels" in page else "Unsplash",
-        }
-        print(f"  got   {slug}  {width}x{height}  {target.stat().st_size // 1024} KB")
+        credits[slug] = credit
+        print(f"  got   {slug}  {credit['size']}  {credit['licence']}  {credit['landing']}")
 
     CREDITS.write_text(
         json.dumps(credits, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
@@ -140,6 +163,7 @@ def main() -> int:
         print("\nfailed:", file=sys.stderr)
         for failure in failures:
             print(f"  {failure}", file=sys.stderr)
+        # A partial run is still worth committing, so the caller decides.
         return 1
     return 0
 
