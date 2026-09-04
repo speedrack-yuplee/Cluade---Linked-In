@@ -112,3 +112,41 @@ def test_plan_rejects_an_empty_catalog(catalog):
 def test_get_pillar_raises_with_a_helpful_message():
     with pytest.raises(KeyError, match="known pillars"):
         get_pillar("nope")
+
+
+def test_one_show_cannot_take_over_the_month(catalog):
+    """High Point Market took six of October's thirteen posts: four countdown
+    milestones plus a post on every day of a week-long run. Six posts carrying
+    the same show name reads as one thing repeated, not as a company with
+    something to say."""
+    from collections import Counter
+
+    slots = [
+        s
+        for s in build_plan(catalog, start=date(2026, 9, 2), weeks=20)
+        if s.scheduled_for <= date(2026, 12, 31)
+    ]
+    per_show = Counter(s.show.name for s in slots if s.show)
+    for name, count in per_show.items():
+        assert count <= 4, f"{name} claimed {count} posts"
+
+    for month in {s.scheduled_for.month for s in slots}:
+        in_month = [s for s in slots if s.scheduled_for.month == month]
+        shows = sum(1 for s in in_month if s.pillar.key == "tradeshow")
+        assert shows * 3 <= len(in_month), f"month {month} is mostly one show"
+
+
+def test_every_pillar_gets_a_turn_before_the_year_ends(catalog):
+    """A rotation that never reaches a pillar is a pillar that does not exist."""
+    from collections import Counter
+
+    from homedant_linkedin.pillars import PILLARS
+
+    slots = [
+        s
+        for s in build_plan(catalog, start=date(2026, 9, 2), weeks=20)
+        if s.scheduled_for <= date(2026, 12, 31)
+    ]
+    seen = Counter(s.pillar.key for s in slots)
+    for pillar in PILLARS:
+        assert seen[pillar.key] >= 3, f"{pillar.key} came round only {seen[pillar.key]} times"

@@ -76,13 +76,22 @@ def _usable_pillars(catalog: Catalog, pillars: tuple[Pillar, ...], start: date) 
     return tuple(p for p in pillars if available.get(p.needs, False))
 
 
-COUNTDOWN_DAYS: tuple[int, ...] = (30, 14, 7, 2)
+COUNTDOWN_DAYS: tuple[int, ...] = (30, 7)
 """How far ahead of a show to force a post about it.
 
 A showroom space on an upper floor cannot rely on buyers wandering in, so the
 meetings have to be booked before the show. These posts are what books them,
 and they take priority over the ordinary rotation.
+
+Two milestones, not four. Four countdowns plus a post on every day of the run
+turned October into six posts about High Point Market out of thirteen — the
+same show name six times, which reads as one thing repeated rather than a
+company with something to say.
 """
+
+MAX_POSTS_PER_SHOW = 4
+"""Announcement, two countdowns and one from the floor. Past that a show
+crowds out every other subject in the month it falls in."""
 
 
 def _show_dates(shows: list, days: list[date]) -> dict[date, object]:
@@ -92,15 +101,21 @@ def _show_dates(shows: list, days: list[date]) -> dict[date, object]:
     posting date inside the show's own run is claimed by that show.
     """
     claimed: dict[date, object] = {}
+    taken: dict[str, int] = {}
+
+    def claim(day: date, show) -> None:
+        if day in claimed or taken.get(show.name, 0) >= MAX_POSTS_PER_SHOW:
+            return
+        claimed[day] = show
+        taken[show.name] = taken.get(show.name, 0) + 1
+
     upcoming = [s for s in shows if days and s.start >= days[0]]
     if upcoming and days:
         # A calendar that opens with a show ahead of it opens by announcing the
         # show: that is the post the meetings get booked from.
-        claimed[days[0]] = min(upcoming, key=lambda s: s.start)
+        claim(days[0], min(upcoming, key=lambda s: s.start))
+
     for show in shows:
-        for day in days:
-            if show.is_running(day):
-                claimed.setdefault(day, show)
         for offset in COUNTDOWN_DAYS:
             target = show.start - timedelta(days=offset)
             free = [d for d in days if d not in claimed and d <= show.start]
@@ -108,7 +123,15 @@ def _show_dates(shows: list, days: list[date]) -> dict[date, object]:
                 continue
             nearest = min(free, key=lambda d: abs((d - target).days))
             if abs((nearest - target).days) <= 3:
-                claimed[nearest] = show
+                claim(nearest, show)
+
+        # One post from the floor, not one for every day of the run: the
+        # remaining days of a week-long market would otherwise be the same
+        # show over and over.
+        running = [d for d in days if show.is_running(d)]
+        if running:
+            claim(running[0], show)
+
     return claimed
 
 
