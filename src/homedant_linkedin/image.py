@@ -449,6 +449,124 @@ def _layout_reference(image, draw, draft: PostDraft, photo) -> None:
     )
 
 
+def _layout_full(image, draw, draft: PostDraft, photo) -> None:
+    """The photograph is the whole frame; one line sits in the dark at the foot.
+
+    The same treatment the installation posts get, because it is the one that
+    stops a thumb: a room, not a slide. Used for any post whose hook can carry
+    the image on its own.
+    """
+    if photo is None:
+        _layout_product(image, draw, draft, None)
+        return
+
+    image.paste(_cover(photo.convert("RGB"), SIZE), (0, 0))
+    _scrim(image, 560)
+
+    logo = load_asset(ASSET_DIR / "logo-light.png")
+    if logo is not None:
+        _paste(image, logo, (MARGIN, MARGIN, MARGIN + 340, MARGIN + 86))
+    else:
+        draw.text((MARGIN, MARGIN), "HOMEDANT", font=_font(BOLD, 44), fill=LIGHT_TEXT)
+
+    width = SIZE - 2 * MARGIN
+    lines, font = _fit(draw, draft.hook, width, 4, 72, 40)
+    y = SIZE - MARGIN - 40 - len(lines) * int(font.size * 1.18)
+    for line in lines:
+        draw.text((MARGIN, y), line, font=font, fill=LIGHT_TEXT)
+        y += int(font.size * 1.18)
+
+    foot = _font(REGULAR, 26)
+    draw.text((MARGIN, SIZE - MARGIN - 6), _footer_text(draft), font=foot, fill=(178, 184, 186))
+
+
+def _layout_figure(image, draw, draft: PostDraft, photo) -> None:
+    """One number, set large, with the photograph behind the lower half.
+
+    A load rating or an assembly time is the whole argument on some posts, and
+    a numeral reads across a feed at a size a sentence never will.
+    """
+    accent = SEASON_ACCENT if draft.pillar.key == "seasonal" else ACCENT
+    figure, caption = _headline_figure(draft)
+    if figure is None:
+        _layout_product(image, draw, draft, photo)
+        return
+
+    draw.rectangle([0, 0, SIZE, SIZE], fill=GROUND)
+    if photo is not None:
+        band_top = 690
+        height = SIZE - band_top
+        covered = _cover(photo.convert("RGB"), SIZE)
+        # The middle of a shelving photograph holds the shelves; the top holds
+        # the ceiling, which is what a strip taken from the top would show.
+        middle = (SIZE - height) // 2
+        image.paste(covered.crop((0, middle, SIZE, middle + height)), (0, band_top))
+
+    top = _masthead(image, draw, dark=False)
+
+    numeral = _font(BOLD, 250)
+    while draw.textlength(figure, font=numeral) > SIZE - 2 * MARGIN and numeral.size > 110:
+        numeral = _font(BOLD, numeral.size - 10)
+    draw.text((MARGIN, top + 40), figure, font=numeral, fill=accent)
+
+    lines, font = _fit(draw, caption, SIZE - 2 * MARGIN, 2, 46, 30)
+    y = top + 40 + int(numeral.size * 1.02)
+    for line in lines:
+        draw.text((MARGIN, y), line, font=font, fill=INK)
+        y += int(font.size * 1.24)
+
+    _band(image, draw, _footer_text(draft), accent, LIGHT_TEXT)
+
+
+FIGURES = (
+    ("264 lb", "per tier, on the five-tier HOMEDANT House shelving"),
+    ("10 min", "to stand a unit up, by hand, with no tools"),
+    ("1979", "the year the factory opened, and it is still ours"),
+    ("1.18 in", "between tier heights, so the shelf fits the box"),
+    ("0 bolts", "HANDiLOCK locks the frame together by hand"),
+    ("6 sides", "laminated, anti-scratch and waterproof"),
+)
+
+
+def _headline_figure(draft: PostDraft):
+    """The number this post could lead on, or (None, None).
+
+    Only where the pillar's argument is a figure. A show carries a countdown
+    and an award carries a badge; neither wants a load rating instead.
+    """
+    if draft.slot.show or draft.slot.recognition or draft.slot.installation:
+        return None, None
+    return FIGURES[draft.slot.turn % len(FIGURES)]
+
+
+LAYOUT_CYCLE = ("product", "full", "figure")
+"""Three treatments, walked one per turn within a pillar.
+
+One template with the words swapped is what made a feed of these look like a
+single post repeated. A pillar now moves through a bulleted layout, a
+full-bleed photograph and a figure card before it comes back round.
+"""
+
+LAYOUT_OFFSET = {
+    "project": 0,
+    "retail": 1,
+    "manufacturing": 2,
+    "seasonal": 1,
+    "supply": 0,
+}
+"""Where each pillar enters the cycle.
+
+Every pillar starts at turn zero, so without an offset the first post of each
+one came out on the same template and the opening fortnight looked like one
+post five times.
+"""
+
+
+def _layout_key(draft: PostDraft) -> str:
+    turn = draft.slot.turn + LAYOUT_OFFSET.get(draft.pillar.key, 0)
+    return LAYOUT_CYCLE[turn % len(LAYOUT_CYCLE)]
+
+
 def _layout_plain(image, draw, draft: PostDraft, photo) -> None:
     """No subject to picture: the sentence carries it."""
     top = _masthead(image, draw, dark=False)
@@ -486,10 +604,11 @@ def render(draft: PostDraft, path: str | Path, photo=None, use_creatives: bool =
         _layout_show(image, draw, draft, photo)
     elif draft.slot.recognition:
         _layout_award(image, draw, draft, photo)
-    elif draft.product:
-        _layout_product(image, draw, draft, photo)
     else:
-        _layout_plain(image, draw, draft, photo)
+        {"full": _layout_full, "figure": _layout_figure}.get(
+            _layout_key(draft),
+            _layout_product if draft.product else _layout_plain,
+        )(image, draw, draft, photo)
 
     image.save(path, "PNG", optimize=True)
     return path

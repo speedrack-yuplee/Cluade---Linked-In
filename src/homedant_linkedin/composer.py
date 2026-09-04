@@ -146,11 +146,17 @@ def _compose_recognition(slot: Slot, catalog: Catalog) -> PostDraft:
         # next instead.
         show = _next_show(catalog, slot.scheduled_for)
         where = f" at {show.name}" if show else ""
+        # Twice at most, and the second time cannot be the first time again.
         return PostDraft(
             slot=slot,
-            hook=(
-                f"What does a {award.award or award.name} actually change? "
-                "It changes who picks up the phone."
+            hook=_variant(
+                slot,
+                (
+                    f"What does a {award.award or award.name} actually change? "
+                    "It changes who picks up the phone.",
+                    f"The {award.org.split('(')[0].strip()} judges are retailers. "
+                    "That is the only reason this award is worth mentioning.",
+                ),
             ),
             body=_paragraphs(
                 f"Since {profile.company} was recognised at the {award.date.year} {award.event}, "

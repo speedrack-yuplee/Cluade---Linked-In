@@ -259,3 +259,23 @@ def test_no_bullet_is_painted_over_by_the_footer_band():
         assert end <= image_module.BULLET_FLOOR + image_module.BULLET_GAP, (
             f"bullets starting at {top} reach {end}, past the band at {image_module.BULLET_FLOOR}"
         )
+
+
+def test_the_opening_fortnight_is_not_one_template_five_times(catalog):
+    """Every pillar starts at turn zero, so without an offset the first post of
+    each came out on the same layout and the feed opened with one post
+    repeated."""
+    from homedant_linkedin import image as image_module
+
+    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=5), catalog)
+    plain = [
+        image_module._layout_key(d)
+        for d in drafts
+        if not (d.slot.show or d.slot.recognition or d.slot.installation)
+    ]
+    assert len(plain) >= 5
+    assert len(set(plain)) == len(image_module.LAYOUT_CYCLE), (
+        "the first weeks of ordinary posts never reach every template"
+    )
+    for earlier, later in zip(plain, plain[1:]):
+        assert earlier != later, "two ordinary posts running on the same template"

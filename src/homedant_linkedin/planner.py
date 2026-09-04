@@ -159,6 +159,53 @@ def _show_dates(shows: list, days: list[date]) -> dict[date, object]:
     return claimed
 
 
+MAX_POSTS_PER_RECOGNITION = 2
+REST_WEEKS_PER_RECOGNITION = 8
+"""How often one award may be raised again, and how many times at all.
+
+A countdown to a show that has not happened yet is news every time it runs.
+An award won in April is not: three posts about the same Retailers' Choice
+win inside four months is the same sentence three times. Two mentions, two
+months apart, is as much as one award carries.
+"""
+
+
+def _subject_for(pillar: Pillar, pools, cursors, spent, day):
+    """The subject this pillar would carry today, or None if it has none left.
+
+    Products cycle for ever — there is always another shelf to talk about. An
+    award does not: it is one piece of news, and saying it a third time in four
+    months is the same sentence three times.
+    """
+    if not pillar.needs:
+        return {}
+
+    key = (
+        f"product:{pillar.segment}"
+        if pillar.needs == "product" and pillar.segment
+        else pillar.needs
+    )
+    pool = pools[key]
+    if not pool:
+        return None
+
+    if pillar.needs != "recognition":
+        chosen = pool[cursors[key] % len(pool)]
+        cursors[key] += 1
+        return {pillar.needs: chosen}
+
+    # Take the award that has been rested longest and still has a turn left.
+    for award in sorted(pool, key=lambda a: len(spent.get(id(a), []))):
+        used = spent.get(id(award), [])
+        if len(used) >= MAX_POSTS_PER_RECOGNITION:
+            continue
+        if used and (day - used[-1]).days < REST_WEEKS_PER_RECOGNITION * 7:
+            continue
+        spent.setdefault(id(award), []).append(day)
+        return {"recognition": award}
+    return None
+
+
 def build_plan(
     catalog: Catalog,
     start: date,
@@ -207,6 +254,7 @@ def build_plan(
     moments = _moment_dates(catalog.moments, [d for d in days if d not in claimed], usable)
 
     slots: list[Slot] = []
+    spent: dict[int, list] = {}
     turns: dict[str, int] = {}
 
     def turn(pillar: Pillar) -> int:
@@ -242,16 +290,23 @@ def build_plan(
             continue
 
         in_season = [p for p in rotation if not p.months or day.month in p.months]
-        pillar = in_season[index % len(in_season)]
-        index += 1
-        subject = {}
-        if pillar.needs:
-            key = f"product:{pillar.segment}" if pillar.needs == "product" and pillar.segment else pillar.needs
-            pool = pools[key]
-            subject[pillar.needs] = pool[cursors[key] % len(pool)]
-            cursors[key] += 1
-        if pillar.needs != "product":
+
+        # Walk the rotation until a pillar can actually supply a subject: a
+        # recognition that has had its two turns steps aside for whatever comes
+        # next rather than repeating itself.
+        chosen = None
+        for step in range(len(in_season)):
+            candidate = in_season[(index + step) % len(in_season)]
+            subject = _subject_for(candidate, pools, cursors, spent, day)
+            if subject is not None:
+                chosen, index = candidate, index + step + 1
+                break
+        if chosen is None:
+            index += 1
+            continue
+
+        if chosen.needs != "product":
             subject["feature"] = _feature(catalog, day)
-        slots.append(Slot(scheduled_for=day, pillar=pillar, turn=turn(pillar), **subject))
+        slots.append(Slot(scheduled_for=day, pillar=chosen, turn=turn(chosen), **subject))
 
     return slots

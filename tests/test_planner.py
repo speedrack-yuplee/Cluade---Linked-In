@@ -186,3 +186,33 @@ def test_a_post_lands_near_the_date_it_is_about(catalog):
         assert -7 <= gap <= 21, (
             f"{slot.moment.name} posts {gap} days from the date it is about"
         )
+
+
+def test_one_award_is_not_raised_again_and_again(catalog):
+    """A countdown to a show that has not happened is news every time it runs.
+    An award won in April is not: three posts about the same Retailers' Choice
+    win inside four months is one sentence said three times."""
+    from collections import Counter
+
+    from homedant_linkedin.planner import (
+        MAX_POSTS_PER_RECOGNITION,
+        REST_WEEKS_PER_RECOGNITION,
+    )
+
+    slots = [
+        s
+        for s in build_plan(catalog, start=PLAN_START, weeks=20)
+        if s.scheduled_for <= date(2026, 12, 31) and s.recognition
+    ]
+    counts = Counter(s.recognition.name for s in slots)
+    for name, n in counts.items():
+        assert n <= MAX_POSTS_PER_RECOGNITION, f"{name} came round {n} times"
+
+    when: dict[str, list] = {}
+    for slot in slots:
+        when.setdefault(slot.recognition.name, []).append(slot.scheduled_for)
+    for name, days in when.items():
+        for earlier, later in zip(days, days[1:]):
+            assert (later - earlier).days >= REST_WEEKS_PER_RECOGNITION * 7, (
+                f"{name} came back after {(later - earlier).days} days"
+            )
