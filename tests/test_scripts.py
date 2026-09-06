@@ -74,10 +74,28 @@ def test_the_collector_never_checks_out_another_branch():
         assert "git checkout" not in code, f"still switches branches: {line.strip()}"
 
     assert "git worktree add" in body
-    assert body.count("git worktree remove") >= 2, (
-        "a worktree left behind makes the next run refuse to add one"
-    )
+    # Once before, because a worktree left behind by a crashed run makes the
+    # next one refuse to add its own, and once in a finally, because a run that
+    # fails at the push must not leave one behind either.
+    assert body.count("Remove-Worktree $Tree") >= 2, "the worktree is not cleaned up twice"
+    assert "} finally {" in body
     assert "rev-parse --abbrev-ref HEAD" in body, "nothing checks the branch survived"
+
+
+def test_git_failures_in_the_tail_are_tested_rather_than_thrown_on():
+    """$ErrorActionPreference = Stop turns any non-zero git exit into a
+    terminating error. "is not a working tree", from removing a worktree that
+    was never there, took a run down after the posts were collected and before
+    they were pushed."""
+    body = next(
+        s for s in SCRIPTS if s.name == "collect_linkedin.ps1"
+    ).read_text(encoding="utf-8")
+
+    tail = body[body.index("function Remove-Worktree") :]
+    assert '$ErrorActionPreference = "Continue"' in body[: body.index("function Remove-Worktree")][-1200:], (
+        "the git tail still runs under Stop"
+    )
+    assert "$LASTEXITCODE" in tail, "nothing checks whether the push worked"
 
 
 def test_a_failing_opencli_call_says_what_it_said():
@@ -92,9 +110,12 @@ def test_a_failing_opencli_call_says_what_it_said():
     assert '$ErrorActionPreference = "Continue"' in wrapper
     assert "Write-Host" in wrapper, "a failure that prints nothing cannot be diagnosed"
 
-    stale = wrapper.index("stale page identity")
-    window = wrapper.index("--window|unknown option")
-    assert stale < window, (
-        "a stale page must be retried before falling back to the foreground, "
-        "or an unrelated failure puts the window back on the screen"
+    # The wrapper used to fall back from --window background to foreground
+    # whenever the output mentioned --window. A NativeCommandError quotes the
+    # failing source line, and that line contains --window, so every unrelated
+    # failure "proved" the flag was rejected and put the browser back on the
+    # screen. hide_browser.ps1 is the mechanism; the flag never was.
+    assert "$mode" not in wrapper, "the --window fallback is back"
+    assert "EMPTY_RESULT" in wrapper, (
+        "a home feed still loading is worth one more ask, not a skipped timeline"
     )

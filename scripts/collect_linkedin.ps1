@@ -31,7 +31,7 @@ param(
     [string]$Branch = "claude/linkedin-metrics",
     [int]$Limit = 40,
     [ValidateSet("background", "foreground")]
-    [string]$Window = "background",
+    [string]$Window = "foreground",
     [switch]$ShowBrowser
 )
 
@@ -95,25 +95,26 @@ function Invoke-OpenCli {
     # diagnose. Inside this function a non-zero exit is data, not an event.
     $ErrorActionPreference = "Continue"
 
-    $mode = $Window
+    # This used to fall back from --window background to foreground when the
+    # output mentioned --window. It always did: a PowerShell NativeCommandError
+    # quotes the failing source line, and that line contains --window. So every
+    # unrelated failure "proved" the flag was rejected. It is moot anyway —
+    # opencli on this machine does not take background at all, which is the
+    # whole reason hide_browser.ps1 exists. The window is raised and then moved
+    # off the desktop; that is the mechanism, not this flag.
     for ($try = 1; $try -le $Attempts; $try++) {
-        $output = & opencli.cmd @Arguments --window $mode --keep-tab false 2>&1 |
+        $output = & opencli.cmd @Arguments --window $Window --keep-tab false 2>&1 |
             Out-String -Width 100000
 
         if ($output.TrimStart().StartsWith("[")) { return $output }
 
-        # Order matters. A stale page is the common failure and is fixed by
-        # asking again; falling back to the foreground for it would put the
-        # window back on the screen for a problem that had nothing to do with
-        # the window.
-        if ($try -lt $Attempts -and $output -match "stale page identity|Page not found") {
-            Start-Sleep -Seconds 3
-            continue
-        }
-        if ($mode -ne "foreground" -and
-            $output -match "--window|unknown option|unrecognized|invalid value") {
-            Write-Warning "opencli 가 --window $mode 를 받지 않습니다. 화면에 띄워서 다시 시도합니다."
-            $mode = "foreground"
+        # Retried, because both of these come back clean on a second ask: a
+        # tab opencli closed can leave the bridge holding an identity the
+        # browser no longer has, and the home feed is sometimes still loading
+        # the first time the timeline is read.
+        if ($try -lt $Attempts -and
+            $output -match "stale page identity|Page not found|EMPTY_RESULT") {
+            Start-Sleep -Seconds 4
             continue
         }
         break
@@ -274,18 +275,33 @@ if (-not $produced) {
     exit 1
 }
 
-# A worktree, so the branch Leo is on is never checked out from under him and
-# never left switched afterwards. Removed again whatever happens, including
-# when the push fails: a stale worktree makes the next run refuse to add one.
-$Tree = Join-Path $env:TEMP "homedant-metrics"
-git worktree remove --force $Tree 2>$null | Out-Null
-Remove-Item -LiteralPath $Tree -Recurse -Force -ErrorAction SilentlyContinue
+# From here on a non-zero exit from git is a value to test, not an event to
+# throw on. Under Stop it was one: "is not a working tree", from removing a
+# worktree that was never there, took the run down after the posts had been
+# collected and before they were pushed.
+$ErrorActionPreference = "Continue"
 
-if (git ls-remote --exit-code --heads origin $Branch 2>$null) {
+function Remove-Worktree {
+    param([string]$Path)
+    if ((git worktree list) -match [regex]::Escape($Path)) {
+        git worktree remove --force $Path 2>&1 | Out-Null
+    }
+    git worktree prune 2>&1 | Out-Null
+    Remove-Item -LiteralPath $Path -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+# A worktree, so the branch Leo is on is never checked out from under him and
+# never left switched afterwards.
+$Tree = Join-Path $env:TEMP "homedant-metrics"
+Remove-Worktree $Tree
+
+git ls-remote --exit-code --heads origin $Branch 2>&1 | Out-Null
+if ($LASTEXITCODE -eq 0) {
     git worktree add --quiet -B $Branch $Tree "origin/$Branch"
 } else {
     git worktree add --quiet -b $Branch $Tree
 }
+if ($LASTEXITCODE -ne 0) { throw "worktree 를 만들지 못했습니다: $Tree" }
 
 try {
     $into = Join-Path $Tree "content\reference"
@@ -295,16 +311,20 @@ try {
     }
 
     git -C $Tree add content/reference
-    if (git -C $Tree diff --cached --quiet) {
+    git -C $Tree diff --cached --quiet
+    if ($LASTEXITCODE -eq 0) {
         Write-Host "no change since the last run"
     } else {
         git -C $Tree commit -m "Refresh LinkedIn metrics ($count own posts, $(Get-Date -Format yyyy-MM-dd))" --quiet
         git -C $Tree push -u origin $Branch --quiet
-        Write-Host "pushed to $Branch"
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "pushed to $Branch" -ForegroundColor Green
+        } else {
+            Write-Warning "push 에 실패했습니다. 수집한 파일은 $Staging 에 남아 있습니다."
+        }
     }
 } finally {
-    git worktree remove --force $Tree 2>$null | Out-Null
-    Remove-Item -LiteralPath $Tree -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Worktree $Tree
 }
 
 $now = (git rev-parse --abbrev-ref HEAD).Trim()
