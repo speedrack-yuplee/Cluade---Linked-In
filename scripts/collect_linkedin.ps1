@@ -32,7 +32,8 @@ param(
     [int]$Limit = 40,
     [ValidateSet("background", "foreground")]
     [string]$Window = "foreground",
-    [switch]$ShowBrowser
+    [switch]$ShowBrowser,
+    [switch]$Full
 )
 
 $ErrorActionPreference = "Stop"
@@ -221,10 +222,24 @@ if (-not $json.TrimStart().StartsWith("[")) {
 $Staging = Join-Path $env:TEMP "homedant-collect"
 New-Item -ItemType Directory -Force -Path $Staging | Out-Null
 $target = Join-Path $Staging "posts.json"
-[IO.File]::WriteAllText($target, (ConvertTo-ReferenceSchema $json), [Text.UTF8Encoding]::new($false))
+$rows = ConvertTo-ReferenceSchema $json
+[IO.File]::WriteAllText($target, $rows, [Text.UTF8Encoding]::new($false))
 
 $count = ([regex]::Matches($json, '"rank"')).Count
 Write-Host "collected $count posts"
+
+# posts.json is a snapshot; overwriting it each run is exactly right for "what
+# does the feed look like now" and exactly wrong for "is this post gaining."
+# This run's snapshot is written on its own here and appended to the
+# committed log further down, once the worktree that log lives in exists —
+# appending to a plain file in $Staging would not survive back to a fresh
+# checkout on a machine or run that does not already have it.
+$snapshotTarget = Join-Path $Staging "impressions_snapshot.jsonl"
+[ordered]@{
+    checked_at = (Get-Date).ToUniversalTime().ToString("o")
+    posts      = @($rows | ConvertFrom-Json)
+} | ConvertTo-Json -Depth 6 -Compress |
+    Out-File -LiteralPath $snapshotTarget -Encoding utf8 -NoNewline
 
 # The feed: what the people and companies this account follows are posting.
 # Impressions are visible to a post's author only, so watched posts carry
@@ -238,10 +253,14 @@ if ($feed.TrimStart().StartsWith("[")) {
     Write-Warning "timeline returned no JSON; skipping"
 }
 
-# Named profiles from the watchlist. An entry with no profile_url is named
-# and skipped: a guessed handle would collect the wrong person silently.
+# Named profiles from the watchlist. Only on -Full: visiting the same named
+# profile every hour looks nothing like the account's ordinary use, where
+# following a company and reading a feed does. Competitor *company* posts do
+# not wait for this — they arrive in the timeline above every run, the moment
+# the company is followed. This loop exists for the one or two people who are
+# worth reading but have no company page to follow instead.
 $watchPath = Join-Path $RepoPath "src\homedant_linkedin\data\watchlist.json"
-if (Test-Path $watchPath) {
+if ($Full -and (Test-Path $watchPath)) {
     $watch = Get-Content $watchPath -Raw | ConvertFrom-Json
     $collected = @()
     $missing = @()
@@ -308,6 +327,14 @@ try {
     New-Item -ItemType Directory -Force -Path $into | Out-Null
     foreach ($file in $produced) {
         Copy-Item -LiteralPath (Join-Path $Staging $file) -Destination $into -Force
+    }
+
+    # Appended to whatever the worktree already has from earlier pushes, never
+    # overwritten — the whole point is a trend across runs, not this run's view.
+    if (Test-Path -LiteralPath $snapshotTarget) {
+        $logFile = Join-Path $into "impressions_log.jsonl"
+        $line = [IO.File]::ReadAllText($snapshotTarget, [Text.UTF8Encoding]::new($false))
+        Add-Content -LiteralPath $logFile -Value $line -Encoding utf8
     }
 
     git -C $Tree add content/reference

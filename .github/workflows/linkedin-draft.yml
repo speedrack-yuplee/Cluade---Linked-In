@@ -12,11 +12,16 @@ on:
         description: "Post for this date instead of today (YYYY-MM-DD)"
         required: false
 
+permissions:
+  contents: write
+
 jobs:
   draft:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
 
       - uses: actions/setup-python@v5
         with:
@@ -43,3 +48,20 @@ jobs:
         with:
           name: linkedin-draft-${{ github.run_number }}
           path: out/
+
+      - name: Record what this draft was
+        # report_performance.py joins a real LinkedIn post back to this by
+        # date and pillar; without this commit that join has nothing on the
+        # composer's side to line up with, and a performance check cannot say
+        # which layout or hook to blame or repeat.
+        if: hashFiles('out/post.txt') != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content/reference/published.json
+          if git diff --cached --quiet; then
+            echo "nothing to record"
+          else
+            git commit -m "Record the $(date -u +%F) draft"
+            git push
+          fi

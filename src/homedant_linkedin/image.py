@@ -685,6 +685,30 @@ def _layout_plain(image, draw, draft: PostDraft, photo) -> None:
     _band(image, draw, _footer_text(draft), ACCENT, LIGHT_TEXT)
 
 
+def layout_for(draft: PostDraft) -> str:
+    """The template name ``render`` will choose for ``draft``.
+
+    Exposed so a caller that logs what actually went out — cli.py's ``next``,
+    for a performance report to join impressions back against later — can
+    record the real answer rather than reimplementing render's dispatch order
+    and drifting from it the first time that order changes.
+    """
+    if draft.slot.installation:
+        return "reference"
+    if draft.slot.show:
+        return "show"
+    if draft.slot.recognition:
+        return "award"
+    key = _layout_key(draft)
+    if key in ("full", "figure", "detail"):
+        return key
+    # "product" from the cycle names the bulleted layout, and render only
+    # draws it when there is a product to bullet; otherwise it falls back to
+    # the words-only layout. Mirroring that fallback here, rather than always
+    # answering "product", is the only way this stays true to what render did.
+    return "product" if draft.product else "plain"
+
+
 def render(draft: PostDraft, path: str | Path, photo=None, use_creatives: bool = False) -> Path:
     """Write the image for ``draft`` and return the path it was written to.
 

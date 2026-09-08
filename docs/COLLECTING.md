@@ -21,6 +21,22 @@ powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\Documents\Cluade---Li
 
 끝나면 `claude/linkedin-metrics` 브랜치에 푸시됩니다.
 
+### 두 가지 주기 — 자기 성과는 자주, 경쟁사 프로필은 하루 한 번
+
+`-Full` 없이 돌리면 **내 게시글 성과 + 팔로우한 회사 타임라인**만 가져옵니다.
+둘 다 "내 계정이 평소 하는 일"이라 자주 해도 괜찮습니다. `watchlist.json`
+에 이름으로 등록된 개인 프로필은 `-Full` 을 줘야 방문합니다 — 같은 사람
+프로필을 시간마다 찾아가는 건 계정이 평소 하는 행동과 다르게 보입니다.
+
+| | 명령 | 주기 |
+|---|---|---|
+| 내 성과 + 경쟁사 타임라인 | `collect_linkedin.ps1` | **1시간마다** |
+| + 이름으로 등록된 개인 | `collect_linkedin.ps1 -Full` | 하루 1번 |
+
+경쟁사 **회사**(Edsal, Seville Classics, NewAge Products 등) 글은 팔로우만
+해두면 매 시간 수집되는 타임라인에 이미 들어옵니다. 회사 팔로우가 곧
+경쟁사 수집입니다 — 시간마다 새로 하는 게 없습니다.
+
 ### 화면에 안 뜨게 하기
 
 **클라우드에서는 못 돌립니다.** opencli 는 이 PC의 로그인된 크롬을 몰아야
@@ -48,23 +64,32 @@ powershell -ExecutionPolicy Bypass -File .\scripts\collect_linkedin.ps1 -ShowBro
 
 작업 스케줄러에 등록합니다. PowerShell을 **관리자 권한으로** 열고:
 
+**매시간 — 내 성과 + 경쟁사 타임라인:**
+
 ```powershell
 $script = "$env:USERPROFILE\Documents\Cluade---Linked-In\scripts\collect_linkedin.ps1"
 $action = New-ScheduledTaskAction -Execute "powershell.exe" `
     -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$script`""
-$trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday -At 7am
-Register-ScheduledTask -TaskName "LinkedIn metrics" -Action $action -Trigger $trigger
+$trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) `
+    -RepetitionInterval (New-TimeSpan -Hours 1) -RepetitionDuration ([TimeSpan]::MaxValue)
+Register-ScheduledTask -TaskName "LinkedIn metrics" -Action $action -Trigger $trigger `
+    -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopOnIdleEnd)
 ```
 
-월요일 오전 7시에 돕니다. 출근 전이라 화면을 뺏길 일이 없고, 게시 요일
-(월·수·금)보다 앞이라 그 주 콘텐츠를 정하기 전에 지난주 성과가 들어옵니다.
-
-PC가 꺼져 있어 걸렀다면 켠 다음 따라잡게 하려면:
+**하루 한 번 — 이름 등록된 개인까지 (`-Full`):**
 
 ```powershell
-Set-ScheduledTask -TaskName "LinkedIn metrics" `
+$script = "$env:USERPROFILE\Documents\Cluade---Linked-In\scripts\collect_linkedin.ps1"
+$action = New-ScheduledTaskAction -Execute "powershell.exe" `
+    -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$script`" -Full"
+$trigger = New-ScheduledTaskTrigger -Daily -At 7am
+Register-ScheduledTask -TaskName "LinkedIn metrics (full)" -Action $action -Trigger $trigger `
     -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable)
 ```
+
+PC가 꺼져 있어 걸렀다면 켠 다음 따라잡습니다 (`-StartWhenAvailable` 이미 포함).
+매시간 작업은 컴퓨터가 켜져 있는 동안만 돌면 충분합니다 — 밤새 꺼두셔도
+됩니다.
 
 **크롬이 로그인된 상태여야 합니다.** 로그아웃되면 스크립트가 실패합니다.
 확인:

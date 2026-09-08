@@ -251,29 +251,54 @@ def _cmd_next(args, catalog: Catalog, out) -> int:
     text_path = directory / "post.txt"
     text_path.write_text(draft.render() + "\n", encoding="utf-8")
 
-    from .image import photo_for, render  # late import: only this needs Pillow
+    from .image import layout_for, photo_for, render  # late import: only this needs Pillow
 
     photo = photo_for(draft)
     if photo is None and draft.slot.pictured:
         print("note: no photograph available, using the type-only layout", file=out)
+    layout = layout_for(draft)
     image_path = render(draft, directory / "post.png", photo=photo)
-    (directory / "post.json").write_text(
-        json.dumps(
-            {
-                "date": draft.scheduled_for.isoformat(),
-                "pillar": draft.pillar.key,
-                "pillar_name": draft.pillar.name,
-                "subject": draft.slot.subject,
-                "chars": draft.char_count,
-            },
-            indent=2,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
+    record = {
+        "date": draft.scheduled_for.isoformat(),
+        "pillar": draft.pillar.key,
+        "pillar_name": draft.pillar.name,
+        "subject": draft.slot.subject,
+        "layout": layout,
+        "hook": draft.hook,
+        "chars": draft.char_count,
+    }
+    (directory / "post.json").write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    _log_published(record)
     print(f"{day:%Y-%m-%d} {draft.pillar.name}: {draft.slot.subject}", file=out)
     print(f"wrote {text_path} and {image_path}", file=out)
     return 0
+
+
+PUBLISHED_LOG = Path("content/reference/published.json")
+
+
+def _log_published(record: dict) -> None:
+    """Append what this draft actually was to the running history.
+
+    A generated image and a live LinkedIn post are joined later only by date
+    and pillar — report_performance.py has no other key to match posts.json
+    against. Without this record that join has nothing on the composer's side
+    to line up with: which layout ran, which hook opened it. Re-running
+    ``next`` for a date already logged replaces that entry rather than
+    duplicating it, so a corrected re-draft does not leave two answers for the
+    same day.
+    """
+    PUBLISHED_LOG.parent.mkdir(parents=True, exist_ok=True)
+    history = []
+    if PUBLISHED_LOG.exists():
+        try:
+            history = json.loads(PUBLISHED_LOG.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            history = []
+    history = [h for h in history if h.get("date") != record["date"]]
+    history.append(record)
+    history.sort(key=lambda h: h["date"])
+    PUBLISHED_LOG.write_text(json.dumps(history, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 COMMANDS = {
