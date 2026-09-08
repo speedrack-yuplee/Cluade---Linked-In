@@ -79,6 +79,16 @@ post now gets a photograph from the working copy of the library instead.
 """
 
 
+POOL_EXCLUDED_SEGMENTS = ("3B Style",)
+"""Folders that turned out to hold staged prop shots rather than product
+photography: a football filling the frame with a shelf edge behind it, a
+kitchen scene with no HOMEDANT unit in it at all. Reviewing the image a post
+actually rendered with — not just counting how many files synced — is what
+found this; a photo count says nothing about what is in the photos. Excluded
+at the pool rather than deleted, since sync_photos.ps1 will bring the folder
+back on every run and a fix that only edits the working copy does not last."""
+
+
 def photo_pool() -> list[Path]:
     """Every photograph a product post may be built on, in a stable order."""
     out: list[Path] = []
@@ -89,7 +99,9 @@ def photo_pool() -> list[Path]:
         out += [
             p
             for p in sorted(directory.rglob("*"))
-            if p.suffix.lower() in PHOTO_SUFFIXES and not p.name.startswith(".")
+            if p.suffix.lower() in PHOTO_SUFFIXES
+            and not p.name.startswith(".")
+            and not any(seg in p.parts for seg in POOL_EXCLUDED_SEGMENTS)
         ]
     return out
 
@@ -411,6 +423,26 @@ def _scrim(image, top: int, opacity: int = 225) -> None:
     )
 
 
+def _scrim_top(image, bottom: int, opacity: int = 190) -> None:
+    """Darken the frame from the top down to ``bottom``, fading out as it goes.
+
+    _scrim guarantees the footer reads over any photograph; nothing did the
+    same for the logo and wordmark in the top-left corner, so a light wall in
+    an installation photo, or a cutout's near-white ground, left the white
+    wordmark simply gone. Found by looking at a rendered post, not by reading
+    the code — nothing here would have raised it as a risk on its own.
+    """
+    overlay = Image.new("RGBA", (1, SIZE), (0, 0, 0, 0))
+    for y in range(0, bottom):
+        alpha = min(opacity, int(opacity * (bottom - y) / bottom))
+        overlay.putpixel((0, y), (14, 20, 24, alpha))
+    image.paste(
+        overlay.resize((SIZE, SIZE), Image.NEAREST),
+        (0, 0),
+        overlay.resize((SIZE, SIZE), Image.NEAREST),
+    )
+
+
 def _layout_reference(image, draw, draft: PostDraft, photo) -> None:
     """The photograph is the image; the words sit in the dark at the bottom.
 
@@ -426,6 +458,7 @@ def _layout_reference(image, draw, draft: PostDraft, photo) -> None:
 
     image.paste(_cover(room, SIZE), (0, 0))
     _scrim(image, 520)
+    _scrim_top(image, 210)
 
     draw.text((MARGIN, MARGIN), "HOMEDANT", font=_font(BOLD, 44), fill=LIGHT_TEXT)
     draw.rectangle([MARGIN, MARGIN + 62, MARGIN + 110, MARGIN + 68], fill=ACCENT)
@@ -469,6 +502,7 @@ def _layout_full(image, draw, draft: PostDraft, photo) -> None:
 
     image.paste(_cover(photo.convert("RGB"), SIZE), (0, 0))
     _scrim(image, 560)
+    _scrim_top(image, 210)
 
     logo = load_asset(ASSET_DIR / "logo-light.png")
     if logo is not None:

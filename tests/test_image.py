@@ -327,3 +327,33 @@ def test_a_detail_post_renders_without_the_rotation_photograph(catalog, tmp_path
 
     written = image_module.render(details[0], tmp_path / "detail.png", photo=None)
     assert written.exists() and written.stat().st_size > 0
+
+
+def test_full_bleed_layouts_darken_the_top_corner_for_the_logo(catalog):
+    """A near-white photograph — a light wall, a cutout's pale ground — left
+    the light wordmark simply unreadable in the top-left corner, because
+    _scrim only protects the footer band. Found by looking at a rendered
+    post, not by reading the code."""
+    from PIL import Image as PILImage, ImageDraw
+
+    from homedant_linkedin import image as image_module
+
+    white = PILImage.new("RGB", (1600, 1067), (250, 250, 248))
+
+    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=17), catalog)
+    draft = next(
+        d for d in drafts
+        if not (d.slot.show or d.slot.recognition or d.slot.installation)
+    )
+
+    canvas = PILImage.new("RGB", (image_module.SIZE, image_module.SIZE), image_module.GROUND)
+    draw = ImageDraw.Draw(canvas)
+    image_module._layout_full(canvas, draw, draft, white)
+
+    # Sample where the wordmark is drawn: it must sit on a darkened ground,
+    # not on the raw, near-white photograph.
+    from PIL import ImageStat
+
+    corner = canvas.crop((0, 0, 400, 210)).convert("L")
+    average = ImageStat.Stat(corner).mean[0]
+    assert average < 200, f"logo corner averages {average:.0f} — too close to white to read a light logo on"
