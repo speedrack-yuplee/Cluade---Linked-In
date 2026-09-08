@@ -233,3 +233,26 @@ def test_two_posts_from_one_pillar_never_open_the_same_way(catalog):
     for key, hooks in by_pillar.items():
         for earlier, later in zip(hooks, hooks[1:]):
             assert earlier != later, f"{key} opened the same way twice running"
+
+
+def test_a_figure_card_post_opens_with_the_same_figure_the_image_shows(catalog):
+    """A stat-led opening line outperforms a generic one, and the figure-card
+    layout already puts a number large on the image — the post text has to
+    lead with that same number, or the words and the picture are arguing two
+    different things."""
+    from homedant_linkedin import image as image_module
+
+    drafts = compose_all(build_plan(catalog, start=date(2026, 9, 7), weeks=17), catalog)
+    figure_posts = [d for d in drafts if image_module.layout_for(d) == "figure"]
+    assert figure_posts, "the plan never reaches the figure-card layout"
+
+    for draft in figure_posts:
+        if draft.slot.moment is not None:
+            continue  # a US-moment angle is more specific and wins on purpose
+        figure, caption = image_module.figure_for(draft)
+        assert figure is not None
+        assert draft.hook.startswith(figure), (
+            f"{draft.pillar.key} figure post opens {draft.hook!r}, "
+            f"not with {figure!r} as the image does"
+        )
+        assert caption in draft.hook

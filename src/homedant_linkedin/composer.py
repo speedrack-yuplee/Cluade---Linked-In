@@ -13,7 +13,7 @@ different headline every week.
 from __future__ import annotations
 
 from .catalog import Catalog
-from .models import PostDraft, Slot
+from .models import MAX_HOOK_CHARS, PostDraft, Slot
 
 CONNECT_CTA = (
     "We look forward to connecting with {audiences} who are looking for practical and "
@@ -551,6 +551,37 @@ def _timed_to_moment(draft: PostDraft) -> PostDraft:
     )
 
 
+def _lead_with_the_figure(draft: PostDraft) -> PostDraft:
+    """Open with the number the image is about to lead with, where one applies.
+
+    A stat-led opening line measures about 2.5x the engagement of a generic
+    one, and the figure-card layout already exists to put a load rating or an
+    assembly time large on the image — this is the one place composer.py and
+    image.py were arguing two different things on the same post: the picture
+    led with "264 lb" and the words above it opened with something else
+    entirely. Deferred import: image.py imports this module at load time, so
+    importing it back at module level here would be circular; by the time this
+    function is actually called both modules have finished loading.
+    """
+    from . import image as _image  # noqa: PLC0415 - see docstring
+
+    if _image.layout_for(draft) != "figure":
+        return draft
+    figure, caption = _image.figure_for(draft)
+    if not figure:
+        return draft
+    # An em dash, not a bare space: "1979 the year the factory opened" reads as
+    # a typo, where "1979 — the year the factory opened" reads as the same
+    # pairing the image draws, numeral above caption.
+    lead = f"{figure} \u2014 {caption}."
+    if len(lead) > MAX_HOOK_CHARS:
+        return draft
+
+    from dataclasses import replace
+
+    return replace(draft, hook=lead)
+
+
 def compose(slot: Slot, catalog: Catalog) -> PostDraft:
     """Render one slot. Raises for a pillar with no composer or no subject."""
     try:
@@ -560,7 +591,9 @@ def compose(slot: Slot, catalog: Catalog) -> PostDraft:
     needs = slot.pillar.needs
     if needs and getattr(slot, _SUBJECT_ATTR[needs]) is None:
         raise ValueError(f"pillar {slot.pillar.key!r} requires a {needs} but the slot has none")
-    return _timed_to_moment(composer(slot, catalog))
+    draft = _lead_with_the_figure(composer(slot, catalog))
+    # A moment's own angle is more specific than any figure and always wins.
+    return _timed_to_moment(draft)
 
 
 def compose_all(slots, catalog: Catalog) -> list[PostDraft]:

@@ -623,6 +623,17 @@ FIGURES = (
 )
 
 
+def figure_for(draft: PostDraft) -> tuple[str | None, str | None]:
+    """Public wrapper on _headline_figure, for a caller outside this module.
+
+    composer.py leads a post's opening line with the same figure this module
+    is about to put on the image, where one applies — a stat-led opening
+    outperforms a generic one, and a post that leads with a number the image
+    does not also show is a post arguing two different things at once.
+    """
+    return _headline_figure(draft)
+
+
 def _headline_figure(draft: PostDraft):
     """The number this post could lead on, or (None, None).
 
