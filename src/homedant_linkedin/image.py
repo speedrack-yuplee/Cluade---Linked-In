@@ -522,10 +522,16 @@ def _layout_full(image, draw, draft: PostDraft, photo) -> None:
 
 
 def _layout_figure(image, draw, draft: PostDraft, photo) -> None:
-    """One number, set large, with the photograph behind the lower half.
+    """One number, set large, over a framed photograph in a white panel.
 
     A load rating or an assembly time is the whole argument on some posts, and
-    a numeral reads across a feed at a size a sentence never will.
+    a numeral reads across a feed at a size a sentence never will. The photo
+    behind it is whatever the day's pool lands on, not necessarily the piece
+    the figure names, so an edge-to-edge crop of it reads as a stray fragment
+    (a slice of bracket or rail floating in white space). Framing it in a
+    padded panel instead — the same treatment _layout_detail gives a part
+    photo — makes it read as a deliberate supporting image regardless of
+    exactly what it shows.
     """
     accent = SEASON_ACCENT if draft.pillar.key == "seasonal" else ACCENT
     figure, caption = _headline_figure(draft)
@@ -534,15 +540,6 @@ def _layout_figure(image, draw, draft: PostDraft, photo) -> None:
         return
 
     draw.rectangle([0, 0, SIZE, SIZE], fill=GROUND)
-    if photo is not None:
-        band_top = 690
-        height = SIZE - band_top
-        covered = _cover(photo.convert("RGB"), SIZE)
-        # The middle of a shelving photograph holds the shelves; the top holds
-        # the ceiling, which is what a strip taken from the top would show.
-        middle = (SIZE - height) // 2
-        image.paste(covered.crop((0, middle, SIZE, middle + height)), (0, band_top))
-
     top = _masthead(image, draw, dark=False)
 
     numeral = _font(BOLD, 250)
@@ -555,6 +552,16 @@ def _layout_figure(image, draw, draft: PostDraft, photo) -> None:
     for line in lines:
         draw.text((MARGIN, y), line, font=font, fill=INK)
         y += int(font.size * 1.24)
+
+    if photo is not None:
+        panel_top = max(y + 34, 700)
+        panel_bottom = SIZE - BAND - 30
+        draw.rectangle([MARGIN, panel_top, SIZE - MARGIN, panel_bottom], fill=PANEL)
+        _paste(
+            image,
+            photo.convert("RGB"),
+            (MARGIN + 24, panel_top + 24, SIZE - MARGIN - 24, panel_bottom - 24),
+        )
 
     _band(image, draw, _footer_text(draft), accent, LIGHT_TEXT)
 
