@@ -7,5 +7,14 @@
     "layout": "award",
     "hook": "What does a Retailers' Choice Awards Winner actually change? It changes who picks up the phone.",
     "chars": 890
+  },
+  {
+    "date": "2026-09-09",
+    "pillar": "reference",
+    "pillar_name": "Installed reference",
+    "subject": "Installed: a university in Korea",
+    "layout": "reference",
+    "hook": "This is a store room off a teaching building at a university in Korea. The shelving went up by hand, in an afternoon.",
+    "chars": 896
   }
 ]
