@@ -522,22 +522,25 @@ def _layout_full(image, draw, draft: PostDraft, photo) -> None:
 
 
 def _layout_figure(image, draw, draft: PostDraft, photo) -> None:
-    """One number, set large, over a framed photograph in a white panel.
+    """One number, set large, over the part it describes, in a white panel.
 
     A load rating or an assembly time is the whole argument on some posts, and
     a numeral reads across a feed at a size a sentence never will. The photo
-    behind it is whatever the day's pool lands on, not necessarily the piece
-    the figure names, so an edge-to-edge crop of it reads as a stray fragment
-    (a slice of bracket or rail floating in white space). Framing it in a
-    padded panel instead — the same treatment _layout_detail gives a part
-    photo — makes it read as a deliberate supporting image regardless of
-    exactly what it shows.
+    the rotation would otherwise show is not necessarily the piece the figure
+    names — a "264 lb per tier" claim illustrated by whatever the day's pool
+    lands on once showed a fence post, which argued nothing. FIGURES names the
+    actual part for each figure (the same way details.json does for
+    _layout_detail); the pooled photo is only a fallback for "1979", the one
+    figure that has no part to show.
     """
     accent = SEASON_ACCENT if draft.pillar.key == "seasonal" else ACCENT
-    figure, caption = _headline_figure(draft)
-    if figure is None:
+    entry = _figure_entry(draft)
+    if entry is None:
         _layout_product(image, draw, draft, photo)
         return
+    figure, caption = entry["figure"], entry["caption"]
+
+    figure_photo = load_asset(PARTS_DIR / entry["photo"]) if entry["photo"] else photo
 
     draw.rectangle([0, 0, SIZE, SIZE], fill=GROUND)
     top = _masthead(image, draw, dark=False)
@@ -553,13 +556,13 @@ def _layout_figure(image, draw, draft: PostDraft, photo) -> None:
         draw.text((MARGIN, y), line, font=font, fill=INK)
         y += int(font.size * 1.24)
 
-    if photo is not None:
+    if figure_photo is not None:
         panel_top = max(y + 34, 700)
         panel_bottom = SIZE - BAND - 30
         draw.rectangle([MARGIN, panel_top, SIZE - MARGIN, panel_bottom], fill=PANEL)
         _paste(
             image,
-            photo.convert("RGB"),
+            figure_photo.convert("RGB"),
             (MARGIN + 24, panel_top + 24, SIZE - MARGIN - 24, panel_bottom - 24),
         )
 
@@ -654,13 +657,43 @@ def _layout_detail(image, draw, draft: PostDraft, photo) -> None:
           accent, LIGHT_TEXT)
 
 
+# Each figure names a photo in assets/library/parts, the same way details.json
+# does for _layout_detail — a figure asserts something specific about a part
+# (a load rating, a hole pitch, a fastener count), and whatever photo the
+# day's pool lands on is not that part. "1979" is the one figure with nothing
+# to photograph (a founding year, not a component), so it carries no photo
+# and the layout falls back to the pooled one.
 FIGURES = (
-    ("264 lb", "per tier, on the five-tier HOMEDANT House shelving"),
-    ("10 min", "to stand a unit up, by hand, with no tools"),
-    ("1979", "the year the factory opened, and it is still ours"),
-    ("1.18 in", "between tier heights, so the shelf fits the box"),
-    ("0 bolts", "HANDiLOCK locks the frame together by hand"),
-    ("6 sides", "laminated, anti-scratch and waterproof"),
+    {
+        "figure": "264 lb",
+        "caption": "per tier, on the five-tier HOMEDANT House shelving",
+        "photo": "스피드랙) 받침 디테일 B.jpg",
+    },
+    {
+        "figure": "10 min",
+        "caption": "to stand a unit up, by hand, with no tools",
+        "photo": "공용) 우레탄 망치 디테일.jpg",
+    },
+    {
+        "figure": "1979",
+        "caption": "the year the factory opened, and it is still ours",
+        "photo": None,
+    },
+    {
+        "figure": "1.18 in",
+        "caption": "between tier heights, so the shelf fits the box",
+        "photo": "홈던트 하우스) 기둥 디테일 B.jpg",
+    },
+    {
+        "figure": "0 bolts",
+        "caption": "HANDiLOCK locks the frame together by hand",
+        "photo": "홈던트 하우스) 기둥 고정클립 B 연출.jpg",
+    },
+    {
+        "figure": "6 sides",
+        "caption": "laminated, anti-scratch and waterproof",
+        "photo": "공용) 라이트우드,화이트 보드 디테일.jpg",
+    },
 )
 
 
@@ -675,15 +708,23 @@ def figure_for(draft: PostDraft) -> tuple[str | None, str | None]:
     return _headline_figure(draft)
 
 
-def _headline_figure(draft: PostDraft):
-    """The number this post could lead on, or (None, None).
+def _figure_entry(draft: PostDraft) -> dict | None:
+    """The FIGURES row this post could lead on, or None.
 
     Only where the pillar's argument is a figure. A show carries a countdown
     and an award carries a badge; neither wants a load rating instead.
     """
     if draft.slot.show or draft.slot.recognition or draft.slot.installation:
-        return None, None
+        return None
     return FIGURES[draft.slot.turn % len(FIGURES)]
+
+
+def _headline_figure(draft: PostDraft):
+    """The (figure, caption) this post could lead on, or (None, None)."""
+    entry = _figure_entry(draft)
+    if entry is None:
+        return None, None
+    return entry["figure"], entry["caption"]
 
 
 LAYOUT_CYCLE = ("product", "full", "figure", "detail")
