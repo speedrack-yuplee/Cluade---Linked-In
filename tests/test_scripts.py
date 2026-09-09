@@ -119,3 +119,20 @@ def test_a_failing_opencli_call_says_what_it_said():
     assert "EMPTY_RESULT" in wrapper, (
         "a home feed still loading is worth one more ask, not a skipped timeline"
     )
+
+
+def test_own_post_dates_are_normalised_before_matching():
+    """opencli's own-post timestamps are whatever LinkedIn's UI shows: an
+    absolute date under a Korean-language account, a relative age ("5d",
+    "2mo") under English. report_performance.py matches published.json's
+    date field against this one by exact string, so a relative value broke
+    every match the moment the account's display language changed."""
+    body = next(
+        s for s in SCRIPTS if s.name == "collect_linkedin.ps1"
+    ).read_text(encoding="utf-8")
+
+    assert "function ConvertTo-AbsoluteDate" in body
+    schema = body[body.index("function ConvertTo-ReferenceSchema") :]
+    assert "posted_at   = ConvertTo-AbsoluteDate $p.posted_at" in schema, (
+        "the raw relative-or-absolute value from opencli is still written as-is"
+    )
