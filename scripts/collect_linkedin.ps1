@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Collect LinkedIn post metrics and push them to the repository.
 
@@ -129,6 +129,41 @@ function Invoke-OpenCli {
 }
 
 
+function ConvertTo-AbsoluteDate {
+    <#
+        opencli's own-post timestamps are whatever LinkedIn's UI currently
+        shows: an absolute date under a Korean-language account, a relative
+        age ("5d", "2mo") under English. report_performance.py matches
+        published.json's date field against this one by exact string, so a
+        relative value breaks every match silently. Converting here means
+        the join keeps working no matter which display language the account
+        happens to be set to. "mo" and "yr" are approximate (30- and
+        365-day months/years) since LinkedIn does not give a finer figure.
+    #>
+    param([string]$Value)
+
+    if ([string]::IsNullOrWhiteSpace($Value)) { return $Value }
+    if ($Value -match '^\d{4}-\d{2}-\d{2}') { return $Value }
+
+    if ($Value -match '^(\d+)\s*(s|m|min|h|d|w|mo|yr)$') {
+        $n = [int]$Matches[1]
+        $span = switch ($Matches[2]) {
+            "s"   { New-TimeSpan -Seconds $n }
+            "m"   { New-TimeSpan -Minutes $n }
+            "min" { New-TimeSpan -Minutes $n }
+            "h"   { New-TimeSpan -Hours $n }
+            "d"   { New-TimeSpan -Days $n }
+            "w"   { New-TimeSpan -Days ($n * 7) }
+            "mo"  { New-TimeSpan -Days ($n * 30) }
+            "yr"  { New-TimeSpan -Days ($n * 365) }
+        }
+        return ((Get-Date).ToUniversalTime() - $span).ToString("yyyy-MM-dd")
+    }
+
+    return $Value
+}
+
+
 function ConvertTo-ReferenceSchema {
     <#
         opencli emits its own columns, and leaves raw newlines and quotes
@@ -165,7 +200,7 @@ function ConvertTo-ReferenceSchema {
         $tagged = @()
         if ($p.mentions) { $tagged = @(([string]$p.mentions) -split "\s*,\s*" | Where-Object { $_ }) }
         [ordered]@{
-            posted_at   = $p.posted_at
+            posted_at   = ConvertTo-AbsoluteDate $p.posted_at
             pillar      = $null
             topic       = $null
             url         = $p.url
