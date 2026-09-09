@@ -71,7 +71,7 @@ $script = "$env:USERPROFILE\Documents\Cluade---Linked-In\scripts\collect_linkedi
 $action = New-ScheduledTaskAction -Execute "powershell.exe" `
     -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$script`""
 $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) `
-    -RepetitionInterval (New-TimeSpan -Hours 1) -RepetitionDuration ([TimeSpan]::MaxValue)
+    -RepetitionInterval (New-TimeSpan -Hours 1) -RepetitionDuration (New-TimeSpan -Days 3650)
 Register-ScheduledTask -TaskName "LinkedIn metrics" -Action $action -Trigger $trigger `
     -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopOnIdleEnd)
 ```
@@ -157,3 +157,4 @@ LinkedIn은 노출을 작성자에게만 보여줍니다. 남의 게시글은 **
 | 수치가 전부 0 | 어댑터가 셀렉터를 못 찾음. `opencli adapter eject linkedin` 후 수정 |
 | 한글이 `?쇰볗` 처럼 깨짐 | `[Console]::OutputEncoding` 이 설정 안 됨. 스크립트를 최신본으로 pull |
 | `no change since the last run` | 정상입니다. 지난번과 같은 데이터라 커밋하지 않았습니다 |
+| `Register-ScheduledTask` 가 "작업 XML에 형식이 잘못되었거나 범위를 벗어난 값이 있습니다" | `-RepetitionDuration ([TimeSpan]::MaxValue)`가 원인입니다. Task Scheduler의 XML은 그 정도로 긴 Duration을 받아들이지 않습니다. `(New-TimeSpan -Days 3650)`(10년)처럼 값이 있는 범위로 바꿔서 다시 등록하세요 |
