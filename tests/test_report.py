@@ -77,6 +77,33 @@ def test_watch_report_ranks_by_visible_engagement(tmp_path, monkeypatch):
     assert "관세·소싱" in out
 
 
+def test_watch_report_drops_ads_and_the_recommended_for_you_module(tmp_path, monkeypatch):
+    """opencli's timeline read pulls in promoted posts and the "Recommended
+    for you" module alongside genuine feed posts. Neither has a real author
+    or reflects what a followed person or company posted, so surfacing them
+    as "다른 계정 게시글" — e.g. a Kia ad ranked above an actual connection's
+    post on reactions — was actively misleading."""
+    reference = tmp_path / "content" / "reference"
+    reference.mkdir(parents=True)
+    (reference / "timeline.json").write_text(
+        json.dumps(
+            [
+                {"author": "Kia PBV", "text": "Promoted Built for more.", "reactions": 242},
+                {"author": "Recommended for you", "text": "People in your community follow"},
+                {"author": "Robert Sargent", "text": "Heading to High Point Market", "reactions": 3},
+            ]
+        ),
+        encoding="utf-8",
+    )
+    script = Path(__file__).resolve().parent.parent / "scripts" / "report_watch.py"
+    out = subprocess.run(
+        [sys.executable, str(script)], capture_output=True, text=True, cwd=tmp_path
+    ).stdout
+    assert "Kia PBV" not in out
+    assert "Recommended for you" not in out
+    assert "Robert Sargent" in out
+
+
 def test_watch_report_says_so_when_nothing_was_collected(tmp_path):
     script = Path(__file__).resolve().parent.parent / "scripts" / "report_watch.py"
     out = subprocess.run(

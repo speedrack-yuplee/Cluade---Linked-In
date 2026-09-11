@@ -39,6 +39,20 @@ this that these those we our you your they their it its will can has have had mo
 about into over under after before new now just our us""".split())
 
 
+def _is_organic(post: dict) -> bool:
+    """opencli's timeline read pulls in ad units and the "Recommended for
+    you" module along with genuine feed posts — LinkedIn marks both with no
+    real author or timestamp of their own. Neither says anything about what
+    the people and companies this account follows are actually posting, so
+    both are noise here rather than signal."""
+    author = (post.get("author") or "").strip()
+    if author == "Recommended for you":
+        return False
+    if text_of(post).startswith("Promoted"):
+        return False
+    return True
+
+
 def load(name: str) -> list[dict]:
     path = REFERENCE / name
     if not path.exists():
@@ -58,7 +72,7 @@ def load(name: str) -> list[dict]:
                 posts.append({**post, "author": post.get("author") or entry.get("name")})
         else:
             posts.append(entry)
-    return posts
+    return [p for p in posts if _is_organic(p)]
 
 
 def engagement(post: dict) -> int:
