@@ -275,6 +275,23 @@ def _footer_text(draft: PostDraft) -> str:
     return "HOMEDANT   ·   The Best Organizing Solution"
 
 
+def _eyebrow(draw, x: int, y: int, text: str, color) -> int:
+    """A small caps label naming the pillar, set above the headline.
+
+    The plainer layouts (no photo panel, no badge, no countdown) opened on
+    the headline with nothing ahead of it — one weight, one size, reading as
+    a wall of the same emphasis. A short label first gives the eye a place to
+    land before the sentence, the way a promoted card on the feed itself
+    does, and it costs nothing the library has to supply. Returns the y the
+    headline may start at.
+    """
+    font = _font(BOLD, 24)
+    draw.text((x, y), text.upper(), font=font, fill=color)
+    rule_y = y + font.size + 14
+    draw.rectangle([x, rule_y, x + 56, rule_y + 5], fill=color)
+    return rule_y + 34
+
+
 def _layout_show(image, draw, draft: PostDraft, photo) -> None:
     """A dark event card: the countdown is the picture."""
     show = draft.slot.show
@@ -378,8 +395,9 @@ def _layout_product(image, draw, draft: PostDraft, photo) -> None:
         _paste(image, photo.convert("RGBA"), (panel_left + 30, 120, SIZE - 30, SIZE - BAND - 60))
         width = panel_left - MARGIN - 50
 
+    top = _eyebrow(draw, MARGIN, top, draft.pillar.name, accent)
     lines, font = _fit(draw, draft.hook, width, 6, 60, 32)
-    y = top + 20
+    y = top
     for line in lines:
         draw.text((MARGIN, y), line, font=font, fill=accent)
         y += int(font.size * 1.24)
@@ -769,8 +787,9 @@ def _layout_plain(image, draw, draft: PostDraft, photo) -> None:
         draw.rectangle([panel, 0, SIZE, SIZE - BAND], fill=PANEL)
         _paste(image, photo.convert("RGBA"), (panel + 26, 150, SIZE - 26, SIZE - BAND - 50))
         width = panel - MARGIN - 46
+    top = _eyebrow(draw, MARGIN, top, draft.pillar.name, ACCENT)
     lines, font = _fit(draw, draft.hook, width, 6, 62, 32)
-    y = top + 40
+    y = top
     for line in lines:
         draw.text((MARGIN, y), line, font=font, fill=ACCENT)
         y += int(font.size * 1.26)
