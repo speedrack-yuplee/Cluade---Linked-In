@@ -13,7 +13,7 @@ import re
 from datetime import date
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 from .composer import _sentence
 from .models import PostDraft
@@ -194,6 +194,59 @@ def _paste(canvas, art, box: tuple[int, int, int, int]) -> None:
     x = left + (right - left - fitted.width) // 2
     y = top + (bottom - top - fitted.height) // 2
     canvas.paste(fitted, (x, y), fitted if fitted.mode == "RGBA" else None)
+
+
+def _staged_panel(image, art, box: tuple[int, int, int, int], accent) -> None:
+    """A component photograph set on a lit surface, not floating on flat white.
+
+    A part shot straight off the listing is cut on pure white with nothing
+    under it, and pasted onto another flat white panel it reads as a sticker
+    rather than a photograph — which is what read as "이상해요" (strange) once
+    it was actually looked at rather than just checked for presence. A soft
+    warm gradient behind it and a blurred shadow under it are the two things
+    a real product shot on a table has that a listing cutout does not; adding
+    them is cheaper than reshooting, and it is what makes the panel look
+    designed instead of pasted.
+    """
+    left, top, right, bottom = box
+    width, height = right - left, bottom - top
+
+    # A photography sweep: brightest where the part sits, darkening toward
+    # every edge, rather than a flat tint top to bottom — that is what a real
+    # backdrop looks like, and a flat tint still read as "just white with a
+    # filter on it."
+    grid_w, grid_h = 48, 36
+    cx, cy = grid_w * 0.5, grid_h * 0.42
+    reach = max(cx, cy, grid_w - cx, grid_h - cy) or 1
+    small = Image.new("RGB", (grid_w, grid_h))
+    sdraw = ImageDraw.Draw(small)
+    for row in range(grid_h):
+        dy = (row - cy) / reach
+        for col in range(grid_w):
+            dx = (col - cx) / reach
+            t = min(1.0, (dx * dx + dy * dy) ** 0.5)
+            sdraw.point((col, row), fill=tuple(int(PANEL[i] + (GROUND[i] - PANEL[i]) * t * 0.85) for i in range(3)))
+    panel = small.resize((width, height), Image.BICUBIC)
+
+    fitted = art.convert("RGBA") if art.mode != "RGBA" else art
+    fitted = fitted.copy()
+    fitted.thumbnail((width - 80, height - 110), Image.LANCZOS)
+    fx = (width - fitted.width) // 2
+    fy = (height - fitted.height) // 2 - 16
+
+    shadow = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    sdraw = ImageDraw.Draw(shadow)
+    ellipse_w = max(60, int(fitted.width * 0.82))
+    ellipse_h = max(16, int(fitted.height * 0.07))
+    ex = fx + (fitted.width - ellipse_w) // 2
+    ey = fy + fitted.height - ellipse_h // 2
+    sdraw.ellipse([ex, ey, ex + ellipse_w, ey + ellipse_h], fill=(20, 18, 16, 95))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(16))
+    panel.paste(shadow, (0, 0), shadow)
+
+    panel.paste(fitted, (fx, fy), fitted)
+    image.paste(panel, (left, top))
+    ImageDraw.Draw(image).rectangle([left, top, right - 1, bottom - 1], outline=accent, width=2)
 
 
 def _masthead(image, draw, dark: bool) -> int:
@@ -577,12 +630,7 @@ def _layout_figure(image, draw, draft: PostDraft, photo) -> None:
     if figure_photo is not None:
         panel_top = max(y + 34, 700)
         panel_bottom = SIZE - BAND - 30
-        draw.rectangle([MARGIN, panel_top, SIZE - MARGIN, panel_bottom], fill=PANEL)
-        _paste(
-            image,
-            figure_photo.convert("RGB"),
-            (MARGIN + 24, panel_top + 24, SIZE - MARGIN - 24, panel_bottom - 24),
-        )
+        _staged_panel(image, figure_photo, (MARGIN, panel_top, SIZE - MARGIN, panel_bottom), accent)
 
     _band(image, draw, _footer_text(draft), accent, LIGHT_TEXT)
 
@@ -661,12 +709,7 @@ def _layout_detail(image, draw, draft: PostDraft, photo) -> None:
 
     panel_top = max(y + 34, 520)
     panel_bottom = SIZE - BAND - 30
-    draw.rectangle([MARGIN, panel_top, SIZE - MARGIN, panel_bottom], fill=PANEL)
-    _paste(
-        image,
-        part.convert("RGB"),
-        (MARGIN + 24, panel_top + 24, SIZE - MARGIN - 24, panel_bottom - 24),
-    )
+    _staged_panel(image, part, (MARGIN, panel_top, SIZE - MARGIN, panel_bottom), accent)
 
     # Not _footer_text: a castor bracket is common to the range, and naming
     # one SKU under it invites the reader to check whether that SKU is the one
