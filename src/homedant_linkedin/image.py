@@ -866,20 +866,21 @@ def photo_for(draft: PostDraft, timeout: int = 20):
         # repository; nothing to fetch and nothing to fall back to.
         return _open(ASSET_DIR / "library" / draft.slot.installation.photo)
 
-    # The library is deep enough that walking it beats showing the same
-    # listing cut twice a fortnight, so the pool leads and the product's own
-    # photograph is the fallback rather than the other way round.
-    pooled = _any_supplied_photo(draft.scheduled_for)
-    if pooled is not None:
-        return pooled
-
+    # A post that names a specific product describes that product, so its own
+    # photograph is what has to appear — the pool used to lead here, which is
+    # how a post about a white shelving unit went out over a black corner
+    # post from an unrelated listing. The pool is for posts with no one
+    # product to be faithful to.
     product = draft.slot.pictured
-    if product is None:
-        return None
-    local = product_photo_path(product.asin)
-    if local is not None and (image := _open(local)) is not None:
-        return image
-    return fetch_product_image(product.image_url, timeout=timeout)
+    if product is not None:
+        local = product_photo_path(product.asin)
+        if local is not None and (image := _open(local)) is not None:
+            return image
+        fetched = fetch_product_image(product.image_url, timeout=timeout)
+        if fetched is not None:
+            return fetched
+
+    return _any_supplied_photo(draft.scheduled_for)
 
 
 def fetch_product_image(url: str, timeout: int = 20):
