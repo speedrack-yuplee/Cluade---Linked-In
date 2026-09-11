@@ -328,21 +328,76 @@ def _footer_text(draft: PostDraft) -> str:
     return "HOMEDANT   ·   The Best Organizing Solution"
 
 
-def _eyebrow(draw, x: int, y: int, text: str, color) -> int:
-    """A small caps label naming the pillar, set above the headline.
+def _kicker(draw, x: int, y: int, text: str, color) -> int:
+    """A solid-color label block naming the pillar, ahead of the headline.
 
-    The plainer layouts (no photo panel, no badge, no countdown) opened on
-    the headline with nothing ahead of it — one weight, one size, reading as
-    a wall of the same emphasis. A short label first gives the eye a place to
-    land before the sentence, the way a promoted card on the feed itself
-    does, and it costs nothing the library has to supply. Returns the y the
-    headline may start at.
+    A caps line with a thin rule under it still reads as one more line of
+    text competing with the headline for attention. A filled block is what a
+    promoted card or a trade one-pager actually uses for this: the color
+    does the separating, so the headline itself can stay plain ink instead
+    of carrying the accent. Returns the y the headline may start at.
     """
-    font = _font(BOLD, 24)
-    draw.text((x, y), text.upper(), font=font, fill=color)
-    rule_y = y + font.size + 14
-    draw.rectangle([x, rule_y, x + 56, rule_y + 5], fill=color)
-    return rule_y + 34
+    font = _font(BOLD, 26)
+    label = text.upper()
+    width = draw.textlength(label, font=font) + 48
+    height = 56
+    draw.rectangle([x, y, x + width, y + height], fill=color)
+    draw.text((x + 24, y + (height - font.size) // 2 - 2), label, font=font, fill=LIGHT_TEXT)
+    return y + height + 46
+
+
+def _supporting_line(draw, x: int, y: int, text: str, width: int) -> int:
+    """One muted sentence under the headline, in place of a bulleted list.
+
+    Three bullets, a photo and a footer band all arguing at once in one
+    1200-square frame is a lot of the same message said three times. A
+    single line leaves the headline as the one thing doing the work, which
+    is what a feed actually rewards. Returns the y after it.
+    """
+    font = _font(REGULAR, 27)
+    for line in _wrap(draw, text, font, width)[:2]:
+        draw.text((x, y), line, font=font, fill=MUTED)
+        y += int(font.size * 1.4)
+    return y
+
+
+def _minimal_footer(draw, text: str, accent) -> None:
+    """A short rule and one line, in place of a full-width color band.
+
+    The band earns its place where the rest of the frame is a photograph or
+    a dark ground — it is what makes the type readable there. On a plain,
+    light, sentence-led layout it is just another block of color competing
+    with the kicker for the same job.
+    """
+    y = SIZE - MARGIN - 40
+    draw.rectangle([MARGIN, y - 26, MARGIN + 70, y - 20], fill=accent)
+    draw.text((MARGIN, y), text, font=_font(REGULAR, 24), fill=MUTED)
+
+
+def _lifestyle_photo(image, photo, box: tuple[int, int, int, int]) -> None:
+    """A lifestyle or listing photo set directly on the ground, shadow only.
+
+    These photos already carry their own background — a room, a staged
+    surface — so boxing them on a flat white panel just adds a second frame
+    around a frame. A soft shadow under the photo is the only thing a real
+    print ad would add.
+    """
+    left, top, right, bottom = box
+    width, height = right - left, bottom - top
+    fitted = photo.convert("RGBA")
+    fitted.thumbnail((width, height), Image.LANCZOS)
+    fx = left + (width - fitted.width) // 2
+    fy = top + (height - fitted.height) // 2
+
+    shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    sdraw = ImageDraw.Draw(shadow)
+    sdraw.ellipse(
+        [fx + 20, fy + fitted.height - 30, fx + fitted.width - 20, fy + fitted.height + 30],
+        fill=(20, 18, 16, 70),
+    )
+    shadow = shadow.filter(ImageFilter.GaussianBlur(20))
+    image.paste(shadow, (0, 0), shadow)
+    image.paste(fitted, (fx, fy), fitted)
 
 
 def _layout_show(image, draw, draft: PostDraft, photo) -> None:
@@ -437,27 +492,37 @@ def _layout_award(image, draw, draft: PostDraft, photo) -> None:
 
 
 def _layout_product(image, draw, draft: PostDraft, photo) -> None:
-    """The product fills the right half; the argument runs down the left."""
+    """One headline carries the argument; the product sits large beside it.
+
+    Was a bulleted case built down the left column against a boxed photo and
+    a full-width band — a lot of a single frame arguing the same point three
+    times over. This is the leaner treatment: a kicker names the pillar, one
+    headline in plain ink does the work, one supporting line backs it up, and
+    the photo runs large with nothing boxing it in.
+    """
     accent = SEASON_ACCENT if draft.pillar.key == "seasonal" else ACCENT
     top = _masthead(image, draw, dark=False)
 
     width = SIZE - 2 * MARGIN
+    photo_box = None
     if photo is not None:
-        panel_left = 660
-        draw.rectangle([panel_left, 0, SIZE, SIZE - BAND], fill=PANEL)
-        _paste(image, photo.convert("RGBA"), (panel_left + 30, 120, SIZE - 30, SIZE - BAND - 60))
-        width = panel_left - MARGIN - 50
+        photo_box = (760, 140, SIZE - 60, SIZE - 140)
+        width = photo_box[0] - MARGIN - 100
 
-    top = _eyebrow(draw, MARGIN, top, draft.pillar.name, accent)
-    lines, font = _fit(draw, draft.hook, width, 6, 60, 32)
+    top = _kicker(draw, MARGIN, top, draft.pillar.name, accent)
+    lines, font = _fit(draw, draft.hook, width, 5, 58, 32)
     y = top
     for line in lines:
-        draw.text((MARGIN, y), line, font=font, fill=accent)
-        y += int(font.size * 1.24)
+        draw.text((MARGIN, y), line, font=font, fill=INK)
+        y += int(font.size * 1.22)
 
-    _bullets(image, draw, draft.points, y + 34, width, INK, accent)
+    if draft.points:
+        _supporting_line(draw, MARGIN, y + 30, draft.points[0], width)
 
-    _band(image, draw, _footer_text(draft), accent, LIGHT_TEXT)
+    _minimal_footer(draw, _footer_text(draft), accent)
+
+    if photo_box is not None:
+        _lifestyle_photo(image, photo, photo_box)
 
 
 def _cover(art, size: int):
@@ -822,22 +887,28 @@ def _layout_key(draft: PostDraft) -> str:
 
 
 def _layout_plain(image, draw, draft: PostDraft, photo) -> None:
-    """No subject to picture: the sentence carries it."""
+    """No subject to picture: the sentence carries it, one line at a time."""
     top = _masthead(image, draw, dark=False)
     width = SIZE - 2 * MARGIN
+    photo_box = None
     if photo is not None:
-        panel = 700
-        draw.rectangle([panel, 0, SIZE, SIZE - BAND], fill=PANEL)
-        _paste(image, photo.convert("RGBA"), (panel + 26, 150, SIZE - 26, SIZE - BAND - 50))
-        width = panel - MARGIN - 46
-    top = _eyebrow(draw, MARGIN, top, draft.pillar.name, ACCENT)
-    lines, font = _fit(draw, draft.hook, width, 6, 62, 32)
+        photo_box = (760, 140, SIZE - 60, SIZE - 140)
+        width = photo_box[0] - MARGIN - 100
+
+    top = _kicker(draw, MARGIN, top, draft.pillar.name, ACCENT)
+    lines, font = _fit(draw, draft.hook, width, 5, 58, 32)
     y = top
     for line in lines:
-        draw.text((MARGIN, y), line, font=font, fill=ACCENT)
-        y += int(font.size * 1.26)
-    _bullets(image, draw, draft.points, y + 44, width, INK, ACCENT)
-    _band(image, draw, _footer_text(draft), ACCENT, LIGHT_TEXT)
+        draw.text((MARGIN, y), line, font=font, fill=INK)
+        y += int(font.size * 1.22)
+
+    if draft.points:
+        _supporting_line(draw, MARGIN, y + 30, draft.points[0], width)
+
+    _minimal_footer(draw, _footer_text(draft), ACCENT)
+
+    if photo_box is not None:
+        _lifestyle_photo(image, photo, photo_box)
 
 
 def layout_for(draft: PostDraft) -> str:
