@@ -1,0 +1,105 @@
+{
+  "_comment": [
+    "A claim and the component that proves it.",
+    "",
+    "The other layouts take whatever photograph the rotation lands on, which is",
+    "right when the picture is there to be looked at. It is wrong when the post",
+    "asserts something mechanical. A post that says the frame locks together by",
+    "hand and shows a whole unit on a showroom floor has asserted it twice and",
+    "shown it never; the clip that does the locking is a photograph we have.",
+    "",
+    "So here the sentence chooses the picture. 'photo' names a file in",
+    "assets/library/parts, and a detail whose file is missing is skipped rather",
+    "than drawn empty. 'pillars' is which posts may use it — a rail divider",
+    "belongs on a retail post and nowhere else.",
+    "",
+    "Everything claimed here has to be true of the product as shipped. This is",
+    "the one layout where the reader can check the words against the picture."
+  ],
+  "details": [
+    {
+      "claim": "The frame locks together by hand.",
+      "caption": "HANDiLOCK post clip. No bolts, no washers, nothing to drop behind the unit.",
+      "photo": "홈던트 하우스) 기둥 고정클립 B 연출.jpg",
+      "pillars": ["manufacturing", "project", "supply"]
+    },
+    {
+      "claim": "The only tool in the carton is a mallet.",
+      "caption": "Urethane head: it seats the clip and leaves no mark on the finish.",
+      "photo": "공용) 우레탄 망치 디테일.jpg",
+      "pillars": ["manufacturing", "project"]
+    },
+    {
+      "claim": "The beam carries the load, not the board.",
+      "caption": "Roll-formed depth and cross beams. The board sits on steel on all four sides.",
+      "photo": "스피드랙) 받침 디테일 B.jpg",
+      "pillars": ["manufacturing", "project"]
+    },
+    {
+      "claim": "Six sides laminated, not five.",
+      "caption": "Anti-scratch and waterproof, and the cut edge is finished like the face.",
+      "photo": "공용) 라이트우드,화이트 보드 디테일.jpg",
+      "pillars": ["manufacturing", "retail"]
+    },
+    {
+      "claim": "Where the code says anchor it, there is a part for that.",
+      "caption": "Wall bracket. Standard on tall runs in schools, labs and back rooms.",
+      "photo": "홈던트 하우스) 벽고정 브래킷.jpg",
+      "pillars": ["project", "manufacturing"]
+    },
+    {
+      "claim": "A steel post on a soft floor needs a foot.",
+      "caption": "Safety foot. It spreads the load so the post does not sink or scar the floor.",
+      "photo": "홈던트 하우스) 안전좌B.jpg",
+      "pillars": ["project", "supply"]
+    },
+    {
+      "claim": "A unit that is too short next year is not scrap.",
+      "caption": "Post connector. Add a section and the same run stands taller.",
+      "photo": "홈던트 하우스) 기둥연결브래킷 B.jpg",
+      "pillars": ["project", "supply", "seasonal"]
+    },
+    {
+      "claim": "Two runs meet in a corner without losing the corner.",
+      "caption": "Corner bracket. The return bay carries load like any other bay.",
+      "photo": "스피드랙) 코너연결 브래킷.jpg",
+      "pillars": ["project", "retail"]
+    },
+    {
+      "claim": "The same unit that stands still can roll.",
+      "caption": "Castor bracket, two and three inch, braked or free.",
+      "photo": "홈던트 하우스) 바퀴 브래킷 기둥 결합.jpg",
+      "pillars": ["retail", "supply"]
+    },
+    {
+      "claim": "Open shelving that closes when it has to.",
+      "caption": "Curtain rail and bracket: dust off the stock, and the stock out of sight.",
+      "photo": "홈던트 하우스) 정면 커튼 브래킷+커튼봉 결합.jpg",
+      "pillars": ["retail", "seasonal"]
+    },
+    {
+      "claim": "Stock stays in its lane.",
+      "caption": "Rail divider. A bay faced in the morning is still faced at closing.",
+      "photo": "홈던트 하우스) 레일 디바이더 세트.jpg",
+      "pillars": ["retail"]
+    },
+    {
+      "claim": "Not everything stacks. Some of it hangs.",
+      "caption": "Hanger rail and support, added to any tier without tools.",
+      "photo": "스피드랙) 행거봉 결합 연출.jpg",
+      "pillars": ["seasonal", "retail"]
+    },
+    {
+      "claim": "The upright is not only structure. It is storage.",
+      "caption": "Mesh board and bracket: hooks, tools and small parts off the shelf.",
+      "photo": "홈던트 하우스) 메쉬보드+브래킷 결합.jpg",
+      "pillars": ["seasonal", "project"]
+    },
+    {
+      "claim": "One hook, two depths, no second part number.",
+      "caption": "Reversible C hook. Turn it over for the longer reach.",
+      "photo": "홈던트 하우스) 리버서블 C후크결합.jpg",
+      "pillars": ["supply", "seasonal"]
+    }
+  ]
+}

@@ -1,3 +1,254 @@
-# Cluade - Linked In
+# HOMEDANT USA — LinkedIn AI Agent
 
-LinkedIn tooling for HOMEDANT USA.
+Plans, drafts and checks the LinkedIn posts for Homedant USA Inc before
+anything is published.
+
+The account sells **B2B**: retail buyers, distributors, hospitality specifiers
+and multifamily developers. Posts are written for those readers, not for the
+Amazon shopper, and they close by asking for a conversation rather than
+linking a listing.
+
+The agent works from a brand profile (`src/homedant_linkedin/data/brand.json`)
+and a product catalog (`src/homedant_linkedin/data/products.json`), rotates a
+set of content pillars across a posting calendar, renders each slot into a post
+draft, and refuses to pass anything that breaks LinkedIn's limits or makes a
+claim the brand cannot substantiate.
+
+## What the account's own history says
+
+| Post | Impressions | Reactions |
+| --- | ---: | ---: |
+| Retailers' Choice Awards win at the National Hardware Show | **698** | 10 |
+| RangeMe Award Winner Collection | 42 | 1 |
+| Open wardrobe system for hotel and residential projects | 18 | — |
+
+Third-party recognition outperformed product-led posts by 15 to 35 times, so
+the plan leads every cycle with it. See `content/posts/` for the source.
+
+## Install
+
+```bash
+pip install -e ".[dev]"
+```
+
+Or run straight from the source tree:
+
+```bash
+PYTHONPATH=src python -m homedant_linkedin plan
+```
+
+## Commands
+
+| Command | What it does |
+| --- | --- |
+| `plan` | Print the posting calendar: date, pillar, product |
+| `draft` | Render every post in the plan, ready to paste |
+| `validate` | Check every draft; exits `1` if any post has an issue |
+| `products` | List the catalog |
+| `next` | Write today's post and image into `out/` for an unattended run |
+| `calendar` | The whole plan up to `--until`, grouped by month |
+| `assets` | Which logo and badge files the images look for, and which are supplied |
+
+Common flags: `--start YYYY-MM-DD`, `--weeks N`, `--marketplace US`,
+`--catalog path/to/products.json`, and `--json` on `plan` and `draft`.
+
+```bash
+PYTHONPATH=src python -m homedant_linkedin plan --start 2026-09-08 --weeks 4
+PYTHONPATH=src python -m homedant_linkedin draft --weeks 1
+PYTHONPATH=src python -m homedant_linkedin validate --weeks 4
+```
+
+## Content pillars
+
+Posts rotate through six pillars, two posts a week on Tuesday and Thursday:
+
+| Pillar | Subject | Notes |
+| --- | --- | --- |
+| Third-party recognition | An award on file | Leads the rotation |
+| Trade show | An upcoming show | Dropped once the show has closed |
+| Project solution | A project-tagged product | Hospitality and multifamily |
+| Retail fit | A retail-tagged product | Merchandising, case pack, planogram |
+| Made in Korea | Any product | Manufacturing and design control |
+| Supply and logistics | — | Warehousing and lead time |
+
+Each subject pool round-robins on its own counter, so a subject only repeats
+once its pool is exhausted. Product pillars draw only from products tagged for
+that segment — a hospitality hook over a pallet-configuration product reads as
+a mismatch.
+
+**Trade shows drive the calendar, not the rotation.** A show claims posting
+dates at 30, 14, 7 and 2 days out, and every posting day it is open, ahead of
+whatever the rotation would otherwise have put there. A showroom space on an
+upper floor cannot rely on buyers wandering in, so the meetings have to be
+booked before the show — these posts are what books them.
+
+The countdown copy follows the show: an announcement a month out, "the calendar
+is filling up" two weeks out, "N Days to Go" inside the last week, and "we are
+on the floor" while it runs.
+
+A show whose end date has passed is dropped and the pillar falls out until an
+upcoming show is added to `brand.json`.
+
+## Validation rules
+
+`validate` fails a draft that:
+
+- exceeds LinkedIn's 3,000 character body limit
+- has a hook over 210 characters (it would truncate behind "…see more")
+- carries fewer than 3 or more than 10 hashtags, or omits `#HOMEDANT`
+- has no call to action, or a call to action that does not ask for a conversation
+- never names Homedant USA Inc (every real post tags the company)
+- links a retail listing — that is a consumer CTA, not a B2B one
+- contains an unsupportable superlative ("cheapest", "#1 on Amazon", "lifetime guarantee", …)
+- contains a run of blank lines
+
+## Data
+
+`brand.json` holds who is posting and the facts every post can draw on: the
+company name as it is tagged on LinkedIn, the audiences, the proof points, and
+the recognitions and trade shows the plan schedules against. **Add each new
+award and each upcoming show here** — that is what keeps the top-performing
+pillar supplied.
+
+`products.json` holds the products the agent may promote. Each entry needs
+`asin`, `sku`, `title`, `category`, `marketplace` and `url`; `short_name`,
+`highlights`, `audience`, `retail_fit` and `segments` are what the post copy is
+actually written from. Point `--catalog` at your own file to plan against a
+different set.
+
+## Weekly automation
+
+`.github/workflows/linkedin-draft.yml` runs three times a week — Monday,
+Wednesday and Friday at 09:00 KST — and sends that day's post and image to
+Telegram. Nothing is published automatically; the draft arrives in the chat and
+a person posts it.
+
+The run is a straight line: `next` builds the post from the calendar, validates
+it, renders the image, and `scripts/send_telegram.py` delivers both. A post that
+fails validation exits non-zero and is never sent.
+
+The rotation is counted from `plan_anchor` in `brand.json`, not from the day the
+job happens to run, so a missed or re-run job lands on the same slot the
+calendar shows.
+
+### Setting it up
+
+Add two repository secrets under **Settings → Secrets and variables → Actions**:
+
+| Secret | Where it comes from |
+| --- | --- |
+| `TELEGRAM_BOT_TOKEN` | BotFather, when the bot was created |
+| `TELEGRAM_CHAT_ID` | `https://api.telegram.org/bot<token>/getUpdates` after messaging the bot |
+
+Secrets are not readable from the repository, so a public repository is fine.
+Then run the workflow once by hand (**Actions → LinkedIn draft → Run
+workflow**) to confirm the message arrives.
+
+## Images
+
+`image.py` renders each post into a 1200x1200 PNG from the same draft the text
+comes from. Each pillar gets the treatment its subject deserves rather than one
+template with the words swapped:
+
+| Post | Layout |
+| --- | --- |
+| Trade show | Dark steel ground, the countdown set large, the product on a panel beside it, venue and space in the band |
+| Recognition | Award badge beside the headline, or the product where no badge has been supplied |
+| Product | The photo fills the right panel, the argument runs down the left |
+| Brand | The product carries the panel while the sentence carries the left |
+
+Every post pictures a product, whether or not the text is about one. A show or
+brand post has no product subject, so the planner assigns it one to show,
+rotated by date so the same shelf does not appear on every show post.
+
+Where the brand's own finished artwork covers a pillar — the Amazon A+ panels,
+for instance — it is used as the post image instead, and the hook stays in the
+caption where LinkedIn shows it anyway. Drop those in
+`assets/creatives/<pillar>/`; several in one folder rotate by week. Show and
+award posts are always drawn, because no fixed panel can state a countdown or
+carry the current badge.
+
+Optional images live in [`assets/`](assets/README.md) — the brand wordmark, a
+logo per show, a badge per award. Run `python -m homedant_linkedin assets` to
+see which files the layouts are looking for and which are supplied. A missing
+file is not an error; the layout closes up around it.
+
+Show logos and award badges are the organisers' trademarks. Use the files from
+their official exhibitor or winner kit, not something taken off the web.
+
+Photos come from `assets/products/<ASIN>.jpg` when one has been supplied, and
+from the listing's `image_url` otherwise — lifestyle photography reads far
+better in a feed than a cut-out on white. Where neither is reachable the post
+falls back to the type-only layout rather than failing the run.
+
+## 영문 메일 해석과 답장
+
+들어온 영문 메일을 붙여 넣으면 한국어 번역, 상대의 진짜 의도, 그리고 바로
+보낼 수 있는 영문 답장 초안까지 한 번에 나옵니다. Claude Code에서
+`/email` 로 실행합니다.
+
+```
+/email
+Hello, we are a regional hardware chain with 42 stores...
+```
+
+브랜드 사실관계(`brand.json`)와 제품 사양(`products.json`)을 자동으로 읽기
+때문에 회사 설명을 매번 다시 붙여넣을 필요가 없습니다.
+
+가격·MOQ·결제 조건·리드타임은 건마다 달라지므로 기본값을 두지 않습니다.
+초안에 `[[MOQ]]` 처럼 빈칸으로 남고, 그 자리에서 정해 알려 주시면 채운
+완성본이 다시 나옵니다. 지난 건의 조건이 다른 상대에게 따라가지 않습니다.
+
+## 아침 메일 정리
+
+미국에서 밤사이 들어온 메일을 `/inbox` 로 정리합니다. **채널별로 나누고**
+— 아마존, 월마트, 웨이페어, Faire, 쇼피파이 자사몰, B2B 거래처, 물류,
+전시회·기관, 광고·스팸 — 각 건에 🔴 오늘 처리 / 🟡 확인 / ⚪ 참고 를
+매깁니다. 🔴 과 🟡 만 번역하고, 답장이 필요한 건은 초안까지 만듭니다.
+
+기한이 적힌 메일은 무조건 🔴 입니다. 아마존 계정 상태 경고, 리스팅 차단,
+서류 제출 요구처럼 놓치면 계정이나 돈이 걸리는 건들입니다. 광고·스팸은
+건수와 유형만 세고, 아마존 사칭 피싱을 포함한 사기 의심 건은 발신 주소와
+함께 따로 알립니다.
+
+**아마존 고객 문의는 따로 봅니다.** 발신 주소가 `@marketplace.amazon.com`
+인 것은 아마존 알림이 아니라 구매자가 직접 쓴 글이고, 주말·공휴일을 포함해
+24시간 안에 답하지 않으면 Late Response Rate 가 올라갑니다. 그래서 전부 🔴 로
+두고 아마존 섹션 맨 위에 **남은 시간과 함께** 표로 냅니다. 답장 초안에는
+외부 연락처·링크, 리뷰 요청, 할인 제안을 넣지 않습니다 — 아마존 정책 위반입니다.
+
+채널 판정 기준은 `.claude/skills/inbox/references/channels.md`, 아마존 고객
+문의 처리는 `amazon-messages.md` 에 있습니다. 새 판매 채널이 생기면 이 파일에
+추가하면 됩니다.
+
+### 매일 아침 08:30 자동 실행
+
+평일 아침 08:30(한국시간)에 `/inbox` 가 자동으로 돌아, 출근하면 밤사이 온
+메일이 이미 정리되어 있습니다. 시간이나 요일을 바꾸시려면 말씀해 주세요.
+
+Outlook을 직접 읽으려면 claude.ai에서 Microsoft 365 커넥터를 연결해야
+합니다 — [`content/emails/OUTLOOK.md`](content/emails/OUTLOOK.md). 연결하지
+않아도 날짜·발신자·제목 목록을 붙여 넣으면 선별은 됩니다. 메일함은 읽기만
+하고 삭제·이동·발송은 하지 않습니다.
+
+선별 기준과 검색 질의는 `.claude/skills/inbox/references/` 에 있습니다.
+
+메일 유형별 판단 기준과 답장 뼈대는 `.claude/skills/email/references/` 에
+있습니다 — 바이어 문의, 유통사 제안, 견적 요청, 전시회 미팅, 물류 클레임,
+마켓플레이스 계정, 스팸·사기 판별. 지난 메일은
+[`content/emails/`](content/emails/README.md) 에 남겨 두면 다음 메일에서
+문맥이 이어집니다.
+
+## Existing posts
+
+`content/posts/` holds the LinkedIn posts that have already been published.
+Drop them in as markdown files and the drafts can be written to match that
+voice rather than the default template voice. See
+[`content/posts/README.md`](content/posts/README.md) for the file format and
+for how to add one from the GitHub web UI.
+
+## Tests
+
+```bash
+PYTHONPATH=src pytest
+```

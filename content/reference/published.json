@@ -1,0 +1,47 @@
+[
+  {
+    "date": "2026-09-04",
+    "pillar": "recognition",
+    "pillar_name": "Third-party recognition",
+    "subject": "Retailers' Choice Awards Winner",
+    "layout": "award",
+    "hook": "What does a Retailers' Choice Awards Winner actually change? It changes who picks up the phone.",
+    "chars": 890
+  },
+  {
+    "date": "2026-09-09",
+    "pillar": "reference",
+    "pillar_name": "Installed reference",
+    "subject": "Installed: a university in Korea",
+    "layout": "reference",
+    "hook": "This is a store room off a teaching building at a university in Korea. The shelving went up by hand, in an afternoon.",
+    "chars": 896
+  },
+  {
+    "date": "2026-09-11",
+    "pillar": "project",
+    "pillar_name": "Project solution",
+    "subject": "the white 47.7-inch five-tier shelving unit",
+    "layout": "full",
+    "hook": "How can hotels and residential projects provide more storage without making rooms feel crowded?",
+    "chars": 855
+  },
+  {
+    "date": "2026-09-14",
+    "pillar": "reference",
+    "pillar_name": "Installed reference",
+    "subject": "Installed: an arts university in Korea",
+    "layout": "reference",
+    "hook": "The dorm and classroom orders are placed and installed. What the buildings learned about their storage this year is what they will specify next year.",
+    "chars": 1086
+  },
+  {
+    "date": "2026-09-16",
+    "pillar": "tradeshow",
+    "pillar_name": "Trade show",
+    "subject": "High Point Market",
+    "layout": "show",
+    "hook": "We are taking the full boltless range to High Point Market, Space M-1007. The calendar opens now.",
+    "chars": 840
+  }
+]
