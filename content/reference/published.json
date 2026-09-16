@@ -34,5 +34,14 @@
     "layout": "reference",
     "hook": "The dorm and classroom orders are placed and installed. What the buildings learned about their storage this year is what they will specify next year.",
     "chars": 1086
+  },
+  {
+    "date": "2026-09-16",
+    "pillar": "tradeshow",
+    "pillar_name": "Trade show",
+    "subject": "High Point Market",
+    "layout": "show",
+    "hook": "We are taking the full boltless range to High Point Market, Space M-1007. The calendar opens now.",
+    "chars": 840
   }
 ]
