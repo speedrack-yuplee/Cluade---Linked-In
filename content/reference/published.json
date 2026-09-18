@@ -43,5 +43,14 @@
     "layout": "show",
     "hook": "We are taking the full boltless range to High Point Market, Space M-1007. The calendar opens now.",
     "chars": 840
+  },
+  {
+    "date": "2026-09-18",
+    "pillar": "retail",
+    "pillar_name": "Retail fit",
+    "subject": "the 24-inch pegboard storage rack",
+    "layout": "figure",
+    "hook": "264 lb — per tier, on the five-tier HOMEDANT House shelving.",
+    "chars": 765
   }
 ]
