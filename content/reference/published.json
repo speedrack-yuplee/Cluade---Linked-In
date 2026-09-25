@@ -70,5 +70,14 @@
     "layout": "detail",
     "hook": "Buyers ask about the product first and the supply chain second. The second answer decides it.",
     "chars": 1011
+  },
+  {
+    "date": "2026-09-25",
+    "pillar": "recognition",
+    "pillar_name": "Third-party recognition",
+    "subject": "Award Winner Collection",
+    "layout": "award",
+    "hook": "The RangeMe judges are retailers. That is the only reason this award is worth mentioning.",
+    "chars": 836
   }
 ]
