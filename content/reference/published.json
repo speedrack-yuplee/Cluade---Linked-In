@@ -1,0 +1,83 @@
+[
+  {
+    "date": "2026-09-04",
+    "pillar": "recognition",
+    "pillar_name": "Third-party recognition",
+    "subject": "Retailers' Choice Awards Winner",
+    "layout": "award",
+    "hook": "What does a Retailers' Choice Awards Winner actually change? It changes who picks up the phone.",
+    "chars": 890
+  },
+  {
+    "date": "2026-09-09",
+    "pillar": "reference",
+    "pillar_name": "Installed reference",
+    "subject": "Installed: a university in Korea",
+    "layout": "reference",
+    "hook": "This is a store room off a teaching building at a university in Korea. The shelving went up by hand, in an afternoon.",
+    "chars": 896
+  },
+  {
+    "date": "2026-09-11",
+    "pillar": "project",
+    "pillar_name": "Project solution",
+    "subject": "the white 47.7-inch five-tier shelving unit",
+    "layout": "full",
+    "hook": "How can hotels and residential projects provide more storage without making rooms feel crowded?",
+    "chars": 855
+  },
+  {
+    "date": "2026-09-14",
+    "pillar": "reference",
+    "pillar_name": "Installed reference",
+    "subject": "Installed: an arts university in Korea",
+    "layout": "reference",
+    "hook": "The dorm and classroom orders are placed and installed. What the buildings learned about their storage this year is what they will specify next year.",
+    "chars": 1086
+  },
+  {
+    "date": "2026-09-16",
+    "pillar": "tradeshow",
+    "pillar_name": "Trade show",
+    "subject": "High Point Market",
+    "layout": "show",
+    "hook": "We are taking the full boltless range to High Point Market, Space M-1007. The calendar opens now.",
+    "chars": 840
+  },
+  {
+    "date": "2026-09-18",
+    "pillar": "retail",
+    "pillar_name": "Retail fit",
+    "subject": "the 24-inch pegboard storage rack",
+    "layout": "figure",
+    "hook": "264 lb — per tier, on the five-tier HOMEDANT House shelving.",
+    "chars": 765
+  },
+  {
+    "date": "2026-09-21",
+    "pillar": "manufacturing",
+    "pillar_name": "Made in Korea",
+    "subject": "HOMEDANT House, the 36-inch five-tier laminated shelving unit",
+    "layout": "product",
+    "hook": "A boltless frame sounds like a shortcut. It is the harder engineering choice.",
+    "chars": 989
+  },
+  {
+    "date": "2026-09-23",
+    "pillar": "supply",
+    "pillar_name": "Supply and logistics",
+    "subject": "(brand)",
+    "layout": "detail",
+    "hook": "Buyers ask about the product first and the supply chain second. The second answer decides it.",
+    "chars": 1011
+  },
+  {
+    "date": "2026-09-25",
+    "pillar": "recognition",
+    "pillar_name": "Third-party recognition",
+    "subject": "Award Winner Collection",
+    "layout": "award",
+    "hook": "The RangeMe judges are retailers. That is the only reason this award is worth mentioning.",
+    "chars": 836
+  }
+]
