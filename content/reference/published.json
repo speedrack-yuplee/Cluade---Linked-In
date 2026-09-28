@@ -79,5 +79,14 @@
     "layout": "award",
     "hook": "The RangeMe judges are retailers. That is the only reason this award is worth mentioning.",
     "chars": 836
+  },
+  {
+    "date": "2026-09-28",
+    "pillar": "reference",
+    "pillar_name": "Installed reference",
+    "subject": "Installed: a testing and research institute",
+    "layout": "reference",
+    "hook": "This is a sample store beside the laboratory floor at a testing and research institute. The shelving went up by hand, in an afternoon.",
+    "chars": 914
   }
 ]
