@@ -1,0 +1,38 @@
+{
+  "_comment": [
+    "Rooms a HOMEDANT unit gets composited into.",
+    "An entry names a search rather than a file: which photograph is available",
+    "under a licence that needs no attribution is not knowable from here, so",
+    "scripts/fetch_backgrounds.py asks Openverse and takes the first CC0 or",
+    "public-domain result that is large enough. What it actually chose is",
+    "written to credits.json for review.",
+    "Add an entry, then run the 'Fetch backgrounds' workflow."
+  ],
+  "backgrounds": [
+    {
+      "slug": "school-science-lab",
+      "scene": "school",
+      "query": "school science laboratory classroom interior"
+    },
+    {
+      "slug": "school-classroom",
+      "scene": "school",
+      "query": "empty classroom interior desks"
+    },
+    {
+      "slug": "school-storage-room",
+      "scene": "school",
+      "query": "school storage room supplies shelves"
+    },
+    {
+      "slug": "warehouse-concrete",
+      "scene": "warehouse",
+      "query": "empty warehouse interior concrete floor"
+    },
+    {
+      "slug": "stockroom-retail",
+      "scene": "retail",
+      "query": "retail stockroom back of house storage"
+    }
+  ]
+}

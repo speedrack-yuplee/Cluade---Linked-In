@@ -1,0 +1,29 @@
+name: Telegram note
+
+# A way to put a note in front of the account owner between scheduled drafts:
+# a performance summary, a question, a heads-up about a date that needs
+# checking. Text only; the draft workflow is what sends posts and images.
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: "Text to send to Telegram"
+        required: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Write the note
+        env:
+          MESSAGE: ${{ inputs.message }}
+        run: printf '%s' "$MESSAGE" > note.txt
+      - name: Send it
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/send_telegram.py note.txt
