@@ -106,5 +106,14 @@
     "layout": "detail",
     "hook": "Every multifamily unit has a corner nobody specified. That is where the complaints come from.",
     "chars": 856
+  },
+  {
+    "date": "2026-10-05",
+    "pillar": "retail",
+    "pillar_name": "Retail fit",
+    "subject": "the 32-inch pegboard storage rack",
+    "layout": "detail",
+    "hook": "A shelf that only fits one box size is a planogram problem waiting to happen.",
+    "chars": 701
   }
 ]
