@@ -115,5 +115,14 @@
     "layout": "detail",
     "hook": "A shelf that only fits one box size is a planogram problem waiting to happen.",
     "chars": 701
+  },
+  {
+    "date": "2026-10-07",
+    "pillar": "manufacturing",
+    "pillar_name": "Made in Korea",
+    "subject": "the 24-inch pegboard storage rack",
+    "layout": "full",
+    "hook": "The fastest way to lose a customer is an assembly step they cannot finish.",
+    "chars": 939
   }
 ]
