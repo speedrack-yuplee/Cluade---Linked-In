@@ -1,0 +1,56 @@
+name: Fetch site photos
+
+# Product photography off HOMEDANT's own two websites. They are ours, so there
+# is nothing to license and nothing for Leo to export — which makes this the
+# cheapest way to widen the photograph pool.
+#
+# The cloud session cannot reach either host: the organisation's egress policy
+# answers 403 to CONNECT for homedant.com and speedrack.kr. A runner is not
+# behind that policy. If the policy is later widened, the same script runs in
+# the session and this workflow just stops being necessary.
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "Just one site: homedant or speedrack"
+        required: false
+      limit:
+        description: "Most photographs to keep per site"
+        default: "400"
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install Pillow
+
+      - name: Crawl the sites
+        # A site that refuses the runner must not throw away the other one.
+        continue-on-error: true
+        run: |
+          python scripts/fetch_site_photos.py \
+            --limit ${{ inputs.limit || '400' }} \
+            ${{ inputs.only && format('--only {0}', inputs.only) || '' }}
+
+      - name: Commit whatever came down
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/library/web
+          if git diff --cached --quiet; then
+            echo "nothing new"
+          else
+            git commit -m "Add product photography from homedant.com and speedrack.kr"
+            git push
+          fi

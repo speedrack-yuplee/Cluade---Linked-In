@@ -1,0 +1,67 @@
+name: LinkedIn draft
+
+# Three drafts a week, at 09:00 KST on the day they are meant to go out.
+# The rotation is counted from the anchor date in brand.json, so a missed run
+# does not shift the calendar.
+on:
+  schedule:
+    - cron: "0 0 * * 1,3,5"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Post for this date instead of today (YYYY-MM-DD)"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -e .
+
+      - name: Generate the post and its image
+        run: |
+          python -m homedant_linkedin next --out out \
+            ${{ inputs.date && format('--date {0}', inputs.date) || '' }}
+
+      - name: Send it to Telegram
+        # Skipped on a day with nothing scheduled, when `next` writes no files.
+        if: hashFiles('out/post.txt') != ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/send_telegram.py out/post.txt out/post.png
+
+      - name: Keep the draft as an artifact
+        if: hashFiles('out/post.txt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: linkedin-draft-${{ github.run_number }}
+          path: out/
+
+      - name: Record what this draft was
+        # report_performance.py joins a real LinkedIn post back to this by
+        # date and pillar; without this commit that join has nothing on the
+        # composer's side to line up with, and a performance check cannot say
+        # which layout or hook to blame or repeat.
+        if: hashFiles('out/post.txt') != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content/reference/published.json
+          if git diff --cached --quiet; then
+            echo "nothing to record"
+          else
+            git commit -m "Record the $(date -u +%F) draft"
+            git push
+          fi
