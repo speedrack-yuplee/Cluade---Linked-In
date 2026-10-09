@@ -124,5 +124,14 @@
     "layout": "full",
     "hook": "The fastest way to lose a customer is an assembly step they cannot finish.",
     "chars": 939
+  },
+  {
+    "date": "2026-10-09",
+    "pillar": "tradeshow",
+    "pillar_name": "Trade show",
+    "subject": "High Point Market",
+    "layout": "show",
+    "hook": "⏳ 7 Days to Go — see you at High Point Market, Space M-1007!",
+    "chars": 821
   }
 ]
