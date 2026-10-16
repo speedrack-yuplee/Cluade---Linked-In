@@ -142,5 +142,14 @@
     "layout": "figure",
     "hook": "264 lb — per tier, on the five-tier HOMEDANT House shelving.",
     "chars": 607
+  },
+  {
+    "date": "2026-10-16",
+    "pillar": "tradeshow",
+    "pillar_name": "Trade show",
+    "subject": "High Point Market",
+    "layout": "show",
+    "hook": "We are on the floor at High Point Market, Space M-1007. Come and find us.",
+    "chars": 696
   }
 ]
