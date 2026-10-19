@@ -151,5 +151,14 @@
     "layout": "show",
     "hook": "We are on the floor at High Point Market, Space M-1007. Come and find us.",
     "chars": 696
+  },
+  {
+    "date": "2026-10-19",
+    "pillar": "seasonal",
+    "pillar_name": "Q4 seasonal",
+    "subject": "the 24-inch rolling pegboard cart",
+    "layout": "detail",
+    "hook": "Decorations come out of storage and go back into it three weeks later. The bins have to live somewhere for the other eleven months.",
+    "chars": 788
   }
 ]
