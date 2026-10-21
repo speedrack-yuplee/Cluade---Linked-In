@@ -160,5 +160,14 @@
     "layout": "detail",
     "hook": "Decorations come out of storage and go back into it three weeks later. The bins have to live somewhere for the other eleven months.",
     "chars": 788
+  },
+  {
+    "date": "2026-10-21",
+    "pillar": "supply",
+    "pillar_name": "Supply and logistics",
+    "subject": "(brand)",
+    "layout": "plain",
+    "hook": "A reset date does not move because a vessel did. That is what domestic stock is for.",
+    "chars": 1008
   }
 ]
