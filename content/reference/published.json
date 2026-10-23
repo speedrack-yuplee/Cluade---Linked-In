@@ -169,5 +169,14 @@
     "layout": "plain",
     "hook": "A reset date does not move because a vessel did. That is what domestic stock is for.",
     "chars": 1008
+  },
+  {
+    "date": "2026-10-23",
+    "pillar": "reference",
+    "pillar_name": "Installed reference",
+    "subject": "Installed: a home goods retailer",
+    "layout": "reference",
+    "hook": "A home goods retailer needed the back of house behind the shop floor to hold more, without a contractor and without touching the building.",
+    "chars": 908
   }
 ]
