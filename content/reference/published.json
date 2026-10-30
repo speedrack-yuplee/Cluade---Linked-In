@@ -196,5 +196,14 @@
     "layout": "product",
     "hook": "Buyers do not ask how strong the shelf is. They ask how many of them fit on a pallet.",
     "chars": 876
+  },
+  {
+    "date": "2026-10-30",
+    "pillar": "manufacturing",
+    "pillar_name": "Made in Korea",
+    "subject": "the 32-inch pegboard storage rack",
+    "layout": "figure",
+    "hook": "1979 — the year the factory opened, and it is still ours.",
+    "chars": 899
   }
 ]
