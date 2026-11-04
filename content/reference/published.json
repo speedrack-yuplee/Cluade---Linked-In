@@ -214,5 +214,14 @@
     "layout": "product",
     "hook": "Garages fill up in November and get sorted out in January. Both are shelving moments.",
     "chars": 651
+  },
+  {
+    "date": "2026-11-04",
+    "pillar": "supply",
+    "pillar_name": "Supply and logistics",
+    "subject": "(brand)",
+    "layout": "full",
+    "hook": "The hardest question in a vendor meeting is not about the product. It is “can you actually ship it?”",
+    "chars": 1018
   }
 ]
