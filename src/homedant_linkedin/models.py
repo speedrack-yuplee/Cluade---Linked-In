@@ -1,0 +1,458 @@
+"""Core value objects for the HOMEDANT LinkedIn agent."""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass, field
+from datetime import date, timedelta
+
+MAX_POST_CHARS = 3000
+"""LinkedIn rejects a post body longer than this."""
+
+MAX_HOOK_CHARS = 210
+"""LinkedIn collapses a post behind "...see more" past roughly this point."""
+
+
+@dataclass(frozen=True)
+class Product:
+    """One HOMEDANT product the agent can write about, framed for a buyer."""
+
+    asin: str
+    sku: str
+    title: str
+    category: str
+    marketplace: str
+    url: str
+    highlights: tuple[str, ...] = ()
+    audience: str = ""
+    short_name: str = ""
+    retail_fit: str = ""
+    segments: tuple[str, ...] = ()
+    image_url: str = ""
+    load_per_tier: str = ""
+    load_total: str = ""
+
+    @classmethod
+    def from_dict(cls, raw: dict) -> "Product":
+        missing = [k for k in ("asin", "sku", "title", "category", "marketplace", "url") if not raw.get(k)]
+        if missing:
+            raise ValueError(f"product is missing required field(s): {', '.join(missing)}")
+        return cls(
+            asin=raw["asin"],
+            sku=raw["sku"],
+            title=raw["title"],
+            category=raw["category"],
+            marketplace=raw["marketplace"],
+            url=raw["url"],
+            highlights=tuple(raw.get("highlights", ())),
+            audience=raw.get("audience", ""),
+            short_name=raw.get("short_name", ""),
+            retail_fit=raw.get("retail_fit", ""),
+            segments=tuple(raw.get("segments", ())),
+            image_url=raw.get("image_url", ""),
+            load_per_tier=raw.get("load_per_tier", ""),
+            load_total=raw.get("load_total", ""),
+        )
+
+    @property
+    def short_title(self) -> str:
+        """How the product is named inside a post.
+
+        Amazon titles are keyword stuffed and unreadable in prose, so the
+        catalog carries a hand-written ``short_name``. Products without one
+        fall back to the title with the brand prefix and size tail removed.
+        """
+        if self.short_name:
+            return self.short_name
+        title = re.sub(r"^HOMEDANT\s*[-–]?\s*", "", self.title).strip()
+        title = re.split(r"\s+\d+(?:\.\d+)?\"", title)[0].strip()
+        return title or self.title
+
+    @property
+    def sentence_name(self) -> str:
+        """``short_title`` capitalised for the start of a sentence."""
+        name = self.short_title
+        return name[:1].upper() + name[1:] if name else name
+
+
+@dataclass(frozen=True)
+class Recognition:
+    """An award or listing a third party gave the brand.
+
+    These are the highest performing posts by a wide margin, so the plan
+    leads with them whenever one is available.
+    """
+
+    name: str
+    org: str
+    event: str
+    venue: str
+    date: date
+    thanks: tuple[str, ...] = ()
+    hashtags: tuple[str, ...] = ()
+    city: str = ""
+    award: str = ""
+    posted_on: date | None = None
+    """When this was already announced on LinkedIn. A recognition that has been
+    posted is never announced again; it is revisited from a new angle."""
+
+    headline: str = ""
+    """The opening line, written by hand. ``{company}`` is substituted in."""
+
+    @classmethod
+    def from_dict(cls, raw: dict) -> "Recognition":
+        return cls(
+            name=raw["name"],
+            org=raw["org"],
+            event=raw.get("event", ""),
+            venue=raw.get("venue", ""),
+            date=date.fromisoformat(raw["date"]),
+            thanks=tuple(raw.get("thanks", ())),
+            hashtags=tuple(raw.get("hashtags", ())),
+            headline=raw.get("headline", ""),
+            city=raw.get("city", ""),
+            award=raw.get("award", ""),
+            posted_on=date.fromisoformat(raw["posted_on"]) if raw.get("posted_on") else None,
+        )
+
+    def opening(self, company: str) -> str:
+        if self.headline:
+            return self.headline.format(company=company)
+        return f"{company} has been recognized by {self.org}."
+
+
+@dataclass(frozen=True)
+class TradeShow:
+    """A show the company exhibits at."""
+
+    name: str
+    venue: str
+    start: date
+    end: date
+    booth: str | None = None
+    booth_label: str = "Booth"
+    """Shows differ: NY NOW numbers booths, High Point numbers showroom spaces."""
+
+    hashtags: tuple[str, ...] = ()
+
+    @classmethod
+    def from_dict(cls, raw: dict) -> "TradeShow":
+        return cls(
+            name=raw["name"],
+            venue=raw.get("venue", ""),
+            start=date.fromisoformat(raw["start"]),
+            end=date.fromisoformat(raw["end"]),
+            booth=raw.get("booth"),
+            booth_label=raw.get("booth_label", "Booth"),
+            hashtags=tuple(raw.get("hashtags", ())),
+        )
+
+    def days_until(self, day: date) -> int:
+        """Days from ``day`` to the opening. Negative once the show has opened."""
+        return (self.start - day).days
+
+    def is_running(self, day: date) -> bool:
+        return self.start <= day <= self.end
+
+    @property
+    def location(self) -> str:
+        """How the stand is named on the show floor, e.g. "Space M-1007".
+
+        The number sign only reads correctly on a bare number, so a space
+        carrying a letter prefix goes without it.
+        """
+        if not self.booth:
+            return ""
+        prefix = "#" if self.booth.isdigit() else ""
+        return f"{self.booth_label} {prefix}{self.booth}"
+
+    @property
+    def dates(self) -> str:
+        if self.start.month == self.end.month:
+            return f"{self.start:%B} {self.start.day}-{self.end.day}, {self.end.year}"
+        return f"{self.start:%B %-d} - {self.end:%B %-d, %Y}"
+
+
+@dataclass(frozen=True)
+class Brand:
+    """Who is posting, and the facts every post can draw on."""
+
+    brand: str
+    company: str
+    tagline: str
+    author: str
+    role: str
+    audiences: tuple[str, ...]
+    proof_points: tuple[str, ...]
+    positioning: str = ""
+    founded: int | None = None
+    capability: str = ""
+    offer: str = ""
+    exhibited_at: tuple[str, ...] = ()
+    """Shows the brand has stood at. Names only, because this is used in prose
+    rather than scheduled; a schedulable show needs dates and lives in
+    trade_shows."""
+
+    coined_terms: dict = field(default_factory=dict)
+    """A name we invented, mapped to the words that explain it. A post using
+    the name has to carry one of them."""
+
+    recognitions: tuple[Recognition, ...] = ()
+    trade_shows: tuple[TradeShow, ...] = ()
+    blackout_dates: frozenset = frozenset()
+    """Days nothing goes out: US holidays, when a B2B feed is not being read."""
+
+    plan_anchor: date | None = None
+    """The day the rotation starts counting from, so an unattended run lands on
+    the same slot the calendar shows. Nothing is due before it."""
+
+    @classmethod
+    def from_dict(cls, raw: dict) -> "Brand":
+        return cls(
+            brand=raw.get("brand", "HOMEDANT"),
+            company=raw["company"],
+            tagline=raw.get("tagline", ""),
+            author=raw.get("author", ""),
+            role=raw.get("role", ""),
+            audiences=tuple(raw.get("audiences", ())),
+            proof_points=tuple(raw.get("proof_points", ())),
+            positioning=raw.get("positioning", ""),
+            founded=raw.get("founded"),
+            capability=raw.get("capability", ""),
+            offer=raw.get("offer", ""),
+            coined_terms={k: tuple(v) for k, v in raw.get("coined_terms", {}).items()},
+            exhibited_at=tuple(raw.get("exhibited_at", ())),
+            recognitions=tuple(Recognition.from_dict(r) for r in raw.get("recognitions", ())),
+            trade_shows=tuple(TradeShow.from_dict(s) for s in raw.get("trade_shows", ())),
+            plan_anchor=date.fromisoformat(raw["plan_anchor"]) if raw.get("plan_anchor") else None,
+            blackout_dates=frozenset(date.fromisoformat(d) for d in raw.get("blackout_dates", ())),
+        )
+
+    @property
+    def show_history(self) -> str:
+        """The shows as a sentence: "a, b and c"."""
+        items = list(self.exhibited_at)
+        if len(items) < 2:
+            return items[0] if items else ""
+        return ", ".join(items[:-1]) + f" and {items[-1]}"
+
+    @property
+    def audience_phrase(self) -> str:
+        """The audiences as the posts address them: "a, b, and c"."""
+        items = list(self.audiences)
+        if len(items) < 2:
+            return items[0] if items else "partners"
+        return ", ".join(items[:-1]) + f", and {items[-1]}"
+
+
+@dataclass(frozen=True)
+class Moment:
+    """A date the audience's own year turns on.
+
+    A buyer in the States is not thinking about our factory in September; they
+    are thinking about the reset that has to be on the floor before Halloween.
+    A post timed to one of these reads as someone who knows their year rather
+    than someone talking about themselves.
+    """
+
+    date: date
+    kind: str
+    """holiday (nothing is posted on one) or retail (a post may be timed to it)."""
+
+    name: str
+    ko: str = ""
+    angle: str = ""
+    """What there is to say about it, in our terms rather than the holiday's."""
+
+    lead_days: int = 0
+    """How far ahead the buying conversation happens. A post about Black Friday
+    storage in late November is too late to sell anything."""
+
+    pillars: tuple[str, ...] = ()
+
+    @property
+    def is_holiday(self) -> bool:
+        return self.kind == "holiday"
+
+    @property
+    def posts_on(self):
+        """The day a post about this should go out."""
+        return self.date - timedelta(days=self.lead_days)
+
+    @classmethod
+    def from_dict(cls, raw: dict) -> "Moment":
+        return cls(
+            date=date.fromisoformat(raw["date"]),
+            kind=raw.get("kind", "retail"),
+            name=raw["name"],
+            ko=raw.get("ko", ""),
+            angle=raw.get("angle", ""),
+            lead_days=int(raw.get("lead_days", 0)),
+            pillars=tuple(raw.get("pillars", ())),
+        )
+
+
+@dataclass(frozen=True)
+class Installation:
+    """A room the shelving actually went into, and the photograph of it.
+
+    A studio shot says what the product looks like. One of these says somebody
+    bought it, put it in a real building, and it is still standing there. For a
+    B2B feed that is the stronger argument, and it is one no stock photograph
+    or composite can make.
+    """
+
+    slug: str
+    customer: str
+    sector: str
+    described_as: str
+    room: str
+    situation: str
+    photo: str
+    named: bool = False
+    """Whether the post may say the customer's name.
+
+    A reference is the customer's to give. Until they have agreed, the post
+    describes the kind of place instead — which is what a buyer abroad is
+    asking about anyway."""
+
+    hashtags: tuple[str, ...] = ()
+
+    @property
+    def subject(self) -> str:
+        """How the post refers to this room."""
+        return self.customer if self.named else self.described_as
+
+    @classmethod
+    def from_dict(cls, raw: dict) -> "Installation":
+        return cls(
+            slug=raw["slug"],
+            customer=raw.get("customer", ""),
+            sector=raw.get("sector", ""),
+            described_as=raw.get("described_as", ""),
+            room=raw.get("room", ""),
+            situation=raw.get("situation", ""),
+            photo=raw["photo"],
+            named=bool(raw.get("named", False)),
+            hashtags=tuple(raw.get("hashtags", ())),
+        )
+
+
+@dataclass(frozen=True)
+class Pillar:
+    """A recurring content theme. The plan rotates through these."""
+
+    key: str
+    name: str
+    intent: str
+    hashtags: tuple[str, ...]
+    needs: str | None = "product"
+    """What the slot must carry: "product", "recognition", "show",
+    "installation", or None."""
+
+    months: tuple[int, ...] = ()
+    """Restrict the pillar to these calendar months. Empty means all year."""
+
+    segment: str | None = None
+    """Restrict the product pool to products carrying this segment tag. A
+    hospitality hook over a pallet-configuration product reads as a mismatch,
+    so each product-led pillar draws from its own pool."""
+
+
+@dataclass(frozen=True)
+class Slot:
+    """A pillar scheduled on a date, with whatever subject it needs."""
+
+    scheduled_for: date
+    pillar: Pillar
+    product: Product | None = None
+    recognition: Recognition | None = None
+    show: TradeShow | None = None
+    installation: Installation | None = None
+    moment: Moment | None = None
+    """A US retail date this post was timed to, where one falls due."""
+
+    turn: int = 0
+    """How many times this pillar has already come round in the plan.
+
+    The rotation of hooks counts on this rather than on the date: posting days
+    are two and three days apart, so any modulo of the date eventually lands
+    two neighbours on the same opening line."""
+
+    feature: Product | None = None
+    """A product shown in the image only. A show or brand post has no product
+    subject, but it still has something to show."""
+
+    @property
+    def pictured(self) -> Product | None:
+        """The product the image should show, whether or not the text is about it.
+
+        None for an installation post: that image is the photograph of the
+        room, and a studio cut-out of some other unit on top of it would
+        contradict what the post is saying.
+        """
+        if self.installation:
+            return None
+        return self.product or self.feature
+
+    @property
+    def subject(self) -> str:
+        """A one-line label for the calendar."""
+        if self.product:
+            return self.product.short_title
+        if self.recognition:
+            return self.recognition.name
+        if self.show:
+            return self.show.name
+        if self.installation:
+            return f"Installed: {self.installation.subject}"
+        return "(brand)"
+
+
+@dataclass(frozen=True)
+class PostDraft:
+    """A rendered post, ready for review."""
+
+    slot: Slot
+    hook: str
+    body: str
+    cta: str
+    closing: str = ""
+    """A line that follows the call to action, such as the thank-you the award
+    posts end on."""
+
+    question: str = ""
+    """A question a reader can answer from their own experience in one line.
+
+    The account's best post carried eight comments and reached 709
+    impressions; every other post carried none or one and sat between 46 and
+    99. A message goes to an inbox the feed cannot see, so the post also has
+    to ask for something that costs a reader nothing to give."""
+
+    hashtags: tuple[str, ...] = field(default=())
+    points: tuple[str, ...] = ()
+    """Proof points for the image. The posts themselves run as prose, so these
+    are never rendered into the text."""
+
+    @property
+    def scheduled_for(self) -> date:
+        return self.slot.scheduled_for
+
+    @property
+    def pillar(self) -> Pillar:
+        return self.slot.pillar
+
+    @property
+    def product(self) -> Product | None:
+        return self.slot.product
+
+    def render(self) -> str:
+        """The exact text to paste into LinkedIn."""
+        blocks = [self.hook, self.body, self.cta, self.closing, self.question]
+        if self.hashtags:
+            blocks.append(" ".join(f"#{tag}" for tag in self.hashtags))
+        return "\n\n".join(block for block in blocks if block)
+
+    @property
+    def char_count(self) -> int:
+        return len(self.render())
