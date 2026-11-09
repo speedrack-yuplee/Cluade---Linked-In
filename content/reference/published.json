@@ -232,5 +232,14 @@
     "layout": "award",
     "hook": "What does a Retailers' Choice Awards Winner actually change? It changes who picks up the phone.",
     "chars": 881
+  },
+  {
+    "date": "2026-11-09",
+    "pillar": "reference",
+    "pillar_name": "Installed reference",
+    "subject": "Installed: a construction company",
+    "layout": "reference",
+    "hook": "This is a site store that moves with the job at a construction company. The shelving went up by hand, in an afternoon.",
+    "chars": 905
   }
 ]
