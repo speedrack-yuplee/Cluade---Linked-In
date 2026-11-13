@@ -1,0 +1,70 @@
+{
+  "_comment": [
+    "Rooms someone bought the shelving for, photographed after it went in.",
+    "The photographs came out of the design library through",
+    "scripts/sync_photos.ps1 and live under assets/library/installations.",
+    "",
+    "'customer' is the account, kept here so it is clear which room this is.",
+    "'named' decides whether the post says it out loud. A reference is the",
+    "customer's name to give, not ours to take, so it stays false until they",
+    "have agreed; the post then says what kind of place it was instead, which",
+    "is what a buyer in the US is actually asking about."
+  ],
+  "installations": [
+    {
+      "slug": "university-store",
+      "customer": "인하대학교",
+      "named": false,
+      "sector": "university",
+      "described_as": "a university in Korea",
+      "room": "a store room off a teaching building",
+      "situation": "The room had to keep working while it was fitted out, on a floor where drilling was not an option.",
+      "photo": "installations/중량랙/인하대학교_중량랙(1).jpg",
+      "hashtags": ["Education", "InstitutionalStorage"]
+    },
+    {
+      "slug": "arts-university-store",
+      "customer": "추계예술대학교",
+      "named": false,
+      "sector": "university",
+      "described_as": "an arts university in Korea",
+      "room": "a windowless store room for departmental equipment",
+      "situation": "Eleven bays went up between terms, in a room with a slab floor and no time for a contractor.",
+      "photo": "installations/일반스피드랙/추계예술대학교_일반스피드랙(1).jpg",
+      "hashtags": ["Education", "InstitutionalStorage"]
+    },
+    {
+      "slug": "testing-laboratory",
+      "customer": "코티티시험연구원",
+      "named": false,
+      "sector": "laboratory",
+      "described_as": "a testing and research institute",
+      "room": "a sample store beside the laboratory floor",
+      "situation": "Samples have to be found again years later, so the tiers were set out before anything was ordered.",
+      "photo": "installations/일반스피드랙/코티티시험연구원_일반스피드랙(블랙)(1).jpg",
+      "hashtags": ["Laboratory", "InstitutionalStorage"]
+    },
+    {
+      "slug": "retail-back-of-house",
+      "customer": "앵글스토어",
+      "named": false,
+      "sector": "retail",
+      "described_as": "a home goods retailer",
+      "room": "the back of house behind the shop floor",
+      "situation": "The bays went in against a bare concrete wall, in the hours between closing and opening.",
+      "photo": "installations/홈던트하우스/앵글스토어_홈던트하우스(1).jpg",
+      "hashtags": ["RetailBuyers", "BackOfHouse"]
+    },
+    {
+      "slug": "construction-site-store",
+      "customer": "케이씨씨건설",
+      "named": false,
+      "sector": "construction",
+      "described_as": "a construction company",
+      "room": "a site store that moves with the job",
+      "situation": "It comes apart by hand and goes back together at the next site, which is why it was specified boltless.",
+      "photo": "installations/일반스피드랙/케이씨씨건설_일반스피드랙(블랙) (1).jpg",
+      "hashtags": ["Construction", "InstitutionalStorage"]
+    }
+  ]
+}
