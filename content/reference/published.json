@@ -241,5 +241,14 @@
     "layout": "reference",
     "hook": "This is a site store that moves with the job at a construction company. The shelving went up by hand, in an afternoon.",
     "chars": 905
+  },
+  {
+    "date": "2026-11-13",
+    "pillar": "project",
+    "pillar_name": "Project solution",
+    "subject": "HOMEDANT House, the 36-inch five-tier laminated shelving unit",
+    "layout": "full",
+    "hook": "The storage in a guest room is decided long before the guest arrives. Usually by whoever signed off the millwork budget.",
+    "chars": 999
   }
 ]
