@@ -250,5 +250,14 @@
     "layout": "full",
     "hook": "The storage in a guest room is decided long before the guest arrives. Usually by whoever signed off the millwork budget.",
     "chars": 999
+  },
+  {
+    "date": "2026-11-16",
+    "pillar": "retail",
+    "pillar_name": "Retail fit",
+    "subject": "the 28-inch narrow-depth shelving unit",
+    "layout": "full",
+    "hook": "Ever struggled to fit diverse inventory perfectly onto your shelves?",
+    "chars": 705
   }
 ]
