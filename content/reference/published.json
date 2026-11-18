@@ -259,5 +259,14 @@
     "layout": "full",
     "hook": "Ever struggled to fit diverse inventory perfectly onto your shelves?",
     "chars": 705
+  },
+  {
+    "date": "2026-11-18",
+    "pillar": "retail",
+    "pillar_name": "Retail fit",
+    "subject": "the 24-inch pegboard storage rack",
+    "layout": "figure",
+    "hook": "An independent retailer resets a bay with what fits on one pallet, not one container.",
+    "chars": 845
   }
 ]
