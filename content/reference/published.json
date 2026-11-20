@@ -268,5 +268,14 @@
     "layout": "figure",
     "hook": "An independent retailer resets a bay with what fits on one pallet, not one container.",
     "chars": 845
+  },
+  {
+    "date": "2026-11-20",
+    "pillar": "manufacturing",
+    "pillar_name": "Made in Korea",
+    "subject": "the 47.7-inch five-tier garage shelving unit",
+    "layout": "detail",
+    "hook": "Turn the board over and the shelf changes colour. One SKU, two rooms it belongs in.",
+    "chars": 948
   }
 ]
