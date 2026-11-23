@@ -277,5 +277,14 @@
     "layout": "detail",
     "hook": "Turn the board over and the shelf changes colour. One SKU, two rooms it belongs in.",
     "chars": 948
+  },
+  {
+    "date": "2026-11-23",
+    "pillar": "seasonal",
+    "pillar_name": "Q4 seasonal",
+    "subject": "the 32-inch pegboard storage rack",
+    "layout": "full",
+    "hook": "Holiday decor is a storage category. It just does not look like one on the planogram.",
+    "chars": 650
   }
 ]
