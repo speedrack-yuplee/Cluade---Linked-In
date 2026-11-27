@@ -1,0 +1,116 @@
+{
+  "note": "Who to read, and why. opencli reads posts from /in/ profiles only — a company page cannot be read directly, so follow_url is where to go and press Follow once; after that the company's posts arrive through the timeline and the collector picks them up with everything else. profile_url stays blank for a company and is filled in for a person.",
+  "people": [
+    {
+      "name": "Angel Cho",
+      "why": "Overseas Sales at HOMEDANT, named with Leo Lee on the Lowe's vendor deck. Same audience, same room.",
+      "profile_url": ""
+    }
+  ],
+  "companies": [
+    {
+      "name": "Edsal Manufacturing",
+      "why": "Named as a competitor on the Lowe's deck.",
+      "profile_url": "",
+      "follow_url": "https://www.linkedin.com/company/edsal",
+      "priority": 1
+    },
+    {
+      "name": "NewAge Products",
+      "priority": 1,
+      "follow_url": "https://www.linkedin.com/company/newage-products-inc-",
+      "note": "Garage and home storage out of Canada, selling into the same US big-box and direct channels we do, and posting regularly — which is what Gladiator's page does not. Taken as the fourth priority-one follow in its place."
+    },
+    {
+      "name": "North American Hardware and Paint Association (NHPA)",
+      "why": "Gave the Retailers' Choice award. Tagging them is what carried the 709 post.",
+      "profile_url": "",
+      "follow_url": "https://www.linkedin.com/company/north-american-hardware-and-paint-association",
+      "priority": 1
+    },
+    {
+      "name": "Seville Classics",
+      "why": "Named as a competitor on the Lowe's deck.",
+      "profile_url": "",
+      "follow_url": "https://www.linkedin.com/company/sevilleclassics",
+      "priority": 1
+    },
+    {
+      "name": "ANDMORE",
+      "why": "Runs the Suites at Market Square, where Space M-1007 is.",
+      "profile_url": "",
+      "follow_url": "https://www.linkedin.com/company/andmore-market",
+      "priority": 2
+    },
+    {
+      "name": "High Point Market Authority",
+      "why": "October show. Tag them in the countdown posts.",
+      "profile_url": "",
+      "follow_url": "https://www.linkedin.com/company/high-point-market-authority",
+      "priority": 2
+    },
+    {
+      "name": "RangeMe",
+      "why": "Put HOMEDANT in front of 15,000 retail buyers once already.",
+      "profile_url": "",
+      "follow_url": "https://www.linkedin.com/company/rangeme",
+      "priority": 2
+    },
+    {
+      "name": "ABC News",
+      "why": "Requested. General news rather than trade press, so watch whether it earns its slot.",
+      "profile_url": "",
+      "follow_url": "",
+      "priority": 3
+    },
+    {
+      "name": "CJ Olive Young",
+      "why": "A Korean retailer selling into the US. How they frame Korean-made for an American buyer is the same problem HOMEDANT has.",
+      "profile_url": "",
+      "follow_url": "",
+      "priority": 3
+    },
+    {
+      "name": "Furniture Today",
+      "why": "What the buyers read. Their headlines are next month's buyer questions.",
+      "profile_url": "",
+      "follow_url": "",
+      "priority": 3
+    },
+    {
+      "name": "Gladiator GarageWorks",
+      "why": "Named as a competitor on the Lowe's deck.",
+      "profile_url": "",
+      "follow_url": "",
+      "priority": 3,
+      "note": "The gladiator-systems page carries four followers and no posts, so there is nothing to follow and nothing would arrive. Whirlpool runs the brand's marketing through its own channels. Left here as a name to watch for if a real page appears."
+    },
+    {
+      "name": "Home News Now",
+      "why": "Home furnishings trade press.",
+      "profile_url": "",
+      "follow_url": "",
+      "priority": 3
+    },
+    {
+      "name": "NeoCon",
+      "why": "Exhibited June 2026. Hospitality and multifamily specifiers gather here.",
+      "profile_url": "",
+      "follow_url": "",
+      "priority": 3
+    },
+    {
+      "name": "Retail Dive",
+      "why": "Retail channel and merchandising news.",
+      "profile_url": "",
+      "follow_url": "",
+      "priority": 3
+    }
+  ],
+  "search_terms": [
+    "shelving buyer",
+    "storage category manager",
+    "hardlines merchant",
+    "FF&E procurement hospitality"
+  ]
+}

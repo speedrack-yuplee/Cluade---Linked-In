@@ -1,0 +1,28 @@
+name: Content calendar
+
+# Rebuilds the calendar page whenever the data behind it changes, so the page
+# never drifts from what the scheduled job will actually send.
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "src/homedant_linkedin/data/**"
+      - "src/homedant_linkedin/**.py"
+      - "scripts/build_calendar_page.py"
+  workflow_dispatch:
+
+jobs:
+  calendar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - name: Build the calendar page
+        run: python scripts/build_calendar_page.py --until 2026-12-31 --out calendar.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: content-calendar
+          path: calendar.html

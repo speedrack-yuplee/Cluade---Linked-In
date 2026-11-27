@@ -1,0 +1,154 @@
+{
+  "brand": "HOMEDANT",
+  "company": "Homedant USA Inc",
+  "tagline": "The Best Organizing Solution",
+  "author": "Leo Lee",
+  "role": "Global B2B Sales",
+  "audiences": [
+    "retail buyers",
+    "distributors",
+    "hospitality specifiers",
+    "multifamily developers"
+  ],
+  "proof_points": [
+    "HANDiLOCK joints: the frame locks together by hand, with no bolts and no tools",
+    "tool-free assembly in about ten minutes, with no drilling and no noise",
+    "264 lb per tier and 1,322 lb per unit on the five-tier HOMEDANT House shelving",
+    "reversible laminated board, light wood on one face and soft white on the other",
+    "shelf height adjustable in 1.18 inch intervals",
+    "laminated on all six sides, anti-scratch and waterproof",
+    "a LiftBeam reinforcing bar raises a tier to 551 lb where a project needs it",
+    "manufacturing in South Korea since 1979",
+    "CA and GA warehouses for fast domestic shipping"
+  ],
+  "recognitions": [
+    {
+      "name": "Retailers' Choice Awards Winner",
+      "org": "North American Hardware and Paint Association (NHPA)",
+      "event": "National Hardware Show",
+      "venue": "Las Vegas Convention Center, Las Vegas, NV",
+      "date": "2026-04-02",
+      "thanks": [
+        "Hardlines Supplier Event",
+        "North American Hardware and Paint Association (NHPA)"
+      ],
+      "hashtags": [
+        "HOMEDANT",
+        "RetailersChoice",
+        "NationalHardwareShow",
+        "NHPA",
+        "SteelShelving",
+        "KoreanMade",
+        "StorageSolutions",
+        "B2B"
+      ],
+      "headline": "{company} has been selected as a Retailers' Choice Awards Winner at the National Hardware Show.",
+      "city": "Las Vegas",
+      "award": "Retailers' Choice Awards Winner",
+      "posted_on": "2026-04-15"
+    },
+    {
+      "name": "Award Winner Collection",
+      "org": "RangeMe",
+      "event": "RangeMe Award Winner Collection",
+      "venue": "the RangeMe platform",
+      "date": "2026-08-19",
+      "thanks": [
+        "RangeMe"
+      ],
+      "hashtags": [
+        "HOMEDANT",
+        "RangeMe",
+        "RetailBuyers",
+        "StorageSolutions",
+        "KoreanMade",
+        "B2B"
+      ],
+      "headline": "{company} has been selected for the RangeMe Award Winner Collection, in front of more than 15,000 retail buyers.",
+      "city": "",
+      "award": "RangeMe Award Winner Collection selection",
+      "posted_on": "2026-08-19"
+    }
+  ],
+  "trade_shows": [
+    {
+      "name": "NY NOW Summer 2026",
+      "booth": "372",
+      "venue": "Javits Center, New York, NY",
+      "start": "2026-08-02",
+      "end": "2026-08-06",
+      "hashtags": [
+        "HOMEDANT",
+        "NYNOW",
+        "HomeDecor",
+        "StorageSolutions",
+        "KoreanMade",
+        "B2B"
+      ],
+      "booth_label": "Booth"
+    },
+    {
+      "name": "National Hardware Show 2026",
+      "booth": null,
+      "venue": "Las Vegas Convention Center, Las Vegas, NV",
+      "start": "2026-03-30",
+      "end": "2026-04-02",
+      "hashtags": [
+        "HOMEDANT",
+        "NationalHardwareShow",
+        "SteelShelving",
+        "StorageSolutions",
+        "B2B"
+      ]
+    },
+    {
+      "name": "High Point Market",
+      "booth": "M-1007",
+      "venue": "Suites at Market Square, High Point, NC",
+      "start": "2026-10-16",
+      "end": "2026-10-21",
+      "hashtags": [
+        "HOMEDANT",
+        "HighPointMarket",
+        "HPMKT",
+        "StorageSolutions",
+        "KoreanMade",
+        "B2B"
+      ],
+      "booth_label": "Space"
+    }
+  ],
+  "founded": 1979,
+  "plan_anchor": "2026-09-02",
+  "positioning": "Korean-made boltless steel shelving solutions to the North American market",
+  "capability": "Our shelving systems are designed to support homes, garages, retail backrooms, offices, and commercial spaces with reliable quality, easy assembly, and flexible use.",
+  "offer": "Korean-made boltless steel shelving",
+  "blackout_dates": [
+    "2026-11-26",
+    "2026-12-24",
+    "2026-12-25",
+    "2026-12-31",
+    "2027-01-01"
+  ],
+  "coined_terms": {
+    "HANDiLOCK": [
+      "lock",
+      "by hand",
+      "no bolts",
+      "boltless",
+      "without bolts"
+    ],
+    "LiftBeam": [
+      "reinforc",
+      "per tier",
+      "load",
+      "beam"
+    ]
+  },
+  "exhibited_at": [
+    "the National Hardware Show",
+    "NeoCon",
+    "NY NOW",
+    "DESIGN TOKYO"
+  ]
+}
