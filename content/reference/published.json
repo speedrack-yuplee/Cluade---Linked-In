@@ -295,5 +295,14 @@
     "layout": "figure",
     "hook": "The stock for this week landed in September. A reset date does not move because a vessel did, which is what domestic warehousing is for.",
     "chars": 1120
+  },
+  {
+    "date": "2026-11-27",
+    "pillar": "supply",
+    "pillar_name": "Supply and logistics",
+    "subject": "(brand)",
+    "layout": "detail",
+    "hook": "A reset date does not move because a vessel did. That is what domestic stock is for.",
+    "chars": 1002
   }
 ]
